@@ -20,6 +20,15 @@
     <Filter Include="VmUtils">
       <UniqueIdentifier>{6441c663-5895-4d63-9684-2dfdb84d0bb6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Vmx">
+      <UniqueIdentifier>{1a514472-3c4b-47c0-8ca2-c52d64e472a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vmcs">
+      <UniqueIdentifier>{4ea4c603-86ed-4bf6-900c-25cd2e17b5b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Ept">
+      <UniqueIdentifier>{8ce47128-2148-4c59-87e1-d16c90f293bd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Inf Include="SimpleHypervisor.inf">
@@ -33,6 +42,9 @@
     <ClCompile Include="VmUtils.c">
       <Filter>VmUtils</Filter>
     </ClCompile>
+    <ClCompile Include="Vmcs.c">
+      <Filter>Vmcs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -43,6 +55,9 @@
     </ClInclude>
     <ClInclude Include="ia32.h">
       <Filter>VmUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="Vmcs.h">
+      <Filter>Vmcs</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -110,11 +110,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.c" />
+    <ClCompile Include="Vmcs.c" />
     <ClCompile Include="VmUtils.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ia32.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Vmcs.h" />
     <ClInclude Include="VmUtils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

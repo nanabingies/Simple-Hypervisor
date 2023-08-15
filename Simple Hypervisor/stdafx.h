@@ -3,6 +3,8 @@
 #include <ntifs.h>
 #include <ntddk.h>
 #include <intrin.h>
+#include <windef.h>
 
 #include "ia32.h"
+#include "Vmcs.h"
 #include "VmUtils.h"
