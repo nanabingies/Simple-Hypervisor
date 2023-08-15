@@ -20,9 +20,9 @@ typedef enum EVmErrors
 #define VM_OK(status) (status == EVmErrors::VM_ERROR_OK)
 #define VMWRITE_ERR_QUIT(field, val) if (!VM_OK((status = VmWrite((field), (val))))) return status;
 
-void _sgdt(void* Destination);
-void __str(void* Destination);
-void __sldt(void* Destination);
+//void _sgdt(void* Destination);
+//void __str(void* Destination);
+//void __sldt(void* Destination);
 
 UINT64 g_GuestRip;
 UINT64 g_HostMemory;

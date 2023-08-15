@@ -146,7 +146,6 @@ EVmErrors SetupVmcs() {
 
 	__vmx_vmwrite(VMCS_HOST_CS_SELECTOR, (ctx.SegCs & ~RPL_MASK));
 
-	vmxGdtEntry = { 0 };
 	ShvUtilConvertGdtEntry((void*)gdtrBase, ctx.SegSs, &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_SS_SELECTOR, vmxGdtEntry.Selector);
@@ -156,7 +155,6 @@ EVmErrors SetupVmcs() {
 
 	__vmx_vmwrite(VMCS_HOST_SS_SELECTOR, (ctx.SegSs & ~RPL_MASK));
 
-	vmxGdtEntry = { 0 };
 	ShvUtilConvertGdtEntry((void*)gdtrBase, ctx.SegDs, &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_DS_SELECTOR, vmxGdtEntry.Selector);
@@ -166,7 +164,6 @@ EVmErrors SetupVmcs() {
 
 	__vmx_vmwrite(VMCS_HOST_DS_SELECTOR, (ctx.SegDs & ~RPL_MASK));
 
-	vmxGdtEntry = { 0 };
 	ShvUtilConvertGdtEntry((void*)gdtrBase, ctx.SegEs, &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_ES_SELECTOR, vmxGdtEntry.Selector);	// GETES() & 0xF8
@@ -176,7 +173,6 @@ EVmErrors SetupVmcs() {
 
 	__vmx_vmwrite(VMCS_HOST_ES_SELECTOR, (ctx.SegEs & ~RPL_MASK));
 
-	vmxGdtEntry = { 0 };
 	ShvUtilConvertGdtEntry((void*)gdtrBase, ctx.SegFs, &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_FS_SELECTOR, vmxGdtEntry.Selector);
@@ -187,7 +183,6 @@ EVmErrors SetupVmcs() {
 	__vmx_vmwrite(VMCS_HOST_FS_SELECTOR, (ctx.SegFs & ~RPL_MASK));
 	__vmx_vmwrite(VMCS_HOST_FS_BASE, __readmsr(IA32_FS_BASE));
 
-	vmxGdtEntry = { 0 };
 	ShvUtilConvertGdtEntry((void*)gdtrBase, ctx.SegGs, &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_GS_SELECTOR, vmxGdtEntry.Selector);
@@ -200,7 +195,6 @@ EVmErrors SetupVmcs() {
 
 
 	ldtr = static_cast<uint16_t>(GETLDTR());
-	vmxGdtEntry = { 0 };
 	ShvUtilConvertGdtEntry((void*)gdtrBase, ldtr, &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_LDTR_SELECTOR, vmxGdtEntry.Selector);
