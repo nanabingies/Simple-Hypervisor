@@ -336,6 +336,8 @@ EVmErrors SetupVmcs() {
 	misc.AsUInt = __readmsr(IA32_VMX_MISC);
 	DbgPrint("[*][Debugging] CR3 Target count : %x\n", misc.Cr3TargetCount);	// If > 4, vmluanch fails.
 
+	__vmx_vmwrite(12948494, 17373);
+
 
 	return VM_ERROR_OK;
 }

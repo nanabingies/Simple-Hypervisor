@@ -80,6 +80,7 @@ VOID DevirtualizeAllProcessors() {
 	__vmx_off();
 	MmFreeContiguousMemory((PVOID)vmm_context->vmcsRegionVirt);
 	MmFreeContiguousMemory((PVOID)vmm_context->vmxonRegionVirt);
+	ExFreePoolWithTag(vmm_context, VMM_POOL);
 
 	KeRevertToUserGroupAffinityThread(&old_affinity);
 }
@@ -135,6 +136,7 @@ VOID LaunchVm(int processorId) {
 		DbgPrint("[-] VMCLEAR operation failed.\n");
 
 		__vmx_off();
+		VmOff = TRUE;
 		return;
 	}
 
@@ -146,6 +148,7 @@ VOID LaunchVm(int processorId) {
 		DbgPrint("[-] VMPTRLD operation failed.\n");
 
 		__vmx_off();
+		VmOff = TRUE;
 		return;
 	}
 
@@ -158,6 +161,7 @@ VOID LaunchVm(int processorId) {
 		ULONG64 ErrorCode = 0;
 		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &ErrorCode);
 		__vmx_off();
+		VmOff = TRUE;
 		return;
 	}
 

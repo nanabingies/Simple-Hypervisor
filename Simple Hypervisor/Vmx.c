@@ -45,7 +45,7 @@ BOOLEAN CheckBiosLock() {
 	return TRUE;
 }
 
-VOID allocateVmxonRegion(/*_vmm_context* vmm_context_*/ UCHAR processorNumber) {
+VOID allocateVmxonRegion(UCHAR processorNumber) {
 	if (!vmm_context) {
 		DbgPrint("[-] Unspecified VM context for processor %x\n", processorNumber);
 		return;
@@ -86,7 +86,7 @@ VOID allocateVmxonRegion(/*_vmm_context* vmm_context_*/ UCHAR processorNumber) {
 }
 
 
-VOID allocateVmcsRegion(/*_vmm_context* vmm_context_*/ UCHAR processorNumber) {
+VOID allocateVmcsRegion(UCHAR processorNumber) {
 	if (!vmm_context) {
 		DbgPrint("[-] Unspecified VM context for processor %x\n", processorNumber);
 		return;
