@@ -114,7 +114,7 @@ EVmErrors SetupVmcs() {
 
 	__vmx_vmwrite(VMCS_HOST_RSP, vmm_context->GuestStack + STACK_SIZE - 1);
 	// Address host should point to, to kick things off when vmexit occurs
-	__vmx_vmwrite(VMCS_HOST_RIP, (UINT64)HOST_CONTINUE_EXECUTION);
+	__vmx_vmwrite(VMCS_HOST_RIP, (UINT64)HostContinueExecution);
 
 	//
 	// CS, SS, DS, ES, FS, GS, LDTR, and TR -- Guest & Host
@@ -194,7 +194,8 @@ EVmErrors SetupVmcs() {
 	__vmx_vmwrite(VMCS_HOST_GS_BASE, (__readmsr(IA32_GS_BASE) & 0xF8));
 
 
-	ldtr = static_cast<uint16_t>(GETLDTR());
+	_sldt(&ldtr);
+	//ldtr = static_cast<uint16_t>(GETLDTR());
 	ShvUtilConvertGdtEntry((void*)gdtrBase, ldtr, &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_LDTR_SELECTOR, vmxGdtEntry.Selector);
@@ -205,8 +206,8 @@ EVmErrors SetupVmcs() {
 	// There is no field in the host - state area for the LDTR selector.
 
 
-	tr = static_cast<uint16_t>(GETTR());
-	vmxGdtEntry = { 0 };
+	_str(&tr);
+	//tr = static_cast<uint16_t>(GETTR());
 	ShvUtilConvertGdtEntry((void*)gdtrBase, tr, &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_TR_SELECTOR, vmxGdtEntry.Selector);	// GETTR() & 0xF8
@@ -265,7 +266,7 @@ EVmErrors SetupVmcs() {
 	//
 	// VMCS link pointer
 	//
-	__vmx_vmwrite(VMCS_GUEST_VMCS_LINK_POINTER, static_cast<size_t>(~0));
+	__vmx_vmwrite(VMCS_GUEST_VMCS_LINK_POINTER, (size_t)(~0));
 
 	//
 	// VM Execution Control Fields

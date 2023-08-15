@@ -109,11 +109,13 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Ept.c" />
     <ClCompile Include="Main.c" />
     <ClCompile Include="Vmcs.c" />
     <ClCompile Include="VmUtils.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Ept.h" />
     <ClInclude Include="ia32.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Vmcs.h" />

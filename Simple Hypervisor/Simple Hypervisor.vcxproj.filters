@@ -45,6 +45,9 @@
     <ClCompile Include="Vmcs.c">
       <Filter>Vmcs</Filter>
     </ClCompile>
+    <ClCompile Include="Ept.c">
+      <Filter>Ept</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -58,6 +61,9 @@
     </ClInclude>
     <ClInclude Include="Vmcs.h">
       <Filter>Vmcs</Filter>
+    </ClInclude>
+    <ClInclude Include="Ept.h">
+      <Filter>Ept</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

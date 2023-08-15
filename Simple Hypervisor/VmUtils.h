@@ -29,6 +29,7 @@ struct driverGlobals {
 
 struct _vmm_context* vmm_context;
 struct driverGlobals* g_DriverGlobals;
+UINT64 g_GuestMemory;
 
 ULONG64 PhysicalToVirtualAddress(UINT64 physical_address);
 UINT64 VirtualToPhysicalAddress(void* virtual_address);
