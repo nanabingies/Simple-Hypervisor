@@ -1,74 +1,56 @@
 #include "stdafx.h"
 
-//
-// Thanks Alex Ionescu
-// https://github.com/ionescu007/SimpleVisor/blob/HEAD/shvutil.c#L25-L89 
-// 
-VOID
-ShvUtilConvertGdtEntry(
-	_In_ VOID* GdtBase,
-	_In_ UINT16 Selector,
-	_Out_ struct _VMX_GDTENTRY64* VmxGdtEntry
-)
-{
-	//PKGDTENTRY64 gdtEntry;
-	kgdtentry64* gdtEntry;
+BOOLEAN GetSegmentDescriptor(PSEGMENT_SELECTOR SegmentSelector, USHORT Selector, PUCHAR GdtBase) {
+	PSEGMENT_DESCRIPTOR SegDesc;
 
-	//
-	// Reject LDT or NULL entries
-	//
-	if ((Selector == 0) ||
-		(Selector & SELECTOR_TABLE_INDEX) != 0)
+	if (!SegmentSelector)
+		return FALSE;
+
+	if (Selector & 0x4)
 	{
-		VmxGdtEntry->Limit = VmxGdtEntry->AccessRights = 0;
-		VmxGdtEntry->Base = 0;
-		VmxGdtEntry->Selector = 0;
-		VmxGdtEntry->Bits.Unusable = TRUE;
-		return;
+		return FALSE;
 	}
 
-	//
-	// Read the GDT entry at the given selector, masking out the RPL bits.
-	//
-	gdtEntry = (kgdtentry64*)((uintptr_t)GdtBase + (Selector & ~RPL_MASK));
+	SegDesc = (PSEGMENT_DESCRIPTOR)((PUCHAR)GdtBase + (Selector & ~0x7));
 
-	//
-	// Write the selector directly 
-	//
-	VmxGdtEntry->Selector = Selector;
+	SegmentSelector->SEL = Selector;
+	SegmentSelector->BASE = SegDesc->BASE0 | SegDesc->BASE1 << 16 | SegDesc->BASE2 << 24;
+	SegmentSelector->LIMIT = SegDesc->LIMIT0 | (SegDesc->LIMIT1ATTR1 & 0xf) << 16;
+	SegmentSelector->ATTRIBUTES.UCHARs = SegDesc->ATTR0 | (SegDesc->LIMIT1ATTR1 & 0xf0) << 4;
 
-	//
-	// Use the LSL intrinsic to read the segment limit
-	//
-	VmxGdtEntry->Limit = __segmentlimit(Selector);
+	if (!(SegDesc->ATTR0 & 0x10))
+	{ // LA_ACCESSED
+		ULONG64 Tmp;
+		// this is a TSS or callgate etc, save the base high part
+		Tmp = (*(PULONG64)((PUCHAR)SegDesc + 8));
+		SegmentSelector->BASE = (SegmentSelector->BASE & 0xffffffff) | (Tmp << 32);
+	}
 
-	//
-	// Build the full 64-bit effective address, keeping in mind that only when
-	// the System bit is unset, should this be done.
-	//
-	// NOTE: The Windows definition of KGDTENTRY64 is WRONG. The "System" field
-	// is incorrectly defined at the position of where the AVL bit should be.
-	// The actual location of the SYSTEM bit is encoded as the highest bit in
-	// the "Type" field.
-	//
-	VmxGdtEntry->Base = ((gdtEntry->Bytes.BaseHigh << 24) |
-		(gdtEntry->Bytes.BaseMiddle << 16) |
-		(gdtEntry->BaseLow)) & 0xFFFFFFFF;
-	VmxGdtEntry->Base |= ((gdtEntry->Bits.Type & 0x10) == 0) ?
-		((uintptr_t)gdtEntry->BaseUpper << 32) : 0;
+	if (SegmentSelector->ATTRIBUTES.Fields.G)
+	{
+		// 4096-bit granularity is enabled for this segment, scale the limit
+		SegmentSelector->LIMIT = (SegmentSelector->LIMIT << 12) + 0xfff;
+	}
 
-	//
-	// Load the access rights
-	//
-	VmxGdtEntry->AccessRights = 0;
-	VmxGdtEntry->Bytes.Flags1 = gdtEntry->Bytes.Flags1;
-	VmxGdtEntry->Bytes.Flags2 = gdtEntry->Bytes.Flags2;
+	return TRUE;
+}
 
-	//
-	// Finally, handle the VMX-specific bits
-	//
-	VmxGdtEntry->Bits.Reserved = 0;
-	VmxGdtEntry->Bits.Unusable = !gdtEntry->Bits.Present;
+BOOLEAN SetGuestSelector(PVOID GDT_Base, ULONG Segment_Register, USHORT Selector) {
+	SEGMENT_SELECTOR SegmentSelector = { 0 };
+	ULONG            uAccessRights;
+
+	GetSegmentDescriptor(&SegmentSelector, Selector, GDT_Base);
+	uAccessRights = ((PUCHAR)&SegmentSelector.ATTRIBUTES)[0] + (((PUCHAR)&SegmentSelector.ATTRIBUTES)[1] << 12);
+
+	if (!Selector)
+		uAccessRights |= 0x10000;
+
+	__vmx_vmwrite(VMCS_GUEST_ES_SELECTOR + Segment_Register * 2, Selector);
+	__vmx_vmwrite(VMCS_GUEST_ES_LIMIT + Segment_Register * 2, SegmentSelector.LIMIT);
+	__vmx_vmwrite(VMCS_GUEST_ES_ACCESS_RIGHTS + Segment_Register * 2, uAccessRights);
+	__vmx_vmwrite(VMCS_GUEST_ES_BASE + Segment_Register * 2, SegmentSelector.BASE);
+
+	return TRUE;
 }
 
 ULONG AdjustControls(ULONG Ctl, ULONG Msr) {
@@ -82,11 +64,144 @@ ULONG AdjustControls(ULONG Ctl, ULONG Msr) {
 }
 
 EVmErrors SetupVmcs() {
+	BOOLEAN status = FALSE;
+
+	//
+	// Load Extended Page Table Pointer
+	// __vmx_vmwrite(EPT_POINTER, Eptr->All
+	//
+
+	ULONG64				GdtBase = 0;
+	SEGMENT_SELECTOR	SegmentSelector = { 0 };
+
+	//
+	// The last three significant bits must be cleared
+	// Otherwise, it leads to an error 
+	// As the VMLAUNCH is executed with an Invalid Host State error
+	// Hence the 0xF8
+	//
+	__vmx_vmwrite(VMCS_HOST_ES_SELECTOR, GetEs() & 0xF8);
+	__vmx_vmwrite(VMCS_HOST_CS_SELECTOR, GetCs() & 0xF8);
+	__vmx_vmwrite(VMCS_HOST_SS_SELECTOR, GetSs() & 0xF8);
+	__vmx_vmwrite(VMCS_HOST_DS_SELECTOR, GetDs() & 0xF8);
+	__vmx_vmwrite(VMCS_HOST_FS_SELECTOR, GetFs() & 0xF8);
+	__vmx_vmwrite(VMCS_HOST_GS_SELECTOR, GetGs() & 0xF8);
+	__vmx_vmwrite(VMCS_HOST_TR_SELECTOR, GetTr() & 0xF8);
+
+	//
+	// Setting the link pointer to the required value for 4KB VMCS
+	//
+	__vmx_vmwrite(VMCS_GUEST_VMCS_LINK_POINTER, ~0ULL);
+
+	__vmx_vmwrite(VMCS_GUEST_DEBUGCTL, __readmsr(MSR_IA32_DEBUGCTL) & 0xffffffff);
+	__vmx_vmwrite(VMCS_GUEST_DEBUGCTL_HIGH, __readmsr(MSR_IA32_DEBUGCTL) >> 32);
+
+	//
+	// Time-Stamp counter offset
+	//
+	__vmx_vmwrite(TSC_OFFSET, 0);
+	__vmx_vmwrite(TSC_OFFSET_HIGH, 0);
+
+	__vmx_vmwrite(PAGE_FAULT_ERROR_CODE_MASK, 0);
+	__vmx_vmwrite(PAGE_FAULT_ERROR_CODE_MATCH, 0);
+
+	__vmx_vmwrite(VM_EXIT_MSR_STORE_COUNT, 0);
+	__vmx_vmwrite(VM_EXIT_MSR_LOAD_COUNT, 0);
+
+	__vmx_vmwrite(VM_ENTRY_MSR_LOAD_COUNT, 0);
+	__vmx_vmwrite(VM_ENTRY_INTR_INFO_FIELD, 0);
+
+	GdtBase = GetGdtBase();
+
+	FillGuestSelectorData((PVOID)GdtBase, ES, GetEs());
+	FillGuestSelectorData((PVOID)GdtBase, CS, GetCs());
+	FillGuestSelectorData((PVOID)GdtBase, SS, GetSs());
+	FillGuestSelectorData((PVOID)GdtBase, DS, GetDs());
+	FillGuestSelectorData((PVOID)GdtBase, FS, GetFs());
+	FillGuestSelectorData((PVOID)GdtBase, GS, GetGs());
+	FillGuestSelectorData((PVOID)GdtBase, LDTR, GetLdtr());
+	FillGuestSelectorData((PVOID)GdtBase, TR, GetTr());
+
+	__vmx_vmwrite(VMCS_GUEST_FS_BASE, __readmsr(IA32_FS_BASE));
+	__vmx_vmwrite(VMCS_GUEST_GS_BASE, __readmsr(IA32_GS_BASE));
+
+	__vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY_STATE, 0);
+	__vmx_vmwrite(VMCS_GUEST_ACTIVITY_STATE, 0);			// Active State
+	
+	__vmx_vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS, 
+		AdjustControls(IA32_VMX_PROCBASED_CTLS_HLT_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_ACTIVATE_SECONDARY_CONTROLS_FLAG,
+			IA32_VMX_PROCBASED_CTLS));
+	__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS, 
+		AdjustControls(IA32_VMX_PROCBASED_CTLS2_ENABLE_RDTSCP_FLAG /* | IA32_VMX_PROCBASED_CTLS2_ENABLE_EPT_FLAG*/,
+			IA32_VMX_PROCBASED_CTLS2));
+
+	__vmx_vmwrite(VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS, 
+		AdjustControls(0, IA32_VMX_PINBASED_CTLS));
+	__vmx_vmwrite(VMCS_CTRL_PRIMARY_VMEXIT_CONTROLS,
+		AdjustControls(IA32_VMX_EXIT_CTLS_HOST_ADDRESS_SPACE_SIZE_FLAG | IA32_VMX_EXIT_CTLS_ACKNOWLEDGE_INTERRUPT_ON_EXIT_FLAG,
+			IA32_VMX_EXIT_CTLS));
+	__vmx_vmwrite(VMCS_CTRL_VMENTRY_CONTROLS, 
+		AdjustControls(IA32_VMX_ENTRY_CTLS_IA32E_MODE_GUEST_FLAG, IA32_VMX_ENTRY_CTLS));
+
+	__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, 0);
+	__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_0, 0);
+	__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_1, 0);
+	__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_2, 0);
+	__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_3, 0);
+
+	__vmx_vmwrite(VMCS_GUEST_CR0, __readcr0());
+	__vmx_vmwrite(VMCS_GUEST_CR3, __readcr3());
+	__vmx_vmwrite(VMCS_GUEST_CR4, __readcr4());
+
+	__vmx_vmwrite(VMCS_GUEST_DR7, 0x400);
+
+	__vmx_vmwrite(VMCS_HOST_CR0, __readcr0());
+	__vmx_vmwrite(VMCS_HOST_CR3, __readcr3());
+	__vmx_vmwrite(VMCS_HOST_CR4, __readcr4());
+
+	__vmx_vmwrite(VMCS_GUEST_GDTR_BASE, GetGdtBase());
+	__vmx_vmwrite(VMCS_GUEST_IDTR_BASE, GetIdtBase());
+	__vmx_vmwrite(VMCS_GUEST_GDTR_LIMIT, GetGdtLimit());
+	__vmx_vmwrite(VMCS_GUEST_IDTR_LIMIT, GetIdtLimit());
+
+	__vmx_vmwrite(VMCS_GUEST_RFLAGS, GetRflags());
+
+	__vmx_vmwrite(VMCS_GUEST_SYSENTER_CS, __readmsr(MSR_IA32_SYSENTER_CS));
+	__vmx_vmwrite(VMCS_GUEST_SYSENTER_EIP, __readmsr(MSR_IA32_SYSENTER_EIP));
+	__vmx_vmwrite(VMCS_GUEST_SYSENTER_ESP, __readmsr(MSR_IA32_SYSENTER_ESP));
+
+	GetSegmentDescriptor(&SegmentSelector, GetTr(), (PUCHAR)GetGdtBase());
+	__vmx_vmwrite(VMCS_HOST_TR_BASE, SegmentSelector.BASE);
+
+	__vmx_vmwrite(VMCS_HOST_FS_BASE, __readmsr(IA32_FS_BASE));
+	__vmx_vmwrite(VMCS_HOST_GS_BASE, __readmsr(IA32_GS_BASE));
+
+	__vmx_vmwrite(VMCS_HOST_GDTR_BASE, GetGdtBase());
+	__vmx_vmwrite(VMCS_HOST_IDTR_BASE, GetIdtBase());
+
+	__vmx_vmwrite(VMCS_HOST_SYSENTER_CS, __readmsr(MSR_IA32_SYSENTER_CS));
+	__vmx_vmwrite(VMCS_HOST_SYSENTER_EIP, __readmsr(MSR_IA32_SYSENTER_EIP));
+	__vmx_vmwrite(VMCS_HOST_SYSENTER_ESP, __readmsr(MSR_IA32_SYSENTER_ESP));
+
+	//
+	// Setup Guest SP
+	// Setup Guest IP
+	//
+	__vmx_vmwrite(VMCS_GUEST_RSP, (ULONG64)g_GuestMemory);
+	__vmx_vmwrite(VMCS_GUEST_RIP, (ULONG64)g_GuestMemory);
+
+	__vmx_vmwrite(VMCS_HOST_RSP, ((ULONG64)vmm_context->GuestStack + STACK_SIZE - 1));
+	__vmx_vmwrite(VMCS_HOST_RIP, (ULONG64)HostContinueExecution);
+
+	return VM_ERROR_OK;
+}
+
+/*EVmErrors SetupVmcs() {
 
 	//
 	// Control Registers - Guest & Host
 	//
-	__vmx_vmwrite(VMCS_GUEST_CR0, __readcr0()); //__vmx_vmwrite(VMCS_GUEST_CR0, __readcr0());
+	__vmx_vmwrite(VMCS_GUEST_CR0, __readcr0());
 	__vmx_vmwrite(VMCS_GUEST_CR3, __readcr3());
 	__vmx_vmwrite(VMCS_GUEST_CR4, __readcr4());
 
@@ -290,10 +405,10 @@ EVmErrors SetupVmcs() {
 	__vmx_vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
 		AdjustControls(IA32_VMX_PROCBASED_CTLS_HLT_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_ACTIVATE_SECONDARY_CONTROLS_FLAG,
 			IA32_VMX_PROCBASED_CTLS));
-	__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
-		AdjustControls(/*IA32_VMX_PROCBASED_CTLS2_ENABLE_EPT_FLAG |*/ IA32_VMX_PROCBASED_CTLS2_ENABLE_RDTSCP_FLAG,
-			IA32_VMX_PROCBASED_CTLS2));
-	DbgPrint("[*] VM Execution fields done\n");
+	__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,*/
+	//	AdjustControls(/*IA32_VMX_PROCBASED_CTLS2_ENABLE_EPT_FLAG |*/ IA32_VMX_PROCBASED_CTLS2_ENABLE_RDTSCP_FLAG,
+	//		IA32_VMX_PROCBASED_CTLS2));
+	/*DbgPrint("[*] VM Execution fields done\n");
 
 	//
 	// VM-exit control fields. 
@@ -334,10 +449,8 @@ EVmErrors SetupVmcs() {
 	//
 	IA32_VMX_MISC_REGISTER misc;
 	misc.AsUInt = __readmsr(IA32_VMX_MISC);
-	DbgPrint("[*][Debugging] CR3 Target count : %x\n", misc.Cr3TargetCount);	// If > 4, vmluanch fails.
+	DbgPrint("[*][Debugging] CR3 Target count : %llx\n", misc.Cr3TargetCount);	// If > 4, vmluanch fails.
 
-	__vmx_vmwrite(12948494, 17373);
-
-
+	
 	return VM_ERROR_OK;
-}
+}*/

@@ -181,7 +181,7 @@ VOID LaunchVm(int processorId) {
 		// if VMLAUNCH succeeds will never be here!
 		//
 		ULONG64 ErrorCode = 0;
-		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &ErrorCode);
+		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &ErrorCode);	// Intel SDM Chapter 30
 		__vmx_off();
 		DbgPrint("[*] VMLAUNCH Error : 0x%llx\n", ErrorCode);
 		VmOff = TRUE;
