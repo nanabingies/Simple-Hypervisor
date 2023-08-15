@@ -48,6 +48,12 @@
     <ClCompile Include="Ept.c">
       <Filter>Ept</Filter>
     </ClCompile>
+    <ClCompile Include="Vmx.c">
+      <Filter>Vmx</Filter>
+    </ClCompile>
+    <ClCompile Include="HyperVisor.c">
+      <Filter>Vmx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -64,6 +70,9 @@
     </ClInclude>
     <ClInclude Include="Ept.h">
       <Filter>Ept</Filter>
+    </ClInclude>
+    <ClInclude Include="Vmx.h">
+      <Filter>Vmx</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

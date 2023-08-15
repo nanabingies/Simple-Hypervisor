@@ -6,6 +6,7 @@
 #include <windef.h>
 
 #include "Ept.h"
+#include "Vmx.h"
 #include "ia32.h"
 #include "Vmcs.h"
 #include "VmUtils.h"

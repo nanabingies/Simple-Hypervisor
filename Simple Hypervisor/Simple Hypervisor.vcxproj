@@ -110,9 +110,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Ept.c" />
+    <ClCompile Include="HyperVisor.c" />
     <ClCompile Include="Main.c" />
     <ClCompile Include="Vmcs.c" />
     <ClCompile Include="VmUtils.c" />
+    <ClCompile Include="Vmx.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Ept.h" />
@@ -120,6 +122,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Vmcs.h" />
     <ClInclude Include="VmUtils.h" />
+    <ClInclude Include="Vmx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
