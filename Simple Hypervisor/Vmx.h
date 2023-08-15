@@ -13,3 +13,9 @@ VOID allocateVmxonRegion(UCHAR processorNumber);
 VOID VirtualizeAllProcessors();
 
 VOID DevirtualizeAllProcessors();
+
+VOID LaunchVm(int processorId);
+
+VOID TerminateVm();
+
+VOID VmExit();
