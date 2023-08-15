@@ -9,14 +9,13 @@ void InitializeEpt() {
 	}
 
 	RtlSecureZeroMemory(EptPtr, PAGE_SIZE);
-	DbgPrint("[*] Pointer to EPT at : %llx\n", reinterpret_cast<uint64_t>(EptPtr));
+	DbgPrint("[*] Pointer to EPT at : %llx\n", (UINT64)EptPtr);
 
-	vmm_context->eptPtr = reinterpret_cast<uint64_t>(EptPtr);
+	vmm_context->eptPtr = (UINT64)EptPtr;
 
-	auto pml4e = reinterpret_cast<EPT_PML4E*>
+	EPT_PML4E* pml4e = (EPT_PML4E*)
 		(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL));
-	//(ExAllocatePool2(POOL_FLAG_NON_PAGED, PAGE_SIZE, VMM_POOL));
-	if (pml4e == nullptr) {
+	if (!pml4e) {
 		DbgPrint("[-] Failed to allocate memory for pml4e.\n");
 		ExFreePoolWithTag(EptPtr, VMM_POOL);
 
@@ -24,12 +23,11 @@ void InitializeEpt() {
 	}
 
 	RtlSecureZeroMemory(pml4e, PAGE_SIZE);
-	DbgPrint("[*] pml4e is at : %llx\n", reinterpret_cast<uint64_t>(pml4e));
+	DbgPrint("[*] pml4e is at : %llx\n", (UINT64)pml4e);
 
-	auto pdpte = reinterpret_cast<EPT_PDPTE*>
+	EPT_PDPTE* pdpte = (EPT_PDPTE*)
 		(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL));
-	//(ExAllocatePool2(POOL_FLAG_NON_PAGED, PAGE_SIZE, VMM_POOL));
-	if (pdpte == nullptr) {
+	if (!pdpte) {
 		DbgPrint("[-] Failed to allocate memory for pdpte.\n");
 
 		ExFreePoolWithTag(EptPtr, VMM_POOL);
@@ -38,12 +36,11 @@ void InitializeEpt() {
 	}
 
 	RtlSecureZeroMemory(pdpte, PAGE_SIZE);
-	DbgPrint("[*] pdpte is at : %llx\n", reinterpret_cast<uint64_t>(pdpte));
+	DbgPrint("[*] pdpte is at : %llx\n", (UINT64)pdpte);
 
-	auto pde = reinterpret_cast<EPT_PDE*>
+	EPT_PDE* pde = (EPT_PDE*)
 		(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL));
-	//(ExAllocatePool2(POOL_FLAG_NON_PAGED, PAGE_SIZE, VMM_POOL));
-	if (pde == nullptr) {
+	if (!pde) {
 		DbgPrint("[-] Failed to allocate memory for pde.\n");
 
 		ExFreePoolWithTag(EptPtr, VMM_POOL);
@@ -53,12 +50,11 @@ void InitializeEpt() {
 	}
 
 	RtlSecureZeroMemory(pde, PAGE_SIZE);
-	DbgPrint("[*] pde is at : %llx\n", reinterpret_cast<uint64_t>(pde));
+	DbgPrint("[*] pde is at : %llx\n", (UINT64)pde);
 
-	auto pte = reinterpret_cast<EPT_PTE*>
+	EPT_PTE* pte = (EPT_PTE*)
 		(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL));
-	//(ExAllocatePool2(POOL_FLAG_NON_PAGED, PAGE_SIZE, VMM_POOL));
-	if (pte == nullptr) {
+	if (!pte) {
 		DbgPrint("[-] Failed to allocate memory for pte.\n");
 
 		ExFreePoolWithTag(EptPtr, VMM_POOL);
@@ -69,7 +65,7 @@ void InitializeEpt() {
 	}
 
 	RtlSecureZeroMemory(pte, PAGE_SIZE);
-	DbgPrint("[*] pte is at : %llx\n", reinterpret_cast<uint64_t>(pte));
+	DbgPrint("[*] pte is at : %llx\n", (UINT64)pte);
 
 
 	// 
@@ -78,13 +74,12 @@ void InitializeEpt() {
 	// since the last 12 bits will be used in chosing the PAGE to use
 	// https://rayanfam.com/topics/hypervisor-from-scratch-part-4/ 
 	//
-	constexpr auto numPagesToAllocate = 10;
-	auto guest_memory = reinterpret_cast<EPT_ENTRY*>
+	
+	EPT_ENTRY* guest_memory = (EPT_ENTRY*)
 		(ExAllocatePoolWithTag(NonPagedPool, numPagesToAllocate * PAGE_SIZE, VMM_POOL));
-	//(ExAllocatePool2(POOL_FLAG_NON_PAGED, numPagesToAllocate * PAGE_SIZE, VMM_POOL));
-	if (guest_memory == nullptr)	return;
+	if (!guest_memory)	return;
 
-	g_GuestMemory = reinterpret_cast<uint64_t>(guest_memory);
+	g_GuestMemory = (UINT64)guest_memory;
 	RtlSecureZeroMemory(guest_memory, numPagesToAllocate * PAGE_SIZE);
 
 	for (size_t i = 0; i < (100 * PAGE_SIZE) - 1; i++) {
