@@ -1,4 +1,5 @@
 #pragma once
+#pragma warning(disable : 4115)
 
 #define RPL_MASK                3
 #define SELECTOR_TABLE_INDEX    0x04
@@ -17,12 +18,6 @@ typedef enum EVmErrors
 	VM_ERROR_ERR_INFO_ERR,
 }EVmErrors;
 
-#define VM_OK(status) (status == EVmErrors::VM_ERROR_OK)
-#define VMWRITE_ERR_QUIT(field, val) if (!VM_OK((status = VmWrite((field), (val))))) return status;
-
-//void _sgdt(void* Destination);
-//void __str(void* Destination);
-//void __sldt(void* Destination);
 
 UINT64 g_GuestRip;
 UINT64 g_HostMemory;
@@ -35,9 +30,13 @@ VOID
 ShvUtilConvertGdtEntry(
 	_In_ VOID* GdtBase,
 	_In_ UINT16 Selector,
-	_Out_ PVMX_GDTENTRY64 VmxGdtEntry
+	_Out_ struct _VMX_GDTENTRY64* VmxGdtEntry
 );
 
 ULONG AdjustControls(ULONG Ctl, ULONG Msr);
 
 EVmErrors SetupVmcs();
+
+UINT64 HostContinueExecution();
+UINT64 GetLdtr();
+UINT64 GetTr();

@@ -1,5 +1,6 @@
 #pragma once
 #include "stdafx.h"
+#pragma warning(disable : 4996)
 
 VOID VirtualizeAllProcessors() {
 	//
@@ -7,7 +8,7 @@ VOID VirtualizeAllProcessors() {
 	// TODO : Add support for multiple processors
 	//
 
-	auto procNumber = 0;
+	ULONG procNumber = 0;
 	PROCESSOR_NUMBER processor_number;
 	GROUP_AFFINITY affinity, old_affinity;
 
@@ -64,7 +65,7 @@ VOID VirtualizeAllProcessors() {
 }
 
 VOID DevirtualizeAllProcessors() {
-	auto procNumber = 0;
+	ULONG procNumber = 0;
 	PROCESSOR_NUMBER processor_number;
 	GROUP_AFFINITY affinity, old_affinity;
 
@@ -100,7 +101,7 @@ VOID LaunchVm(int processorId) {
 	//
 	// Allocate space for VM EXIT Handler
 	//
-	auto vmexitHandler = ExAllocatePoolWithTag(NonPagedPool, STACK_SIZE, VMM_POOL);
+	PVOID vmexitHandler = ExAllocatePoolWithTag(NonPagedPool, STACK_SIZE, VMM_POOL);
 	if (!vmexitHandler) {
 		DbgPrint("[-] Failure allocating memory for VM EXIT Handler.\n");
 		return;
@@ -113,7 +114,7 @@ VOID LaunchVm(int processorId) {
 	//
 	PHYSICAL_ADDRESS physAddr;
 	physAddr.QuadPart = (ULONGLONG)~0;
-	auto bitmap = MmAllocateContiguousMemory(PAGE_SIZE, physAddr);
+	PVOID bitmap = MmAllocateContiguousMemory(PAGE_SIZE, physAddr);
 	if (!bitmap) {
 		DbgPrint("[-] Failure allocating memory for MSR Bitmap.\n");
 		ExFreePoolWithTag(vmexitHandler, VMM_POOL);
@@ -129,7 +130,7 @@ VOID LaunchVm(int processorId) {
 	//
 	// Set VMCS state to inactive
 	//
-	auto retVal = __vmx_vmclear(&vmm_context->vmcsRegionPhys);
+	unsigned char retVal = __vmx_vmclear(&vmm_context->vmcsRegionPhys);
 	if (retVal > 0) {
 		DbgPrint("[-] VMCLEAR operation failed.\n");
 

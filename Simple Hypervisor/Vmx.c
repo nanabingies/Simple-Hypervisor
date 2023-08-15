@@ -57,7 +57,7 @@ VOID allocateVmxonRegion(/*_vmm_context* vmm_context_*/ UCHAR processorNumber) {
 	IA32_VMX_BASIC_REGISTER vmx_basic;
 	vmx_basic.AsUInt = __readmsr(IA32_VMX_BASIC);
 
-	auto vmxon = MmAllocateContiguousMemory(vmx_basic.VmcsSizeInBytes, physAddr);
+	PVOID vmxon = MmAllocateContiguousMemory(vmx_basic.VmcsSizeInBytes, physAddr);
 	if (!vmxon) {
 		DbgPrint("[-] Allocating vmxon failed.\n");
 		return;
@@ -98,7 +98,7 @@ VOID allocateVmcsRegion(/*_vmm_context* vmm_context_*/ UCHAR processorNumber) {
 	IA32_VMX_BASIC_REGISTER vmx_basic;
 	vmx_basic.AsUInt = __readmsr(IA32_VMX_BASIC);
 
-	auto vmcs = MmAllocateContiguousMemory(vmx_basic.VmcsSizeInBytes, physAddr);
+	PVOID vmcs = MmAllocateContiguousMemory(vmx_basic.VmcsSizeInBytes, physAddr);
 	if (!vmcs) {
 		DbgPrint("[-] Allocating vmcs failed.\n");
 		return;

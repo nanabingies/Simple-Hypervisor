@@ -1,5 +1,7 @@
 #pragma once
 
+VOID SaveStackRegs();
+
 BOOLEAN IsVmxSupport();
 
 VOID EnableCR4();

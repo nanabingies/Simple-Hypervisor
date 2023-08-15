@@ -8,7 +8,7 @@ VOID
 ShvUtilConvertGdtEntry(
 	_In_ VOID* GdtBase,
 	_In_ UINT16 Selector,
-	_Out_ PVMX_GDTENTRY64 VmxGdtEntry
+	_Out_ struct _VMX_GDTENTRY64* VmxGdtEntry
 )
 {
 	//PKGDTENTRY64 gdtEntry;
@@ -83,8 +83,6 @@ ULONG AdjustControls(ULONG Ctl, ULONG Msr) {
 
 EVmErrors SetupVmcs() {
 
-	EVmErrors status;
-
 	//
 	// Control Registers - Guest & Host
 	//
@@ -121,7 +119,7 @@ EVmErrors SetupVmcs() {
 	//
 	UINT16 ldtr, tr;
 	unsigned char gdtr[10] = { 0 };
-	VMX_GDTENTRY64 vmxGdtEntry = { 0 };
+	struct _VMX_GDTENTRY64 vmxGdtEntry = { 0 };
 	CONTEXT ctx;
 	RtlCaptureContext(&ctx);
 
@@ -194,8 +192,7 @@ EVmErrors SetupVmcs() {
 	__vmx_vmwrite(VMCS_HOST_GS_BASE, (__readmsr(IA32_GS_BASE) & 0xF8));
 
 
-	_sldt(&ldtr);
-	//ldtr = static_cast<uint16_t>(GETLDTR());
+	ldtr = (UINT16)GetLdtr();
 	ShvUtilConvertGdtEntry((void*)gdtrBase, ldtr, &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_LDTR_SELECTOR, vmxGdtEntry.Selector);
@@ -206,8 +203,7 @@ EVmErrors SetupVmcs() {
 	// There is no field in the host - state area for the LDTR selector.
 
 
-	_str(&tr);
-	//tr = static_cast<uint16_t>(GETTR());
+	tr = (UINT16)GetTr();
 	ShvUtilConvertGdtEntry((void*)gdtrBase, tr, &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_TR_SELECTOR, vmxGdtEntry.Selector);	// GETTR() & 0xF8
@@ -321,5 +317,5 @@ EVmErrors SetupVmcs() {
 	DbgPrint("[*][Debugging] CR3 Target count : %x\n", misc.Cr3TargetCount);	// If > 4, vmluanch fails.
 
 
-	return status;
+	return VM_ERROR_OK;
 }

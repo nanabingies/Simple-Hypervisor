@@ -1,4 +1,5 @@
 #pragma once
+#pragma warning(disable : 4201)
 
 #define DRV_NAME	L"\\Device\\Hypervisor"
 #define DOS_NAME	L"\\DosDevices\\Hypervisor"
@@ -35,7 +36,7 @@ ULONG64 PhysicalToVirtualAddress(UINT64 physical_address);
 UINT64 VirtualToPhysicalAddress(void* virtual_address);
 
 
-typedef struct _VMX_GDTENTRY64
+struct _VMX_GDTENTRY64
 {
     UINT64 Base;
     UINT32 Limit;
@@ -67,7 +68,7 @@ typedef struct _VMX_GDTENTRY64
         UINT32 AccessRights;
     };
     UINT16 Selector;
-} VMX_GDTENTRY64, * PVMX_GDTENTRY64;
+}; /*VMX_GDTENTRY64, * PVMX_GDTENTRY64;*/
 
 //0x10 bytes (sizeof)
 typedef union _kgdtentry64

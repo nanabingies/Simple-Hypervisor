@@ -7,7 +7,7 @@ inline ULONG64 PhysicalToVirtualAddress(UINT64 physical_address) {
 	return (UINT64)(MmGetVirtualForPhysical(physAddr));
 }
 
-inline UINT64 VirtualToPhysicalAddress(void* virtual_address) {
+UINT64 VirtualToPhysicalAddress(void* virtual_address) {
 	PHYSICAL_ADDRESS physAddr;
 
 	physAddr = MmGetPhysicalAddress(virtual_address);

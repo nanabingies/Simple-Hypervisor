@@ -124,6 +124,9 @@
     <ClInclude Include="VmUtils.h" />
     <ClInclude Include="Vmx.h" />
   </ItemGroup>
+  <ItemGroup>
+    <MASM Include="asm64.asm" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />

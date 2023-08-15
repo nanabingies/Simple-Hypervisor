@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#pragma warning(disable : 4996)
 
 void InitializeEpt() {
 	EPT_POINTER* EptPtr = (EPT_POINTER*)
