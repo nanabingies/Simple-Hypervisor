@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-inline ULONG64 PhysicalToVirtualAddress(UINT64 physical_address) {
+ULONG64 PhysicalToVirtualAddress(UINT64 physical_address) {
 	PHYSICAL_ADDRESS physAddr;
 	physAddr.QuadPart = physical_address;
 

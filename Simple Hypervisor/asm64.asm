@@ -21,8 +21,7 @@ HostContinueExecution PROC
 HostContinueExecution ENDP
 
 SaveStackRegs PROC
-	int 3
-	int 3
+	RET
 SaveStackRegs ENDP
 
 END

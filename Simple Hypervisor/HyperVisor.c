@@ -152,7 +152,7 @@ VOID LaunchVm(int processorId) {
 	//
 	// Setup VMCS structure fields
 	//
-	if (SetupVmcs() != 0) {
+	if (SetupVmcs() != VM_ERROR_OK) {
 		DbgPrint("[-] Failure setting Virtual Machine VMCS.\n");
 
 		ULONG64 ErrorCode = 0;
@@ -180,6 +180,7 @@ VOID LaunchVm(int processorId) {
 		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &ErrorCode);
 		__vmx_off();
 		DbgPrint("[*] VMLAUNCH Error : 0x%llx\n", ErrorCode);
+		VmOff = TRUE;
 		DbgBreakPoint();
 		return;
 	}

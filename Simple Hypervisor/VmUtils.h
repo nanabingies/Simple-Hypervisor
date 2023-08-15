@@ -6,6 +6,7 @@
 #define VMM_POOL	'tesT'
 
 #define STACK_SIZE  (8 * PAGE_SIZE)
+BOOLEAN VmOff;
 
 struct _vmm_context {
 	UINT64	vmxonRegionVirt;				// Virtual address of VMXON Region

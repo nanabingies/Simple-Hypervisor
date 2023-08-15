@@ -79,11 +79,12 @@ void InitializeEpt() {
 	EPT_ENTRY* guest_memory = (EPT_ENTRY*)
 		(ExAllocatePoolWithTag(NonPagedPool, numPagesToAllocate * PAGE_SIZE, VMM_POOL));
 	if (!guest_memory)	return;
+	DbgPrint("[*] Guest memory allocated at %llx\n", (UINT64)guest_memory);
 
 	g_GuestMemory = (UINT64)guest_memory;
 	RtlSecureZeroMemory(guest_memory, numPagesToAllocate * PAGE_SIZE);
 
-	for (size_t i = 0; i < (100 * PAGE_SIZE) - 1; i++) {
+	for (size_t i = 0; i < (numPagesToAllocate * PAGE_SIZE) - 1; i++) {
 		void* TempAsm = "\xF4";     // HLT asm opcode
 		memcpy((void*)(g_GuestMemory + i), TempAsm, 1);
 	}

@@ -4,7 +4,8 @@
 VOID DriverUnload(_In_ PDRIVER_OBJECT DriverObject) {
 	DbgPrint("[*] Terminating VMs on processors...\n");
 	
-	DevirtualizeAllProcessors();
+	if (VmOff == FALSE)
+		DevirtualizeAllProcessors();
 
 	if (DriverObject->DeviceObject != NULL)
 		IoDeleteDevice(DriverObject->DeviceObject);
@@ -28,6 +29,7 @@ NTSTATUS DefaultDispatch(_In_ PDEVICE_OBJECT DeviceObject, _In_ PIRP Irp) {
 
 NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING RegistryPath) {
 	UNREFERENCED_PARAMETER(RegistryPath);
+	VmOff = FALSE;
 
 	NTSTATUS status;
 	UNICODE_STRING drvName;
@@ -57,6 +59,7 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING Regi
 	DriverObject->DriverUnload = DriverUnload;
 
 	VirtualizeAllProcessors();
+	LaunchVm(0);
 
 	DbgPrint("[*] The hypervisor has been installed.\n");
 
