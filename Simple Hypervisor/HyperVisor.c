@@ -176,7 +176,7 @@ VOID LaunchVm(int processorId) {
 	//
 	// Save HOST RSP & RBP
 	//
-	//SaveStackRegs();
+	SaveHostRegisters();
 
 	//
 	// Launch VM into Outer Space :)

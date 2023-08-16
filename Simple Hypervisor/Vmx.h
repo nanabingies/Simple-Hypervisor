@@ -1,6 +1,6 @@
 #pragma once
 
-VOID SaveStackRegs();
+VOID SaveHostRegisters();
 
 BOOLEAN IsVmxSupport();
 

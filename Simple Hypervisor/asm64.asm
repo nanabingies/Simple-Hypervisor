@@ -1,15 +1,7 @@
 
 PUBLIC HostContinueExecution
-PUBLIC SaveStackRegs
+PUBLIC SaveHostRegisters
 PUBLIC HostTerminateHypervisor
-
-;PUBLIC GetCs
-;PUBLIC GetDs
-;PUBLIC GetEs
-;PUBLIC GetSs
-;PUBLIC GetFs
-;PUBLIC GetGs
-;PUBLIC GetRflags
 
 PUBLIC GetTr
 PUBLIC GetLdtr
@@ -57,45 +49,58 @@ HostTerminateHypervisor ENDP
 HostContinueExecution PROC
 	int 3		; A VM Exit just occured
 
+	PUSH R15
+    PUSH R14
+    PUSH R13
+    PUSH R12
+    PUSH R11
+    PUSH R10
+    PUSH R9
+    PUSH R8        
+    PUSH RDI
+    PUSH RSI
+    PUSH RBP
+    PUSH RBP	; RSP
+    PUSH RBX
+    PUSH RDX
+    PUSH RCX
+    PUSH RAX
+
+	MOV RCX, RSP		; GuestRegs
+	SUB	RSP, 28h
+
 	CALL VmExit
+	ADD	RSP, 28h	
+
+	POP RAX
+    POP RCX
+    POP RDX
+    POP RBX
+    POP RBP		; RSP
+    POP RBP
+    POP RSI
+    POP RDI 
+    POP R8
+    POP R9
+    POP R10
+    POP R11
+    POP R12
+    POP R13
+    POP R14
+    POP R15
+
 	RET
 HostContinueExecution ENDP
 
-SaveStackRegs PROC
+SaveHostRegisters PROC
 	MOV g_StackPointerForReturning, RSP
 	MOV g_BasePointerForReturning, RBP
 	RET
-SaveStackRegs ENDP
+SaveHostRegisters ENDP
 
-GetCs PROC
-	MOV		RAX, CS
-	RET
-GetCs ENDP
 
-GetDs PROC
-	MOV		RAX, DS
-	RET
-GetDs ENDP
 
-GetEs PROC
-	MOV		RAX, ES
-	RET
-GetEs ENDP
 
-GetSs PROC
-	MOV		RAX, SS
-	RET
-GetSs ENDP
-
-GetFs PROC
-	MOV		RAX, FS
-	RET
-GetFs ENDP
-
-GetGs PROC
-	MOV		RAX, GS
-	RET
-GetGs ENDP
 
 GetIdtBase PROC
 	LOCAL	IDTR[10]:BYTE
