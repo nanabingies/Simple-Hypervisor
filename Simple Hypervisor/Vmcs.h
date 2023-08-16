@@ -18,6 +18,48 @@ typedef enum EVmErrors
 	VM_ERROR_ERR_INFO_ERR,
 }EVmErrors;
 
+enum SEGREGS
+{
+    ES = 0,
+    CS,
+    SS,
+    DS,
+    FS,
+    GS,
+    LDTR,
+    TR
+};
+
+UINT64 g_GuestRip;
+UINT64 g_HostMemory;
+UINT64 g_HostRip;
+
+UINT64 g_StackPointerForReturning;
+UINT64 g_BasePointerForReturning;
+
+
+ULONG AdjustControls(ULONG Ctl, ULONG Msr);
+
+EVmErrors SetupVmcs();
+
+UINT64 HostContinueExecution();
+
+UINT64 inline GetGdtBase();
+UINT64 inline GetGdtBase();
+UINT64 inline GetIdtBase();
+
+USHORT  GetCs(VOID);
+USHORT  GetDs(VOID);
+USHORT  GetEs(VOID);
+USHORT  GetSs(VOID);
+USHORT  GetFs(VOID);
+USHORT  GetGs(VOID);
+USHORT  GetLdtr(VOID);
+USHORT  GetTr(VOID);
+USHORT  GetIdtLimit(VOID);
+USHORT  GetGdtLimit(VOID);
+ULONG64 GetRflags(VOID);
+
 typedef union SEGMENT_ATTRIBUTES
 {
     USHORT UCHARs;
@@ -37,13 +79,13 @@ typedef union SEGMENT_ATTRIBUTES
     } Fields;
 } SEGMENT_ATTRIBUTES;
 
-typedef struct SEGMENT_SELECTOR
+typedef struct VMCS_SEGMENT_SELECTOR
 {
-	USHORT             SEL;
-	SEGMENT_ATTRIBUTES ATTRIBUTES;
-	ULONG32            LIMIT;
-	ULONG64            BASE;
-} SEGMENT_SELECTOR, * PSEGMENT_SELECTOR;
+    USHORT             SEL;
+    SEGMENT_ATTRIBUTES ATTRIBUTES;
+    ULONG32            LIMIT;
+    ULONG64            BASE;
+} VMCS_SEGMENT_SELECTOR, *PVMCS_SEGMENT_SELECTOR;
 
 typedef struct _SEGMENT_DESCRIPTOR
 {
@@ -54,45 +96,3 @@ typedef struct _SEGMENT_DESCRIPTOR
     UCHAR  LIMIT1ATTR1;
     UCHAR  BASE2;
 } SEGMENT_DESCRIPTOR, * PSEGMENT_DESCRIPTOR;
-
-enum SEGREGS
-{
-    ES = 0,
-    CS,
-    SS,
-    DS,
-    FS,
-    GS,
-    LDTR,
-    TR
-};
-
-
-UINT64 g_GuestRip;
-UINT64 g_HostMemory;
-UINT64 g_HostRip;
-
-UINT64 g_StackPointerForReturning;
-UINT64 g_BasePointerForReturning;
-
-
-ULONG AdjustControls(ULONG Ctl, ULONG Msr);
-
-EVmErrors SetupVmcs();
-
-UINT64 HostContinueExecution();
-
-UINT64 inline GetGdtBase();
-UINT64 inline GetIdtBase();
-
-USHORT  GetCs(VOID);
-USHORT  GetDs(VOID);
-USHORT  GetEs(VOID);
-USHORT  GetSs(VOID);
-USHORT  GetFs(VOID);
-USHORT  GetGs(VOID);
-USHORT  GetLdtr(VOID);
-USHORT  GetTr(VOID);
-USHORT  GetIdtLimit(VOID);
-USHORT  GetGdtLimit(VOID);
-ULONG64 GetRflags(VOID);

@@ -13,6 +13,7 @@ PUBLIC GetRflags
 PUBLIC GetIdtLimit
 PUBLIC GetGdtLimit
 PUBLIC GetIdtBase
+PUBLIC GetGdtBase
 
 .code _text
 
@@ -27,8 +28,9 @@ GetTr PROC
 GetTr ENDP
 
 HostContinueExecution PROC
-	int 3
-	int 3
+	;int 3
+	;int 3
+	RET
 HostContinueExecution ENDP
 
 SaveStackRegs PROC
@@ -91,5 +93,12 @@ GetRflags PROC
 	POP		RAX
 	RET
 GetRflags ENDP
+
+GetGdtBase PROC
+	LOCAL	GDTR[10]:BYTE
+	SGDT	GDTR
+	MOV		RAX, QWORD PTR GDTR[2]
+	RET
+GetGdtBase ENDP
 
 END

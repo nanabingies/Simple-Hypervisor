@@ -139,6 +139,7 @@ VOID LaunchVm(int processorId) {
 		VmOff = TRUE;
 		return;
 	}
+	DbgPrint("[*] VMCS set to inactive.\n");
 
 	//
 	//  Make VMCS the current and active 
@@ -151,6 +152,7 @@ VOID LaunchVm(int processorId) {
 		VmOff = TRUE;
 		return;
 	}
+	DbgPrint("[*] VMCS is current and active.\n");
 
 	//
 	// Setup VMCS structure fields
@@ -164,6 +166,8 @@ VOID LaunchVm(int processorId) {
 		VmOff = TRUE;
 		return;
 	}
+	DbgPrint("[*] VMCS setup done\n");
+	__debugbreak();
 
 	//
 	// Save HOST RSP & RBP
