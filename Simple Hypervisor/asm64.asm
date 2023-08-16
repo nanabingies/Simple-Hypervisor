@@ -13,7 +13,7 @@ PUBLIC GetGdtBase
 EXTERN g_StackPointerForReturning:QWORD
 EXTERN g_BasePointerForReturning:QWORD
 
-EXTERN VmExit:PROC
+EXTERN VmExitHandler:PROC
 
 .code _text
 
@@ -66,11 +66,7 @@ HostContinueExecution PROC
     PUSH RCX
     PUSH RAX
 
-	MOV RCX, RSP		; GuestRegs
-	SUB	RSP, 28h
-
-	CALL VmExit
-	ADD	RSP, 28h	
+	CALL VmExitHandler
 
 	POP RAX
     POP RCX
@@ -88,6 +84,9 @@ HostContinueExecution PROC
     POP R13
     POP R14
     POP R15
+
+	SUB RSP, 0100h ; to avoid error in future functions
+    ;JMP VmResumeInstruction
 
 	RET
 HostContinueExecution ENDP

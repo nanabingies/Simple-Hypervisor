@@ -32,14 +32,21 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING Regi
 	VmOff = FALSE;
 
 	NTSTATUS status;
-	UNICODE_STRING drvName;
+	UNICODE_STRING drvName, dosName;
 	PDEVICE_OBJECT deviceObject;
 
 	RtlInitUnicodeString(&drvName, DRV_NAME);
+	RtlInitUnicodeString(&dosName, DOS_NAME);
 
 	status = IoCreateDevice(DriverObject, 0, &drvName, FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN,
 		FALSE, (PDEVICE_OBJECT*)&deviceObject);
 	if (!NT_SUCCESS(status))	return STATUS_FAILED_DRIVER_ENTRY;
+
+	status = IoCreateSymbolicLink(&dosName, &drvName);
+	if (!NT_SUCCESS(status)) {
+		IoDeleteDevice(deviceObject);
+		return STATUS_FAILED_DRIVER_ENTRY;
+	}
 
 	DbgPrint("[*] Successfully created device object\n");
 

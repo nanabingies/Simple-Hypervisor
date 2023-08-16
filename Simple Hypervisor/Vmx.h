@@ -21,4 +21,4 @@ VOID LaunchVm(int processorId);
 
 VOID TerminateVm();
 
-VOID VmExit();
+VOID VmExitHandler();
