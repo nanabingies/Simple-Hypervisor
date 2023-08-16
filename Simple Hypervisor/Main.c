@@ -4,8 +4,8 @@
 VOID DriverUnload(_In_ PDRIVER_OBJECT DriverObject) {
 	DbgPrint("[*] Terminating VMs on processors...\n");
 	
-	//if (VmOff == FALSE)
-	//	DevirtualizeAllProcessors();
+	if (VmOff == FALSE)
+		DevirtualizeAllProcessors();
 
 	if (DriverObject->DeviceObject != NULL)
 		IoDeleteDevice(DriverObject->DeviceObject);

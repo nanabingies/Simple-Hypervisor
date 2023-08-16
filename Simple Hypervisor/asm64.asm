@@ -39,11 +39,14 @@ HostTerminateHypervisor PROC
 	MOV RAX, 1
 
 	; Return Section
-	MOV RBX, [RSP+60h+18h]
-	MOV RSI, [RSP+60h+20h]
-	MOV RDI, [RSP+60h+28h]
+	LEA R11, [RSP+60h]
+	MOV RBX, [R11+18h]
+	MOV RSI, [R11+20h]
+	MOV RDI, [R11+28h]
+	MOV RSP, R11
 	POP RBP
 	RET
+
 HostTerminateHypervisor ENDP
 
 HostContinueExecution PROC
