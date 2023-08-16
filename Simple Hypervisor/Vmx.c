@@ -38,7 +38,7 @@ BOOLEAN CheckBiosLock() {
 	}
 
 	if (feature_control_msr.EnableVmxOutsideSmx == 0) {
-		DbgPrint("[-] checkBiosLock failed.\n");
+		DbgPrint("[-] EnableVmxOutsideSmx bit not set.\n");
 		return FALSE;
 	}
 
