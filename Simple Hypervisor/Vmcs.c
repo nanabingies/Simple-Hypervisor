@@ -1,7 +1,10 @@
 #include "stdafx.h"
 #define VMCS_CTRL_TSC_OFFSET_HIGH	0x2011
 
-
+//
+// https://github.com/ionescu007/SimpleVisor/blob/HEAD/shvutil.c#L25-L89 
+// Thanks Alex Ionescu
+//
 VOID
 ShvUtilConvertGdtEntry(
 	_In_ VOID* GdtBase,
