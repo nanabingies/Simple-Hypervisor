@@ -1,15 +1,18 @@
-PUBLIC GetLdtr
-PUBLIC GetTr
+
 PUBLIC HostContinueExecution
 PUBLIC SaveStackRegs
+PUBLIC HostTerminateHypervisor
 
-PUBLIC GetCs
-PUBLIC GetDs
-PUBLIC GetEs
-PUBLIC GetSs
-PUBLIC GetFs
-PUBLIC GetGs
-PUBLIC GetRflags
+;PUBLIC GetCs
+;PUBLIC GetDs
+;PUBLIC GetEs
+;PUBLIC GetSs
+;PUBLIC GetFs
+;PUBLIC GetGs
+;PUBLIC GetRflags
+
+PUBLIC GetTr
+PUBLIC GetLdtr
 PUBLIC GetIdtLimit
 PUBLIC GetGdtLimit
 PUBLIC GetIdtBase
@@ -17,6 +20,8 @@ PUBLIC GetGdtBase
 
 EXTERN g_StackPointerForReturning:QWORD
 EXTERN g_BasePointerForReturning:QWORD
+
+EXTERN VmExit:QWORD
 
 .code _text
 
@@ -30,11 +35,29 @@ GetTr PROC
 	RET
 GetTr ENDP
 
+HostTerminateHypervisor PROC
+	VMXOFF
+
+	MOV RSP, g_StackPointerForReturning
+	MOV RBP, g_BasePointerForReturning
+
+	ADD RSP, 8
+	
+	XOR RAX, RAX
+	MOV RAX, 1
+
+	; Return Section
+	MOV RBX, [RSP+60h+18h]
+	MOV RSI, [RSP+60h+20h]
+	MOV RDI, [RSP+60h+28h]
+	POP RBP
+	RET
+HostTerminateHypervisor ENDP
+
 HostContinueExecution PROC
 	int 3		; A VM Exit just occured
-	int 3
 
-	CALL 
+	CALL VmExit
 	RET
 HostContinueExecution ENDP
 

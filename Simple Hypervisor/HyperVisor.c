@@ -224,7 +224,3 @@ VOID ResumeVm() {
 
 	return;
 }
-
-VOID VmExit() {
-	return;
-}

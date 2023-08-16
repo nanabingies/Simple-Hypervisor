@@ -44,17 +44,18 @@ ULONG AdjustControls(ULONG Ctl, ULONG Msr);
 EVmErrors SetupVmcs();
 
 UINT64 HostContinueExecution();
+VOID HostTerminateHypervisor();
 
 UINT64 inline GetGdtBase();
 UINT64 inline GetGdtBase();
 UINT64 inline GetIdtBase();
 
-USHORT  GetCs(VOID);
+/*USHORT  GetCs(VOID);
 USHORT  GetDs(VOID);
 USHORT  GetEs(VOID);
 USHORT  GetSs(VOID);
 USHORT  GetFs(VOID);
-USHORT  GetGs(VOID);
+USHORT  GetGs(VOID);*/
 USHORT  GetLdtr(VOID);
 USHORT  GetTr(VOID);
 USHORT  GetIdtLimit(VOID);
