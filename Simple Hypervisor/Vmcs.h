@@ -1,5 +1,6 @@
 #pragma once
 #pragma warning(disable : 4115)
+#pragma warning(disable : 4201)
 
 #define RPL_MASK                3
 #define SELECTOR_TABLE_INDEX    0x04
@@ -60,39 +61,75 @@ USHORT  GetIdtLimit(VOID);
 USHORT  GetGdtLimit(VOID);
 ULONG64 GetRflags(VOID);
 
-typedef union SEGMENT_ATTRIBUTES
+typedef struct _VMX_GDTENTRY64
 {
-    USHORT UCHARs;
+    UINT64 Base;
+    UINT32 Limit;
+    union
+    {
+        struct
+        {
+            UINT8 Flags1;
+            UINT8 Flags2;
+            UINT8 Flags3;
+            UINT8 Flags4;
+        } Bytes;
+        struct
+        {
+            UINT16 SegmentType : 4;
+            UINT16 DescriptorType : 1;
+            UINT16 Dpl : 2;
+            UINT16 Present : 1;
+
+            UINT16 Reserved : 4;
+            UINT16 System : 1;
+            UINT16 LongMode : 1;
+            UINT16 DefaultBig : 1;
+            UINT16 Granularity : 1;
+
+            UINT16 Unusable : 1;
+            UINT16 Reserved2 : 15;
+        } Bits;
+        UINT32 AccessRights;
+    };
+    UINT16 Selector;
+} VMX_GDTENTRY64, * PVMX_GDTENTRY64;
+
+typedef union _KGDTENTRY64
+{
     struct
     {
-        USHORT TYPE : 4; /* 0;  Bit 40-43 */
-        USHORT S : 1;    /* 4;  Bit 44 */
-        USHORT DPL : 2;  /* 5;  Bit 45-46 */
-        USHORT P : 1;    /* 7;  Bit 47 */
-
-        USHORT AVL : 1; /* 8;  Bit 52 */
-        USHORT L : 1;   /* 9;  Bit 53 */
-        USHORT DB : 1;  /* 10; Bit 54 */
-        USHORT G : 1;   /* 11; Bit 55 */
-        USHORT GAP : 4;
-
-    } Fields;
-} SEGMENT_ATTRIBUTES;
-
-typedef struct VMCS_SEGMENT_SELECTOR
-{
-    USHORT             SEL;
-    SEGMENT_ATTRIBUTES ATTRIBUTES;
-    ULONG32            LIMIT;
-    ULONG64            BASE;
-} VMCS_SEGMENT_SELECTOR, *PVMCS_SEGMENT_SELECTOR;
-
-typedef struct _SEGMENT_DESCRIPTOR
-{
-    USHORT LIMIT0;
-    USHORT BASE0;
-    UCHAR  BASE1;
-    UCHAR  ATTR0;
-    UCHAR  LIMIT1ATTR1;
-    UCHAR  BASE2;
-} SEGMENT_DESCRIPTOR, * PSEGMENT_DESCRIPTOR;
+        UINT16 LimitLow;
+        UINT16 BaseLow;
+        union
+        {
+            struct
+            {
+                UINT8 BaseMiddle;
+                UINT8 Flags1;
+                UINT8 Flags2;
+                UINT8 BaseHigh;
+            } Bytes;
+            struct
+            {
+                UINT32 BaseMiddle : 8;
+                UINT32 Type : 5;
+                UINT32 Dpl : 2;
+                UINT32 Present : 1;
+                UINT32 LimitHigh : 4;
+                UINT32 System : 1;
+                UINT32 LongMode : 1;
+                UINT32 DefaultBig : 1;
+                UINT32 Granularity : 1;
+                UINT32 BaseHigh : 8;
+            } Bits;
+        };
+        UINT32 BaseUpper;
+        UINT32 MustBeZero;
+    };
+    struct
+    {
+        INT64 DataLow;
+        INT64 DataHigh;
+    };
+} KGDTENTRY64, * PKGDTENTRY64;

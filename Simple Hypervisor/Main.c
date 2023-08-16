@@ -58,30 +58,8 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING Regi
 	}
 	DriverObject->DriverUnload = DriverUnload;
 
-	//VirtualizeAllProcessors();
-	//LaunchVm(0);
-
-	CONTEXT ctx;
-	RtlCaptureContext(&ctx);
-	DbgPrint("[*] RAX : %llx\n", ctx.Rax);
-	DbgPrint("[*] SegCs : %x\n", ctx.SegCs);
-	DbgPrint("[*] SegDs : %x\n", ctx.SegDs);
-	DbgPrint("[*] SegEs : %x\n", ctx.SegEs);
-	DbgPrint("[*] SegFs : %x\n", ctx.SegFs);
-	DbgPrint("[*] SegGs : %x\n", ctx.SegGs);
-	DbgPrint("[*] SegSs : %x\n", ctx.SegSs);
-
-	DbgPrint("[*] SegCs & 0xF8 : %x\n", (ctx.SegCs & 0xF8));
-	DbgPrint("[*] SegDs & 0xF8 : %x\n", (ctx.SegDs & 0xF8));
-	DbgPrint("[*] SegEs & 0xF8 : %x\n", (ctx.SegEs & 0xF8));
-	DbgPrint("[*] SegFs & 0xF8 : %x\n", (ctx.SegFs & 0xF8));
-	DbgPrint("[*] SegGs & 0xF8 : %x\n", (ctx.SegGs & 0xF8));
-	DbgPrint("[*] SegSs & 0xF8 : %x\n", (ctx.SegSs & 0xF8));
-
-	DbgPrint("[*] DR7 : %llx\n", __readdr(7));
-	DbgPrint("[*] Eflags : %llx\n", __readeflags());
-
-	__debugbreak();
+	VirtualizeAllProcessors();
+	LaunchVm(0);
 
 	DbgPrint("[*] The hypervisor has been installed.\n");
 

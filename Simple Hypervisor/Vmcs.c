@@ -1,55 +1,71 @@
 #include "stdafx.h"
 #define VMCS_CTRL_TSC_OFFSET_HIGH	0x2011
 
-BOOLEAN GetSegmentDescriptor(PVMCS_SEGMENT_SELECTOR SegmentSelector, USHORT Selector, PUCHAR GdtBase) {
-	PSEGMENT_DESCRIPTOR SegDesc;
 
-	if (!SegmentSelector)
-		return FALSE;
+VOID
+ShvUtilConvertGdtEntry(
+	_In_ VOID* GdtBase,
+	_In_ UINT16 Selector,
+	_Out_ PVMX_GDTENTRY64 VmxGdtEntry
+)
+{
+	PKGDTENTRY64 gdtEntry;
 
-	if (Selector & 0x4)
+	//
+	// Reject LDT or NULL entries
+	//
+	if ((Selector == 0) ||
+		(Selector & SELECTOR_TABLE_INDEX) != 0)
 	{
-		return FALSE;
+		VmxGdtEntry->Limit = VmxGdtEntry->AccessRights = 0;
+		VmxGdtEntry->Base = 0;
+		VmxGdtEntry->Selector = 0;
+		VmxGdtEntry->Bits.Unusable = TRUE;
+		return;
 	}
 
-	SegDesc = (PSEGMENT_DESCRIPTOR)((PUCHAR)GdtBase + (Selector & ~0x7));
+	//
+	// Read the GDT entry at the given selector, masking out the RPL bits.
+	//
+	gdtEntry = (PKGDTENTRY64)((uintptr_t)GdtBase + (Selector & ~RPL_MASK)); // &0xF8
 
-	SegmentSelector->SEL = Selector;
-	SegmentSelector->BASE = SegDesc->BASE0 | SegDesc->BASE1 << 16 | SegDesc->BASE2 << 24;
-	SegmentSelector->LIMIT = SegDesc->LIMIT0 | (SegDesc->LIMIT1ATTR1 & 0xf) << 16;
-	SegmentSelector->ATTRIBUTES.UCHARs = SegDesc->ATTR0 | (SegDesc->LIMIT1ATTR1 & 0xf0) << 4;
+	//
+	// Write the selector directly 
+	//
+	VmxGdtEntry->Selector = Selector;
 
-	if (!(SegDesc->ATTR0 & 0x10))
-	{ // LA_ACCESSED
-		ULONG64 Tmp;
-		// this is a TSS or callgate etc, save the base high part
-		Tmp = (*(PULONG64)((PUCHAR)SegDesc + 8));
-		SegmentSelector->BASE = (SegmentSelector->BASE & 0xffffffff) | (Tmp << 32);
-	}
+	//
+	// Use the LSL intrinsic to read the segment limit
+	//
+	VmxGdtEntry->Limit = __segmentlimit(Selector);
 
-	if (SegmentSelector->ATTRIBUTES.Fields.G)
-	{
-		// 4096-bit granularity is enabled for this segment, scale the limit
-		SegmentSelector->LIMIT = (SegmentSelector->LIMIT << 12) + 0xfff;
-	}
+	//
+	// Build the full 64-bit effective address, keeping in mind that only when
+	// the System bit is unset, should this be done.
+	//
+	// NOTE: The Windows definition of KGDTENTRY64 is WRONG. The "System" field
+	// is incorrectly defined at the position of where the AVL bit should be.
+	// The actual location of the SYSTEM bit is encoded as the highest bit in
+	// the "Type" field.
+	//
+	VmxGdtEntry->Base = ((gdtEntry->Bytes.BaseHigh << 24) |
+		(gdtEntry->Bytes.BaseMiddle << 16) |
+		(gdtEntry->BaseLow)) & 0xFFFFFFFF;
+	VmxGdtEntry->Base |= ((gdtEntry->Bits.Type & 0x10) == 0) ?
+		((uintptr_t)gdtEntry->BaseUpper << 32) : 0;
 
-	return TRUE;
-}
+	//
+	// Load the access rights
+	//
+	VmxGdtEntry->AccessRights = 0;
+	VmxGdtEntry->Bytes.Flags1 = gdtEntry->Bytes.Flags1;
+	VmxGdtEntry->Bytes.Flags2 = gdtEntry->Bytes.Flags2;
 
-VOID FillGuestSelectorData(PVOID  GdtBase, ULONG  Segreg, USHORT Selector) {
-	VMCS_SEGMENT_SELECTOR SegmentSelector = { 0 };
-	ULONG            AccessRights;
-
-	GetSegmentDescriptor(&SegmentSelector, Selector, GdtBase);
-	AccessRights = ((PUCHAR)&SegmentSelector.ATTRIBUTES)[0] + (((PUCHAR)&SegmentSelector.ATTRIBUTES)[1] << 12);
-
-	if (!Selector)
-		AccessRights |= 0x10000;
-
-	__vmx_vmwrite(VMCS_GUEST_ES_SELECTOR + Segreg * 2, Selector);
-	__vmx_vmwrite(VMCS_GUEST_ES_LIMIT + Segreg * 2, SegmentSelector.LIMIT);
-	__vmx_vmwrite(VMCS_GUEST_ES_ACCESS_RIGHTS + Segreg * 2, AccessRights);
-	__vmx_vmwrite(VMCS_GUEST_ES_BASE + Segreg * 2, SegmentSelector.BASE);
+	//
+	// Finally, handle the VMX-specific bits
+	//
+	VmxGdtEntry->Bits.Reserved = 0;
+	VmxGdtEntry->Bits.Unusable = !gdtEntry->Bits.Present;
 }
 
 ULONG AdjustControls(ULONG Ctl, ULONG Msr) {
@@ -105,8 +121,10 @@ EVmErrors SetupVmcs() {
 	CONTEXT ctx;
 	RtlCaptureContext(&ctx);
 
+	UINT64 gdtBase = GetGdtBase();
+	VMX_GDTENTRY64 vmxGdtEntry;
 
-	
+	ShvUtilConvertGdtEntry((void*)gdtBase, ctx.SegCs, &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_CS_SELECTOR, vmxGdtEntry.Selector);
 	__vmx_vmwrite(VMCS_GUEST_CS_BASE, vmxGdtEntry.Base);
@@ -114,9 +132,8 @@ EVmErrors SetupVmcs() {
 	__vmx_vmwrite(VMCS_GUEST_CS_ACCESS_RIGHTS, vmxGdtEntry.AccessRights);
 
 	__vmx_vmwrite(VMCS_HOST_CS_SELECTOR, (ctx.SegCs & 0xF8));
-	DbgPrint("[*] Guest & Host CS done\n");
 
-	//ShvUtilConvertGdtEntry((void*)gdtrBase, ctx.SegSs, &vmxGdtEntry);
+	ShvUtilConvertGdtEntry((void*)gdtBase, ctx.SegSs, &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_SS_SELECTOR, vmxGdtEntry.Selector);
 	__vmx_vmwrite(VMCS_GUEST_SS_BASE, vmxGdtEntry.Base);
@@ -124,9 +141,8 @@ EVmErrors SetupVmcs() {
 	__vmx_vmwrite(VMCS_GUEST_SS_ACCESS_RIGHTS, vmxGdtEntry.AccessRights);
 
 	__vmx_vmwrite(VMCS_HOST_SS_SELECTOR, (ctx.SegSs & 0xF8));
-	DbgPrint("[*] Guest & Host SS done\n");
 
-	//ShvUtilConvertGdtEntry((void*)gdtrBase, ctx.SegDs, &vmxGdtEntry);
+	ShvUtilConvertGdtEntry((void*)gdtBase, ctx.SegDs, &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_DS_SELECTOR, vmxGdtEntry.Selector);
 	__vmx_vmwrite(VMCS_GUEST_DS_BASE, vmxGdtEntry.Base);
@@ -134,9 +150,8 @@ EVmErrors SetupVmcs() {
 	__vmx_vmwrite(VMCS_GUEST_DS_ACCESS_RIGHTS, vmxGdtEntry.AccessRights);
 
 	__vmx_vmwrite(VMCS_HOST_DS_SELECTOR, (ctx.SegDs & 0xF8));
-	DbgPrint("[*] Guest & Host DS done\n");
 
-	//ShvUtilConvertGdtEntry((void*)gdtrBase, ctx.SegEs, &vmxGdtEntry);
+	ShvUtilConvertGdtEntry((void*)gdtBase, ctx.SegEs, &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_ES_SELECTOR, vmxGdtEntry.Selector);	// GETES() & 0xF8
 	__vmx_vmwrite(VMCS_GUEST_ES_BASE, vmxGdtEntry.Base);
@@ -144,9 +159,8 @@ EVmErrors SetupVmcs() {
 	__vmx_vmwrite(VMCS_GUEST_ES_ACCESS_RIGHTS, vmxGdtEntry.AccessRights);
 
 	__vmx_vmwrite(VMCS_HOST_ES_SELECTOR, (ctx.SegEs & 0xF8));
-	DbgPrint("[*] Guest & Host ES done\n");
 
-	//ShvUtilConvertGdtEntry((void*)gdtrBase, ctx.SegFs, &vmxGdtEntry);
+	ShvUtilConvertGdtEntry((void*)gdtBase, ctx.SegFs, &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_FS_SELECTOR, vmxGdtEntry.Selector);
 	__vmx_vmwrite(VMCS_GUEST_FS_BASE, __readmsr(IA32_FS_BASE));
@@ -155,9 +169,9 @@ EVmErrors SetupVmcs() {
 
 	__vmx_vmwrite(VMCS_HOST_FS_SELECTOR, (ctx.SegFs & 0xF8));
 	__vmx_vmwrite(VMCS_HOST_FS_BASE, __readmsr(IA32_FS_BASE));
-	DbgPrint("[*] Guest & Host FS done\n");
+	__vmx_vmwrite(VMCS_GUEST_FS_BASE, __readmsr(IA32_FS_BASE));
 
-	//ShvUtilConvertGdtEntry((void*)gdtrBase, ctx.SegGs, &vmxGdtEntry);
+	ShvUtilConvertGdtEntry((void*)gdtBase, ctx.SegGs, &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_GS_SELECTOR, vmxGdtEntry.Selector);
 	__vmx_vmwrite(VMCS_GUEST_GS_BASE, __readmsr(IA32_GS_BASE));
@@ -166,59 +180,41 @@ EVmErrors SetupVmcs() {
 
 	__vmx_vmwrite(VMCS_HOST_GS_SELECTOR, (ctx.SegGs & 0xF8));
 	__vmx_vmwrite(VMCS_HOST_GS_BASE, __readmsr(IA32_GS_BASE));
-	DbgPrint("[*] Guest & Host GS done\n");
+	__vmx_vmwrite(VMCS_GUEST_GS_BASE, __readmsr(IA32_GS_BASE));
 
 
-	ldtr = (UINT16)GetLdtr();
-	//ShvUtilConvertGdtEntry((void*)gdtrBase, ldtr, &vmxGdtEntry);
+	ShvUtilConvertGdtEntry((void*)gdtBase, GetLdtr(), &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_LDTR_SELECTOR, vmxGdtEntry.Selector);
 	__vmx_vmwrite(VMCS_GUEST_LDTR_BASE, vmxGdtEntry.Base);
 	__vmx_vmwrite(VMCS_GUEST_LDTR_LIMIT, vmxGdtEntry.Limit);
 	__vmx_vmwrite(VMCS_GUEST_LDTR_ACCESS_RIGHTS, vmxGdtEntry.AccessRights);
-	DbgPrint("[*] Guest ldtr done\n");
+	__vmx_vmwrite(VMCS_GUEST_LDTR_BASE, GetLdtr() & 0xF8);
 
 	// There is no field in the host - state area for the LDTR selector.
 
 
-	tr = (UINT16)GetTr();
-	//ShvUtilConvertGdtEntry((void*)gdtrBase, tr, &vmxGdtEntry);
+	ShvUtilConvertGdtEntry((void*)gdtBase, GetTr(), &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_TR_SELECTOR, vmxGdtEntry.Selector);	// GETTR() & 0xF8
 	__vmx_vmwrite(VMCS_GUEST_TR_BASE, vmxGdtEntry.Base);
 	__vmx_vmwrite(VMCS_GUEST_TR_LIMIT, vmxGdtEntry.Limit);
 	__vmx_vmwrite(VMCS_GUEST_TR_ACCESS_RIGHTS, vmxGdtEntry.AccessRights);
 
-	__vmx_vmwrite(VMCS_HOST_TR_SELECTOR, (tr & 0xF8));
+	__vmx_vmwrite(VMCS_HOST_TR_SELECTOR, (GetTr() & 0xF8));
 	__vmx_vmwrite(VMCS_HOST_TR_BASE, vmxGdtEntry.Base);
-	DbgPrint("[*] Guest & Host Tr done\n");
 
 	//
 	// GDTR and IDTR 
 	//
 
-	unsigned char idtr[10] = { 0 };
-	__sidt(idtr);
-	unsigned long long idtrBase = (unsigned long long)idtr[9] << 56 |
-		(unsigned long long)idtr[8] << 48 |
-		(unsigned long long)idtr[7] << 40 |
-		(unsigned long long)idtr[6] << 32 |
-		(unsigned long long)idtr[5] << 24 |
-		(unsigned long long)idtr[4] << 16 |
-		(unsigned long long)idtr[3] << 8 |
-		(unsigned long long)idtr[2];
-	unsigned short idtrLimit = (unsigned int)idtr[1] << 8 |
-		(unsigned int)idtr[0];
+	__vmx_vmwrite(VMCS_GUEST_GDTR_BASE, GetGdtBase());
+	__vmx_vmwrite(VMCS_GUEST_GDTR_LIMIT, GetGdtLimit());
+	__vmx_vmwrite(VMCS_HOST_GDTR_BASE, GetGdtBase());
 
-	__vmx_vmwrite(VMCS_GUEST_GDTR_BASE, gdtrBase);
-	__vmx_vmwrite(VMCS_GUEST_GDTR_LIMIT, gdtrLimit);
-	__vmx_vmwrite(VMCS_HOST_GDTR_BASE, gdtrBase);
-	DbgPrint("[*] Guest & Host Gdtr done\n");
-
-	__vmx_vmwrite(VMCS_GUEST_IDTR_BASE, idtrBase);
-	__vmx_vmwrite(VMCS_GUEST_IDTR_LIMIT, idtrLimit);
-	__vmx_vmwrite(VMCS_HOST_IDTR_BASE, idtrBase);
-	DbgPrint("[*] Guest & Host Idtr done\n");
+	__vmx_vmwrite(VMCS_GUEST_IDTR_BASE, GetIdtBase());
+	__vmx_vmwrite(VMCS_GUEST_IDTR_LIMIT, GetIdtLimit());
+	__vmx_vmwrite(VMCS_HOST_IDTR_BASE, GetIdtBase());
 
 	//
 	// The various MSRs as documented in the Intel SDM - Guest & Host
@@ -233,7 +229,6 @@ EVmErrors SetupVmcs() {
 	__vmx_vmwrite(VMCS_HOST_SYSENTER_CS, __readmsr(MSR_IA32_SYSENTER_CS));
 	__vmx_vmwrite(VMCS_HOST_SYSENTER_ESP, __readmsr(MSR_IA32_SYSENTER_ESP));
 	__vmx_vmwrite(VMCS_HOST_SYSENTER_EIP, __readmsr(MSR_IA32_SYSENTER_EIP));
-	DbgPrint("[*] Guest & Host MSR done\n");
 
 	//
 	// SMBASE (32 bits)
