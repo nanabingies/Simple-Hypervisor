@@ -3,6 +3,8 @@
 #pragma warning(disable : 4996)
 
 VOID VirtualizeAllProcessors() {
+	PAGED_CODE();
+
 	//
 	// This was more of an educational project so only one Logical Processor was chosen and virtualized
 	// TODO : Add support for multiple processors
@@ -86,6 +88,7 @@ VOID DevirtualizeAllProcessors() {
 }
 
 VOID LaunchVm(int processorId) {
+
 	//
 	// Bind to processor
 	// 
@@ -98,6 +101,8 @@ VOID LaunchVm(int processorId) {
 	affinity.Group = processor_number.Group;
 	affinity.Mask = (KAFFINITY)1 << processor_number.Number;
 	KeSetSystemGroupAffinityThread(&affinity, &old_affinity);
+
+	PAGED_CODE();
 
 	//
 	// Allocate space for VM EXIT Handler
@@ -167,12 +172,11 @@ VOID LaunchVm(int processorId) {
 		return;
 	}
 	DbgPrint("[*] VMCS setup done\n");
-	__debugbreak();
 
 	//
 	// Save HOST RSP & RBP
 	//
-	SaveStackRegs();
+	//SaveStackRegs();
 
 	//
 	// Launch VM into Outer Space :)

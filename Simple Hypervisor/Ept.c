@@ -2,6 +2,8 @@
 #pragma warning(disable : 4996)
 
 void InitializeEpt() {
+	PAGED_CODE();
+
 	EPT_POINTER* EptPtr = (EPT_POINTER*)
 		(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL));
 	if (!EptPtr) {

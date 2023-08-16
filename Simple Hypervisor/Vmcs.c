@@ -91,7 +91,6 @@ EVmErrors SetupVmcs() {
 	__vmx_vmwrite(VMCS_HOST_CR3, __readcr3());
 	__vmx_vmwrite(VMCS_HOST_CR4, __readcr4());
 
-	DbgPrint("[*] Guest & Host Control Registers done.\n");
 
 	// Don't even know why Daax included this in his hypervisor series.
 	__vmx_vmwrite(VMCS_CTRL_CR0_READ_SHADOW, __readcr0());
@@ -101,7 +100,6 @@ EVmErrors SetupVmcs() {
 	// Debug Register (DR7)
 	//
 	__vmx_vmwrite(VMCS_GUEST_DR7, __readdr(7));
-	DbgPrint("[*] Guest DR7 Done.\n");
 
 	//
 	// RSP, RIP, RFLAGS - Guest & Host
@@ -113,7 +111,6 @@ EVmErrors SetupVmcs() {
 	__vmx_vmwrite(VMCS_HOST_RSP, vmm_context->GuestStack + STACK_SIZE - 1);
 	// Address host should point to, to kick things off when vmexit occurs
 	__vmx_vmwrite(VMCS_HOST_RIP, (UINT64)HostContinueExecution);
-	DbgPrint("[*] Guest & Host RSP, RIP, RFLAGS done\n");
 
 	//
 	// CS, SS, DS, ES, FS, GS, LDTR, and TR -- Guest & Host
@@ -240,7 +237,6 @@ EVmErrors SetupVmcs() {
 	// VMCS link pointer
 	//
 	__vmx_vmwrite(VMCS_GUEST_VMCS_LINK_POINTER, (size_t)(~0));
-	DbgPrint("[*] VMCS link pointer done\n");
 
 	//
 	// VM Execution Control Fields
@@ -255,7 +251,6 @@ EVmErrors SetupVmcs() {
 	__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
 		AdjustControls(/*IA32_VMX_PROCBASED_CTLS2_ENABLE_EPT_FLAG |*/ IA32_VMX_PROCBASED_CTLS2_ENABLE_RDTSCP_FLAG,
 			IA32_VMX_PROCBASED_CTLS2));
-	DbgPrint("[*] VM Execution fields done\n");
 
 	//
 	// VM-exit control fields. 
@@ -264,7 +259,6 @@ EVmErrors SetupVmcs() {
 	__vmx_vmwrite(VMCS_CTRL_PRIMARY_VMEXIT_CONTROLS,
 		AdjustControls(IA32_VMX_EXIT_CTLS_HOST_ADDRESS_SPACE_SIZE_FLAG | IA32_VMX_EXIT_CTLS_ACKNOWLEDGE_INTERRUPT_ON_EXIT_FLAG,
 			IA32_VMX_EXIT_CTLS));
-	DbgPrint("[*] VM Exit fields done\n");
 
 	//
 	// VM-entry control fields. 
@@ -272,7 +266,6 @@ EVmErrors SetupVmcs() {
 	//
 	__vmx_vmwrite(VMCS_CTRL_VMENTRY_CONTROLS,
 		AdjustControls(IA32_VMX_ENTRY_CTLS_IA32E_MODE_GUEST_FLAG, IA32_VMX_ENTRY_CTLS));
-	DbgPrint("[*] VM Entry control fields done\n");
 
 	//
 	// VM-exit information fields. 
@@ -288,8 +281,7 @@ EVmErrors SetupVmcs() {
 	//
 	__vmx_vmwrite(VMCS_GUEST_ACTIVITY_STATE, 0);	// Active State
 	__vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY_STATE, 0);
-	DbgPrint("[*] Misc done.\n");
-
+	
 	//
 	// let's make some check here.
 	// Don't know if they are really needed.

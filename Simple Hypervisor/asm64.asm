@@ -28,8 +28,8 @@ GetTr PROC
 GetTr ENDP
 
 HostContinueExecution PROC
-	;int 3
-	;int 3
+	int 3
+	int 3
 	RET
 HostContinueExecution ENDP
 
