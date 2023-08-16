@@ -1,6 +1,7 @@
 #pragma once
 
 VOID SaveHostRegisters();
+VOID HostTerminateHypervisor();
 
 BOOLEAN IsVmxSupport();
 

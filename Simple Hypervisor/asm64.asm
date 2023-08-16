@@ -13,7 +13,7 @@ PUBLIC GetGdtBase
 EXTERN g_StackPointerForReturning:QWORD
 EXTERN g_BasePointerForReturning:QWORD
 
-EXTERN VmExit:QWORD
+EXTERN VmExit:PROC
 
 .code _text
 

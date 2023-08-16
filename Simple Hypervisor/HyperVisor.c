@@ -107,13 +107,14 @@ VOID LaunchVm(int processorId) {
 	//
 	// Allocate space for VM EXIT Handler
 	//
-	PVOID vmexitHandler = ExAllocatePoolWithTag(NonPagedPool, STACK_SIZE, VMM_POOL);
-	if (!vmexitHandler) {
+	PVOID vmexitStack = ExAllocatePoolWithTag(NonPagedPool, STACK_SIZE, VMM_POOL);
+	if (!vmexitStack) {
 		DbgPrint("[-] Failure allocating memory for VM EXIT Handler.\n");
 		return;
 	}
-	RtlSecureZeroMemory(vmexitHandler, STACK_SIZE);
-	vmm_context->GuestStack = (UINT64)vmexitHandler;
+	RtlSecureZeroMemory(vmexitStack, STACK_SIZE);
+	vmm_context->GuestStack = (UINT64)vmexitStack;
+	DbgPrint("[*] vmm_context->GuestStack : %llx\n", vmm_context->GuestStack);
 
 	//
 	// Allocate memory for MSR Bitmap
@@ -123,7 +124,7 @@ VOID LaunchVm(int processorId) {
 	PVOID bitmap = MmAllocateContiguousMemory(PAGE_SIZE, physAddr);
 	if (!bitmap) {
 		DbgPrint("[-] Failure allocating memory for MSR Bitmap.\n");
-		ExFreePoolWithTag(vmexitHandler, VMM_POOL);
+		ExFreePoolWithTag(vmexitStack, VMM_POOL);
 
 		__vmx_off();
 		return;
