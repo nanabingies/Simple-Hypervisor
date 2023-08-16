@@ -15,6 +15,9 @@ PUBLIC GetGdtLimit
 PUBLIC GetIdtBase
 PUBLIC GetGdtBase
 
+EXTERN g_StackPointerForReturning:QWORD
+EXTERN g_BasePointerForReturning:QWORD
+
 .code _text
 
 GetLdtr PROC
@@ -30,10 +33,14 @@ GetTr ENDP
 HostContinueExecution PROC
 	int 3		; A VM Exit just occured
 	int 3
+
+	CALL 
 	RET
 HostContinueExecution ENDP
 
 SaveStackRegs PROC
+	MOV g_StackPointerForReturning, RSP
+	MOV g_BasePointerForReturning, RBP
 	RET
 SaveStackRegs ENDP
 

@@ -54,6 +54,9 @@
     <ClCompile Include="HyperVisor.c">
       <Filter>Vmx</Filter>
     </ClCompile>
+    <ClCompile Include="VmExit.c">
+      <Filter>Vmx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
