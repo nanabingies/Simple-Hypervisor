@@ -217,6 +217,13 @@ VOID TerminateVm() {
 
 VOID ResumeVm() {
 
+	size_t Rip, InstLen;
+	__vmx_vmread(VMCS_GUEST_RIP, &Rip);
+	__vmx_vmread(VMCS_VMEXIT_INSTRUCTION_LENGTH, &InstLen);
+
+	Rip += InstLen;
+	__vmx_vmwrite(VMCS_GUEST_RIP, Rip);
+
 	//
 	// the VMRESUME instruction requires a VMCS whose launch state is  launched .
 	// we're still in launch mode

@@ -14,6 +14,7 @@ EXTERN g_StackPointerForReturning:QWORD
 EXTERN g_BasePointerForReturning:QWORD
 
 EXTERN VmExitHandler:PROC
+EXTERN ResumeVm:PROC
 
 .code _text
 
@@ -28,7 +29,7 @@ GetTr PROC
 GetTr ENDP
 
 HostTerminateHypervisor PROC
-	VMXOFF
+	;VMXOFF
 
 	MOV RSP, g_StackPointerForReturning
 	MOV RBP, g_BasePointerForReturning
@@ -89,7 +90,7 @@ HostContinueExecution PROC
     POP R15
 
 	SUB RSP, 0100h ; to avoid error in future functions
-    ;JMP VmResumeInstruction
+    JMP ResumeVm
 
 	RET
 HostContinueExecution ENDP

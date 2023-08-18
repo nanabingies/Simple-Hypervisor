@@ -68,8 +68,7 @@ VOID VmExitHandler() {
 		//
 		// Terminate HyperVisor
 		//
-		VmOff = TRUE;
-		HostTerminateHypervisor();
+		//HostTerminateHypervisor();
 		break;
 	}
 
