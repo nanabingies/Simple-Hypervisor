@@ -41,7 +41,7 @@ UINT64 g_BasePointerForReturning;
 
 ULONG AdjustControls(ULONG Ctl, ULONG Msr);
 
-EVmErrors SetupVmcs();
+EVmErrors SetupVmcs(ULONG);
 
 UINT64 HostContinueExecution();
 

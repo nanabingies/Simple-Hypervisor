@@ -62,11 +62,6 @@ BOOLEAN VirtualizeAllProcessors() {
 		if (!allocateVmcsRegion(processor_number.Number))		return FALSE;
 
 		//
-		// Setup EPT structures
-		//
-		//InitializeEpt();
-
-		//
 		// Allocate space for VM EXIT Handler
 		//
 		if (!allocateVmExitStack(processor_number.Number))		return FALSE;
@@ -124,90 +119,61 @@ VOID DevirtualizeAllProcessors() {
 	return;
 }
 
-VOID LaunchVm(int processorId) {
-
-	//
-	// Bind to processor
-	// 
-	PROCESSOR_NUMBER processor_number;
-	GROUP_AFFINITY affinity, old_affinity;
-
-	KeGetProcessorNumberFromIndex(processorId, &processor_number);
-
-	RtlSecureZeroMemory(&affinity, sizeof(GROUP_AFFINITY));
-	affinity.Group = processor_number.Group;
-	affinity.Mask = (KAFFINITY)1 << processor_number.Number;
-	KeSetSystemGroupAffinityThread(&affinity, &old_affinity);
+ULONG_PTR LaunchVm(_In_ ULONG_PTR Argument) {
+	ULONG processorNumber = KeGetCurrentProcessorNumber();
 
 	//
 	// Set VMCS state to inactive
 	//
-	unsigned char retVal = __vmx_vmclear(&vmm_context->vmcsRegionPhys);
+	unsigned char retVal = __vmx_vmclear(&vmm_context[processorNumber].vmcsRegionPhys);
 	if (retVal > 0) {
 		DbgPrint("[-] VMCLEAR operation failed.\n");
 
-		__vmx_off();
-		VmOff = TRUE;
-		return;
+		//__vmx_off();
+		//VmOff = TRUE;
+		return 0;
 	}
-	DbgPrint("[*] VMCS set to inactive.\n");
+	DbgPrint("[*] VMCS for processor %x set to inactive.\n", processorNumber);
 
 	//
-	//  Make VMCS the current and active 
+	//  Make VMCS the current and active on that processor
 	//
-	retVal = __vmx_vmptrld(&vmm_context->vmcsRegionPhys);
+	retVal = __vmx_vmptrld(&vmm_context[processorNumber].vmcsRegionPhys);
 	if (retVal > 0) {
 		DbgPrint("[-] VMPTRLD operation failed.\n");
 
-		__vmx_off();
-		VmOff = TRUE;
-		return;
+		//__vmx_off();
+		//VmOff = TRUE;
+		return 0;
 	}
-	DbgPrint("[*] VMCS is current and active.\n");
+	DbgPrint("[*] VMCS is current and active on processor %x\n", processorNumber);
 
 	//
-	// Setup VMCS structure fields
+	// Setup VMCS structure fields for that logical processor
 	//
-	if (SetupVmcs() != VM_ERROR_OK) {
+	if (SetupVmcs(processorNumber) != VM_ERROR_OK) {
 		DbgPrint("[-] Failure setting Virtual Machine VMCS.\n");
 
-		ULONG64 ErrorCode = 0;
+		size_t ErrorCode = 0;
 		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &ErrorCode);
-		__vmx_off();
-		VmOff = TRUE;
-		return;
+		DbgPrint("[-] Exiting with error code : %llx\n", ErrorCode);
+		//__vmx_off();
+		//VmOff = TRUE;
+		return 0;
 	}
-	DbgPrint("[*] VMCS setup done\n");
+	DbgPrint("[*] VMCS setup on processor %x done\n", processorNumber);
 
 	//
 	// Save HOST RSP & RBP
 	//
-	SaveHostRegisters();
+	//SaveHostRegisters();
 
 	//
 	// Launch VM into Outer Space :)
 	//
-	retVal = __vmx_vmlaunch();
-	if (retVal > 0) {
-		DbgPrint("[-] VMLAUNCH operation failed with error code %x.\n", retVal);
+	__vmx_vmlaunch();
 
-		//
-		// if VMLAUNCH succeeds will never be here!
-		//
-		ULONG64 ErrorCode = 0;
-		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &ErrorCode);	// Intel SDM Chapter 30
-		__vmx_off();
-		DbgPrint("[*] VMLAUNCH Error : 0x%llx\n", ErrorCode);
-		VmOff = TRUE;
-		DbgBreakPoint();
-		return;
-	}
-
-	DbgPrint("[*] VMLAUNCH operation successful.\n");
-
-	KeRevertToUserGroupAffinityThread(&old_affinity);
-
-	return;
+	return Argument;
 }
 
 VOID TerminateVm() {

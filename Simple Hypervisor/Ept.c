@@ -14,7 +14,7 @@ void InitializeEpt() {
 	RtlSecureZeroMemory(EptPtr, PAGE_SIZE);
 	DbgPrint("[*] Pointer to EPT at : %llx\n", (UINT64)EptPtr);
 
-	vmm_context->eptPtr = (UINT64)EptPtr;
+	//vmm_context->eptPtr = (UINT64)EptPtr;
 
 	EPT_PML4E* pml4e = (EPT_PML4E*)
 		(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL));
