@@ -94,10 +94,10 @@ VOID DevirtualizeAllProcessors() {
 		__vmx_off();
 
 		if (vmm_context[processor_number.Number].vmcsRegionVirt)
-			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].vmcsRegionPhys);
+			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].vmcsRegionVirt);
 
 		if (vmm_context[processor_number.Number].vmxonRegionVirt)
-			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].vmxonRegionPhys);
+			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].vmxonRegionVirt);
 		
 		ExFreePoolWithTag(vmm_context, VMM_POOL);
 
