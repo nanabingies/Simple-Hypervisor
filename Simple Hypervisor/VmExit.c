@@ -57,6 +57,16 @@ VOID VmExitHandler(PVOID Param) {
 	}
 
 	case VMX_EXIT_REASON_EXECUTE_CPUID: {
+		int cpuInfo[4] = { 0 };
+
+		//
+		// Terminate VM ??
+		//
+		if (guestRegisters->RAX == 0x6e616e61 && guestRegisters->RCX == 0x6e616e61) {	// 'nana'
+
+		}
+
+		__cpuidex((int*)&cpuInfo, guestRegisters->RAX, guestRegisters->RCX);
 		break;
 	}
 
