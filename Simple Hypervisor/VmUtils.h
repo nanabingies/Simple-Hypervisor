@@ -15,8 +15,8 @@ struct _vmm_context {
 	UINT64	vmcsRegionVirt;					// virtual address of VMCS Region
 	UINT64	vmcsRegionPhys;					// Physical address of VMCS Region
 
-	UINT64    bitmapVirt;                     // Virtual address of bitmap bits
-	UINT64    bitmapPhys;                     // Physical address
+	UINT64  bitmapVirt;                     // Virtual address of bitmap bits
+	UINT64  bitmapPhys;                     // Physical address
 
 	UINT64	eptPtr;							// Pointer to the EPT
 
@@ -30,7 +30,7 @@ struct driverGlobals {
 };
 
 struct _vmm_context* vmm_context;
-struct driverGlobals* g_DriverGlobals;
+struct driverGlobals g_DriverGlobals;
 UINT64 g_GuestMemory;
 
 ULONG64 PhysicalToVirtualAddress(UINT64 physical_address);

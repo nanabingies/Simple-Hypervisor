@@ -3,11 +3,12 @@
 #pragma warning(disable : 4996)
 
 VOID VirtualizeAllProcessors() {
-	PAGED_CODE();
+	//PAGED_CODE();
 
 	//
 	// This was more of an educational project so only one Logical Processor was chosen and virtualized
 	// TODO : Add support for multiple processors
+	// Fix: Support for multiple processors added
 	//
 
 	ULONG procNumber = 0;

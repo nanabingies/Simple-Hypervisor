@@ -50,15 +50,8 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING Regi
 
 	DbgPrint("[*] Successfully created device object\n");
 
-	g_DriverGlobals = (struct driverGlobals*)ExAllocatePoolWithTag(NonPagedPool, sizeof(struct driverGlobals), VMM_POOL);
-	if (!g_DriverGlobals) {
-		DbgPrint("[-] DriverGlobals allocation failed.\n");
-		IoDeleteDevice(deviceObject);
-		return STATUS_FAILED_DRIVER_ENTRY;
-	}
-
-	g_DriverGlobals->g_DeviceObject = deviceObject;
-	InitializeListHead(&g_DriverGlobals->g_ListofDevices);
+	g_DriverGlobals.g_DeviceObject = deviceObject;
+	InitializeListHead(&g_DriverGlobals.g_ListofDevices);
 
 	for (ULONG idx = 0; idx < IRP_MJ_MAXIMUM_FUNCTION; ++idx) {
 		DriverObject->MajorFunction[idx] = DefaultDispatch;
@@ -66,7 +59,7 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING Regi
 	DriverObject->DriverUnload = DriverUnload;
 
 	VirtualizeAllProcessors();
-	LaunchVm(0);
+	//LaunchVm(0);
 
 	DbgPrint("[*] The hypervisor has been installed.\n");
 
