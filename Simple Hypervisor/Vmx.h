@@ -13,7 +13,7 @@ VOID allocateVmcsRegion(UCHAR processorNumber);
 
 VOID allocateVmxonRegion(UCHAR processorNumber);
 
-VOID VirtualizeAllProcessors();
+BOOLEAN VirtualizeAllProcessors();
 
 VOID DevirtualizeAllProcessors();
 

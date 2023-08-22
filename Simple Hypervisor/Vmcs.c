@@ -111,7 +111,7 @@ EVmErrors SetupVmcs() {
 	__vmx_vmwrite(VMCS_GUEST_RIP, g_GuestMemory);
 	__vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags());
 
-	__vmx_vmwrite(VMCS_HOST_RSP, ((ULONG64)vmm_context->GuestStack + STACK_SIZE - 1));
+	__vmx_vmwrite(VMCS_HOST_RSP, ((ULONG64)vmm_context->HostStack + STACK_SIZE - 1));
 	// Address host should point to, to kick things off when vmexit occurs
 	__vmx_vmwrite(VMCS_HOST_RIP, (UINT64)HostContinueExecution); //  &HostTerminateHypervisor
 

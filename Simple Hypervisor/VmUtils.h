@@ -20,7 +20,7 @@ struct _vmm_context {
 
 	UINT64	eptPtr;							// Pointer to the EPT
 
-	UINT64	GuestStack;						// Stack of the VM Exit Handler
+	UINT64	HostStack;						// Stack of the VM Exit Handler
 };
 
 

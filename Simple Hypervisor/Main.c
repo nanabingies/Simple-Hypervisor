@@ -58,7 +58,7 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING Regi
 	}
 	DriverObject->DriverUnload = DriverUnload;
 
-	VirtualizeAllProcessors();
+	if (!VirtualizeAllProcessors())		return STATUS_FAILED_DRIVER_ENTRY;
 	//LaunchVm(0);
 
 	DbgPrint("[*] The hypervisor has been installed.\n");

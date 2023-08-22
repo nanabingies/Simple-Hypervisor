@@ -69,13 +69,13 @@ VOID allocateVmxonRegion(UCHAR processorNumber) {
 
 	*(UINT64*)vmxon = vmx_basic.VmcsRevisionId;
 
-	vmm_context->vmxonRegionVirt = (UINT64)vmxon;
-	vmm_context->vmxonRegionPhys = VirtualToPhysicalAddress(vmxon);
+	vmm_context[processorNumber].vmxonRegionVirt = (UINT64)vmxon;
+	vmm_context[processorNumber].vmxonRegionPhys = VirtualToPhysicalAddress(vmxon);
 
 	//
 	// Execute VMXON
 	//
-	auto retVal = __vmx_on(&vmm_context->vmxonRegionPhys);
+	auto retVal = __vmx_on(&vmm_context[processorNumber].vmxonRegionPhys);
 	if (retVal > 0) {
 		DbgPrint("[-] Failed vmxon with error code %x\n", retVal);
 		return;
@@ -110,13 +110,13 @@ VOID allocateVmcsRegion(UCHAR processorNumber) {
 
 	*(UINT64*)vmcs = vmx_basic.VmcsRevisionId;
 
-	vmm_context->vmcsRegionVirt = (UINT64)vmcs;
-	vmm_context->vmcsRegionPhys = VirtualToPhysicalAddress(vmcs);
+	vmm_context[processorNumber].vmcsRegionVirt = (UINT64)vmcs;
+	vmm_context[processorNumber].vmcsRegionPhys = VirtualToPhysicalAddress(vmcs);
 
 	//
 	// Load current VMCS and make it active
 	//
-	auto retVal = __vmx_vmptrld(&vmm_context->vmcsRegionPhys);
+	auto retVal = __vmx_vmptrld(&vmm_context[processorNumber].vmcsRegionPhys);
 	if (retVal > 0) {
 		DbgPrint("[-] Failed vmcs with error code %x\n", retVal);
 		return;

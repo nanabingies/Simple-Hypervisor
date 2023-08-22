@@ -2,8 +2,7 @@
 #include "stdafx.h"
 #pragma warning(disable : 4996)
 
-VOID VirtualizeAllProcessors() {
-	//PAGED_CODE();
+BOOLEAN VirtualizeAllProcessors() {
 
 	//
 	// This was more of an educational project so only one Logical Processor was chosen and virtualized
@@ -11,7 +10,6 @@ VOID VirtualizeAllProcessors() {
 	// Fix: Support for multiple processors added
 	//
 
-	ULONG procNumber = 0;
 	PROCESSOR_NUMBER processor_number;
 	GROUP_AFFINITY affinity, old_affinity;
 
@@ -22,49 +20,55 @@ VOID VirtualizeAllProcessors() {
 	// ExAllocatePool2 - Memory is zero initialized unless POOL_FLAG_UNINITIALIZED is specified.
 	//
 	vmm_context = (struct _vmm_context*)
-		(ExAllocatePoolWithTag(NonPagedPool, sizeof(struct _vmm_context), VMM_POOL));
+		(ExAllocatePoolWithTag(NonPagedPool, sizeof(struct _vmm_context) * numProcessors, VMM_POOL));
 	if (!vmm_context) {
 		DbgPrint("[-] Failed to allocate pool for vmm_context\n");
-		return;
+		return FALSE;
 	}
 
-	KeGetProcessorNumberFromIndex(procNumber, &processor_number);
+	for (unsigned iter = 0; iter < numProcessors; iter++) {
+		KeGetProcessorNumberFromIndex(iter, &processor_number);
 
-	RtlSecureZeroMemory(&affinity, sizeof(GROUP_AFFINITY));
-	affinity.Group = processor_number.Group;
-	affinity.Mask = (KAFFINITY)1 << processor_number.Number;
-	KeSetSystemGroupAffinityThread(&affinity, &old_affinity);
+		RtlSecureZeroMemory(&affinity, sizeof(GROUP_AFFINITY));
+		affinity.Group = processor_number.Group;
+		affinity.Mask = (KAFFINITY)1 << processor_number.Number;
+		KeSetSystemGroupAffinityThread(&affinity, &old_affinity);
 
-	DbgPrint("[*] Currently executing on processor : %x\n", processor_number.Number);
+		DbgPrint("[*] Currently executing on processor : %x\n", processor_number.Number);
 
-	//
-	// Check VMX Support for that Logical Processor
-	//
-	if (IsVmxSupport() == FALSE)	return;
+		//
+		// Check VMX Support for that Logical Processor
+		//
+		if (IsVmxSupport() == FALSE)	return FALSE;
 
-	//
-	// Check Bios Lock Bit
-	//
-	if (CheckBiosLock() == FALSE)	return;
+		//
+		// Check Bios Lock Bit
+		//
+		if (CheckBiosLock() == FALSE)	return FALSE;
 
-	//
-	// Enable VMXE for that processor
-	//
-	EnableCR4();
-	DbgPrint("[*] Initial checks completed.\n");
+		//
+		// Enable VMXE for that processor
+		//
+		EnableCR4();
 
-	//
-	// Allocate Memory for VMXON & VMCS regions and initialize
-	//
-	allocateVmxonRegion(processor_number.Number);
-	allocateVmcsRegion(processor_number.Number);
+		DbgPrint("[*] Initial checks completed.\n");
 
-	//
-	// Setup EPT structures
-	//
-	InitializeEpt();
+		//
+		// Allocate Memory for VMXON & VMCS regions and initialize
+		//
+		allocateVmxonRegion(processor_number.Number);
+		allocateVmcsRegion(processor_number.Number);
 
-	KeRevertToUserGroupAffinityThread(&old_affinity);
+		//
+		// Setup EPT structures
+		//
+		//InitializeEpt();
+
+		KeRevertToUserGroupAffinityThread(&old_affinity);
+	}
+
+	return TRUE;
+
 }
 
 VOID DevirtualizeAllProcessors() {
@@ -114,8 +118,8 @@ VOID LaunchVm(int processorId) {
 		return;
 	}
 	RtlSecureZeroMemory(vmexitStack, STACK_SIZE);
-	vmm_context->GuestStack = (UINT64)vmexitStack;
-	DbgPrint("[*] vmm_context->GuestStack : %llx\n", vmm_context->GuestStack);
+	vmm_context->HostStack = (UINT64)vmexitStack;
+	DbgPrint("[*] vmm_context->GuestStack : %llx\n", vmm_context->HostStack);
 
 	//
 	// Allocate memory for MSR Bitmap
