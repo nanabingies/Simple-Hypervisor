@@ -7,7 +7,7 @@
 //
 
 VOID VmExitHandler(PVOID Param) {
-	struct _GuestRegisters* guestRegisters = (struct _GuestRegiters*)Param;
+	struct _GuestRegisters* guestRegisters = (struct _GuestRegisters*)Param;
 
 	VMX_VMEXIT_REASON VmExitInfo;
 	__vmx_vmread(VMCS_EXIT_REASON, (size_t*) & VmExitInfo);
@@ -147,7 +147,7 @@ VOID VmExitHandler(PVOID Param) {
 		// Check whether it was a mov to or mov from CR
 		//
 		VMX_EXIT_QUALIFICATION_MOV_CR exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, &exitQualification);
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
 		switch (exitQualification.AccessType) {
 		case 0: {	// MOV to CR
 			switch (exitQualification.ControlRegister) {
@@ -219,7 +219,7 @@ VOID VmExitHandler(PVOID Param) {
 	}
 
 	case VMX_EXIT_REASON_EXECUTE_RDMSR: {
-		if (((guestRegisters->RCX >= 0x00000000) && (guestRegisters->RCX <= 0x00001FFF)) ||
+		if ((guestRegisters->RCX <= 0x00001FFF) ||
 			((guestRegisters->RCX >= 0xC0000000) && (guestRegisters->RCX <= 0xC0001FFF))) {
 
 			LARGE_INTEGER msr;
@@ -232,13 +232,13 @@ VOID VmExitHandler(PVOID Param) {
 	}
 
 	case VMX_EXIT_REASON_EXECUTE_WRMSR: {
-		if (((guestRegisters->RCX >= 0x00000000) && (guestRegisters->RCX <= 0x00001FFF)) ||
+		if ((guestRegisters->RCX <= 0x00001FFF) ||
 			((guestRegisters->RCX >= 0xC0000000) && (guestRegisters->RCX <= 0xC0001FFF))) {
 			
 			LARGE_INTEGER msr;
 			msr.LowPart = (ULONG)guestRegisters->RAX;
 			msr.HighPart = (ULONG)guestRegisters->RDX;
-			__writemsr(guestRegisters->RCX, msr.QuadPart);
+			__writemsr((ULONG)guestRegisters->RCX, msr.QuadPart);
 		}
 
 		break;
