@@ -72,7 +72,7 @@ VOID VmExitHandler(PVOID Param) {
 			// now jump tp g_GuestRip
 		}
 
-		__cpuidex((int*)&cpuInfo, guestRegisters->RAX, guestRegisters->RCX);
+		__cpuidex((int*)&cpuInfo, (int)guestRegisters->RAX, (int)guestRegisters->RCX);
 		break;
 	}
 
