@@ -64,19 +64,19 @@ HostContinueExecution PROC
     PUSH RDI
     PUSH RSI
     PUSH RBP
-    PUSH RBP	; RSP
-    PUSH RBX
+    PUSH RBP	; RSP Placeholder
     PUSH RDX
     PUSH RCX
+	PUSH RBX
     PUSH RAX
 
 	CALL VmExitHandler
 
 	POP RAX
+	POP RBX
     POP RCX
     POP RDX
-    POP RBX
-    POP RBP		; RSP
+    POP RBP		; RSP Placeholder
     POP RBP
     POP RSI
     POP RDI 

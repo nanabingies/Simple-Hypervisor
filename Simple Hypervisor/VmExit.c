@@ -6,7 +6,9 @@
 // @see Vol3D[C(VMX BASIC EXIT REASONS)](reference)
 //
 
-VOID VmExitHandler() {
+VOID VmExitHandler(PVOID Param) {
+	struct _GuestRegiters* guestRegisters = (struct _GuestRegiters*)Param;
+
 	DbgPrint("[*] VM Exit Handler called .....\n");
 
 	ULONG VmExitReason = 0;
@@ -63,7 +65,7 @@ VOID VmExitHandler() {
 	}
 
 	case VMX_EXIT_REASON_EXECUTE_HLT: {
-		DbgPrint("[*] Execution of HLT detected... \n");
+		//DbgPrint("[*] Execution of HLT detected... \n");
 
 		//
 		// Terminate HyperVisor

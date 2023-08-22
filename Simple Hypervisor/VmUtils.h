@@ -29,8 +29,28 @@ struct driverGlobals {
 	LIST_ENTRY		g_ListofDevices;
 };
 
+struct _GuestRegisters {
+	UINT64	RAX;
+	UINT64	RBX;
+	UINT64	RCX;
+	UINT64	RDX;
+	UINT64	RSP;
+	UINT64	RBP;
+	UINT64	RSI;
+	UINT64	RDI;
+	UINT64	R8;
+	UINT64	R9;
+	UINT64	R10;
+	UINT64	R11;
+	UINT64	R12;
+	UINT64	R13;
+	UINT64	R14;
+	UINT64	R15;
+};
+
 struct _vmm_context* vmm_context;
 struct driverGlobals g_DriverGlobals;
+//struct _GuestRegiters guest_registers;
 UINT64 g_GuestMemory;
 
 ULONG64 PhysicalToVirtualAddress(UINT64 physical_address);
