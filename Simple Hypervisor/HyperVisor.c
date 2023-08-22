@@ -75,24 +75,37 @@ BOOLEAN VirtualizeAllProcessors() {
 }
 
 VOID DevirtualizeAllProcessors() {
-	ULONG procNumber = 0;
+
+	ULONG numProcessors = KeQueryActiveProcessorCount(NULL);
 	PROCESSOR_NUMBER processor_number;
 	GROUP_AFFINITY affinity, old_affinity;
 
-	KeGetProcessorNumberFromIndex(procNumber, &processor_number);
+	for (unsigned iter = 0; iter < numProcessors; iter++) {
+		KeGetProcessorNumberFromIndex(iter, &processor_number);
 
-	RtlSecureZeroMemory(&affinity, sizeof(GROUP_AFFINITY));
-	affinity.Group = processor_number.Group;
-	affinity.Mask = (KAFFINITY)1 << processor_number.Number;
-	KeSetSystemGroupAffinityThread(&affinity, &old_affinity);
+		RtlSecureZeroMemory(&affinity, sizeof(GROUP_AFFINITY));
+		affinity.Group = processor_number.Group;
+		affinity.Mask = (KAFFINITY)1 << processor_number.Number;
+		KeSetSystemGroupAffinityThread(&affinity, &old_affinity);
 
-	__vmx_vmclear(&vmm_context->vmcsRegionPhys);
-	__vmx_off();
-	MmFreeContiguousMemory((PVOID)vmm_context->vmcsRegionVirt);
-	MmFreeContiguousMemory((PVOID)vmm_context->vmxonRegionVirt);
-	ExFreePoolWithTag(vmm_context, VMM_POOL);
+		KIRQL irql = KeRaiseIrqlToDpcLevel();
 
-	KeRevertToUserGroupAffinityThread(&old_affinity);
+		__vmx_vmclear(&vmm_context[processor_number.Number].vmcsRegionPhys);
+		__vmx_off();
+
+		if (vmm_context[processor_number.Number].vmcsRegionVirt)
+			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].vmcsRegionPhys);
+
+		if (vmm_context[processor_number.Number].vmxonRegionVirt)
+			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].vmxonRegionPhys);
+		
+		ExFreePoolWithTag(vmm_context, VMM_POOL);
+
+		KeLowerIrql(irql);
+		KeRevertToUserGroupAffinityThread(&old_affinity);
+	}
+
+	return;
 }
 
 VOID LaunchVm(int processorId) {
