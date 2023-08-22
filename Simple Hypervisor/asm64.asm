@@ -29,7 +29,7 @@ GetTr PROC
 GetTr ENDP
 
 HostTerminateHypervisor PROC
-	;VMXOFF
+	VMXOFF
 
 	MOV RSP, g_StackPointerForReturning
 	MOV RBP, g_BasePointerForReturning

@@ -68,6 +68,8 @@ union _VmexitInfo {
 struct _vmm_context* vmm_context;
 struct driverGlobals g_DriverGlobals;
 UINT64 g_GuestMemory;
+UINT64 g_GuestRip;
+UINT64 g_GuestRsp;
 
 ULONG64 PhysicalToVirtualAddress(UINT64 physical_address);
 UINT64 VirtualToPhysicalAddress(void* virtual_address);

@@ -63,7 +63,13 @@ VOID VmExitHandler(PVOID Param) {
 		// Terminate VM ??
 		//
 		if (guestRegisters->RAX == 0x6e616e61 && guestRegisters->RCX == 0x6e616e61) {	// 'nana'
+			__vmx_vmread(VMCS_GUEST_RIP, &g_GuestRip);
+			__vmx_vmread(VMCS_GUEST_RSP, &g_GuestRsp);
 
+			size_t len = 0;
+			__vmx_vmread(VMCS_VMEXIT_INSTRUCTION_LENGTH, &len);
+			g_GuestRip += len;
+			// now jump tp g_GuestRip
 		}
 
 		__cpuidex((int*)&cpuInfo, guestRegisters->RAX, guestRegisters->RCX);
