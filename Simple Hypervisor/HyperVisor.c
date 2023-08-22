@@ -67,9 +67,9 @@ BOOLEAN VirtualizeAllProcessors() {
 		if (!allocateVmExitStack(processor_number.Number))		return FALSE;
 
 		//
-		// Allocate memory for MSR Bitmap
+		// Allocate memory for IO Bitmap
 		//
-		if (!allocateMsrStack(processor_number.Number))			return FALSE;
+		if (!allocateIoBitmapStack(processor_number.Number))			return FALSE;
 
 		KeLowerIrql(irql);
 		KeRevertToUserGroupAffinityThread(&old_affinity);
@@ -107,8 +107,11 @@ VOID DevirtualizeAllProcessors() {
 		if (vmm_context[processor_number.Number].HostStack)
 			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].HostStack);
 
-		if (vmm_context[processor_number.Number].bitmapVirt)
-			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].bitmapVirt);
+		if (vmm_context[processor_number.Number].bitmapAVirt)
+			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].bitmapAVirt);
+
+		if (vmm_context[processor_number.Number].bitmapBVirt)
+			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].bitmapBVirt);
 		
 		ExFreePoolWithTag(vmm_context, VMM_POOL);
 

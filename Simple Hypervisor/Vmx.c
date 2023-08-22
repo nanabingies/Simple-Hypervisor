@@ -142,20 +142,32 @@ BOOLEAN allocateVmExitStack(UCHAR processorNumber) {
 	return TRUE;
 }
 
-BOOLEAN allocateMsrStack(UCHAR processorNumber) {
+BOOLEAN allocateIoBitmapStack(UCHAR processorNumber) {
 	PHYSICAL_ADDRESS physAddr;
 	physAddr.QuadPart = (ULONGLONG)~0;
 	PVOID bitmap = MmAllocateContiguousMemory(PAGE_SIZE, physAddr);
 	if (!bitmap) {
-		DbgPrint("[-] Failure allocating memory for MSR Bitmap.\n");
+		DbgPrint("[-] Failure allocating memory for IO Bitmap A.\n");
 		return FALSE;
 	}
 	RtlSecureZeroMemory(bitmap, PAGE_SIZE);
 
-	vmm_context[processorNumber].bitmapVirt = (UINT64)bitmap;
-	vmm_context[processorNumber].bitmapPhys = VirtualToPhysicalAddress(bitmap);
+	vmm_context[processorNumber].bitmapAVirt = (UINT64)bitmap;
+	vmm_context[processorNumber].bitmapAPhys = VirtualToPhysicalAddress(bitmap);
 
-	DbgPrint("[*] vmm_context[processorNumber].bitmapVirt : %llx\n", vmm_context[processorNumber].bitmapVirt);
+	physAddr.QuadPart = (ULONGLONG)~0;
+	bitmap = MmAllocateContiguousMemory(PAGE_SIZE, physAddr);
+	if (!bitmap) {
+		DbgPrint("[-] Failure allocating memory for IO Bitmap B.\n");
+		return FALSE;
+	}
+	RtlSecureZeroMemory(bitmap, PAGE_SIZE);
+
+	vmm_context[processorNumber].bitmapBVirt = (UINT64)bitmap;
+	vmm_context[processorNumber].bitmapBPhys = VirtualToPhysicalAddress(bitmap);
+
+	DbgPrint("[*] vmm_context[processorNumber].bitmapAVirt : %llx\n", vmm_context[processorNumber].bitmapAVirt);
+	DbgPrint("[*] vmm_context[processorNumber].bitmapBVirt : %llx\n", vmm_context[processorNumber].bitmapBVirt);
 
 	return TRUE;
 }

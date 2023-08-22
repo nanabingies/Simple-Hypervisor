@@ -94,8 +94,6 @@ EVmErrors SetupVmcs(ULONG processorNumber) {
 	__vmx_vmwrite(VMCS_HOST_CR3, __readcr3());
 	__vmx_vmwrite(VMCS_HOST_CR4, __readcr4());
 
-
-	// Don't even know why Daax included this in his hypervisor series.
 	__vmx_vmwrite(VMCS_CTRL_CR0_READ_SHADOW, __readcr0());
 	__vmx_vmwrite(VMCS_CTRL_CR4_READ_SHADOW, __readcr4());
 
@@ -232,7 +230,7 @@ EVmErrors SetupVmcs(ULONG processorNumber) {
 
 	//
 	// SMBASE (32 bits)
-	// This register contains the base address of the logical processor s SMRAM image.
+	// This register contains the base address of the logical processor's SMRAM image.
 	// 
 	//__vmx_vmwrite(VMCS_GUEST_SMBASE, );
 
@@ -249,8 +247,9 @@ EVmErrors SetupVmcs(ULONG processorNumber) {
 	__vmx_vmwrite(VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS, AdjustControls(0, IA32_VMX_PINBASED_CTLS));
 
 	__vmx_vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
-		AdjustControls(IA32_VMX_PROCBASED_CTLS_HLT_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_ACTIVATE_SECONDARY_CONTROLS_FLAG,
-			IA32_VMX_PROCBASED_CTLS));
+		AdjustControls(IA32_VMX_PROCBASED_CTLS_HLT_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_USE_MSR_BITMAPS_FLAG |
+			/*IA32_VMX_PROCBASED_CTLS_CR3_LOAD_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_CR3_STORE_EXITING_FLAG |*/
+			IA32_VMX_PROCBASED_CTLS_ACTIVATE_SECONDARY_CONTROLS_FLAG, IA32_VMX_PROCBASED_CTLS));
 	__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
 		AdjustControls(/*IA32_VMX_PROCBASED_CTLS2_ENABLE_EPT_FLAG |*/ IA32_VMX_PROCBASED_CTLS2_ENABLE_RDTSCP_FLAG,
 			IA32_VMX_PROCBASED_CTLS2));
@@ -274,24 +273,23 @@ EVmErrors SetupVmcs(ULONG processorNumber) {
 	// VM-exit information fields. 
 	// These fields receive information on VM exits and describe the cause and the nature of VM exits.
 	//
-
-	// No information is stored here.
-	//__vmx_vmwrite(VMCS_VMEXIT_INSTRUCTION_INFO,
-	//	AdjustControls(, IA32_VMX_EXIT_CTLS));
+	//__vmx_vmwrite(VMCS_VMEXIT_INSTRUCTION_INFO, AdjustControls(, IA32_VMX_EXIT_CTLS));
 
 	//
 	// Misc
 	//
 	__vmx_vmwrite(VMCS_GUEST_ACTIVITY_STATE, 0);	// Active State
 	__vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY_STATE, 0);
+	__vmx_vmwrite(VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS, 0);
 	
-	//
-	// let's make some check here.
-	// Don't know if they are really needed.
-	//
 	IA32_VMX_MISC_REGISTER misc;
 	misc.AsUInt = __readmsr(IA32_VMX_MISC);
-	DbgPrint("[*][Debugging] CR3 Target count : %llx\n", misc.Cr3TargetCount);	// If > 4, vmluanch fails.
+	__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, misc.Cr3TargetCount);
+
+	for (unsigned iter = 0; iter < misc.Cr3TargetCount; iter++) {
+		__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_0 + (iter * 2), 0);
+	
+	}
 
 	
 	return VM_ERROR_OK;

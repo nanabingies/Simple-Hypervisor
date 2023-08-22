@@ -15,7 +15,7 @@ BOOLEAN allocateVmxonRegion(UCHAR);
 
 BOOLEAN allocateVmExitStack(UCHAR);
 
-BOOLEAN allocateMsrStack(UCHAR);
+BOOLEAN allocateIoBitmapStack(UCHAR);
 
 BOOLEAN VirtualizeAllProcessors();
 

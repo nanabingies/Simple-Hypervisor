@@ -15,8 +15,11 @@ struct _vmm_context {
 	UINT64	vmcsRegionVirt;					// virtual address of VMCS Region
 	UINT64	vmcsRegionPhys;					// Physical address of VMCS Region
 
-	UINT64  bitmapVirt;                     // Virtual address of bitmap bits
-	UINT64  bitmapPhys;                     // Physical address
+	UINT64  bitmapAVirt;                    // Virtual address of bitmap A
+	UINT64  bitmapAPhys;                    // Physical address
+
+	UINT64	bitmapBVirt;					// Virtual address of bitmap B
+	UINT64	bitmapBPhys;					// Plysical address
 
 	UINT64	eptPtr;							// Pointer to the EPT
 
@@ -48,9 +51,22 @@ struct _GuestRegisters {
 	UINT64	R15;
 };
 
+union _VmexitInfo {
+	UINT32	AsUint;
+	struct {
+		UINT32	BasicExitReason : 16;
+		UINT32	Reserved1 : 1;
+		UINT32	NotDefined1 : 10;
+		UINT32	EnclaveMode : 1;
+		UINT32	PendingMTF : 1;
+		UINT32	VMXRootVmExit : 1;
+		UINT32	NotDefined2 : 1;
+		UINT32	VmEntryFailure : 1;
+	};
+};
+
 struct _vmm_context* vmm_context;
 struct driverGlobals g_DriverGlobals;
-//struct _GuestRegiters guest_registers;
 UINT64 g_GuestMemory;
 
 ULONG64 PhysicalToVirtualAddress(UINT64 physical_address);
