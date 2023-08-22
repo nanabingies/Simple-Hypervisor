@@ -58,13 +58,23 @@ BOOLEAN VirtualizeAllProcessors() {
 		//
 		// Allocate Memory for VMXON & VMCS regions and initialize
 		//
-		allocateVmxonRegion(processor_number.Number);
-		allocateVmcsRegion(processor_number.Number);
+		if (!allocateVmxonRegion(processor_number.Number))		return FALSE;
+		if (!allocateVmcsRegion(processor_number.Number))		return FALSE;
 
 		//
 		// Setup EPT structures
 		//
 		//InitializeEpt();
+
+		//
+		// Allocate space for VM EXIT Handler
+		//
+		if (!allocateVmExitStack(processor_number.Number))		return FALSE;
+
+		//
+		// Allocate memory for MSR Bitmap
+		//
+		if (!allocateMsrStack(processor_number.Number))			return FALSE;
 
 		KeLowerIrql(irql);
 		KeRevertToUserGroupAffinityThread(&old_affinity);
@@ -98,6 +108,12 @@ VOID DevirtualizeAllProcessors() {
 
 		if (vmm_context[processor_number.Number].vmxonRegionVirt)
 			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].vmxonRegionVirt);
+
+		if (vmm_context[processor_number.Number].HostStack)
+			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].HostStack);
+
+		if (vmm_context[processor_number.Number].bitmapVirt)
+			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].bitmapVirt);
 		
 		ExFreePoolWithTag(vmm_context, VMM_POOL);
 
@@ -122,38 +138,6 @@ VOID LaunchVm(int processorId) {
 	affinity.Group = processor_number.Group;
 	affinity.Mask = (KAFFINITY)1 << processor_number.Number;
 	KeSetSystemGroupAffinityThread(&affinity, &old_affinity);
-
-	PAGED_CODE();
-
-	//
-	// Allocate space for VM EXIT Handler
-	//
-	PVOID vmexitStack = ExAllocatePoolWithTag(NonPagedPool, STACK_SIZE, VMM_POOL);
-	if (!vmexitStack) {
-		DbgPrint("[-] Failure allocating memory for VM EXIT Handler.\n");
-		return;
-	}
-	RtlSecureZeroMemory(vmexitStack, STACK_SIZE);
-	vmm_context->HostStack = (UINT64)vmexitStack;
-	DbgPrint("[*] vmm_context->GuestStack : %llx\n", vmm_context->HostStack);
-
-	//
-	// Allocate memory for MSR Bitmap
-	//
-	PHYSICAL_ADDRESS physAddr;
-	physAddr.QuadPart = (ULONGLONG)~0;
-	PVOID bitmap = MmAllocateContiguousMemory(PAGE_SIZE, physAddr);
-	if (!bitmap) {
-		DbgPrint("[-] Failure allocating memory for MSR Bitmap.\n");
-		ExFreePoolWithTag(vmexitStack, VMM_POOL);
-
-		__vmx_off();
-		return;
-	}
-	RtlSecureZeroMemory(bitmap, PAGE_SIZE);
-
-	vmm_context->bitmapVirt = (UINT64)bitmap;
-	vmm_context->bitmapPhys = VirtualToPhysicalAddress(bitmap);
 
 	//
 	// Set VMCS state to inactive

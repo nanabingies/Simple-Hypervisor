@@ -9,9 +9,13 @@ VOID EnableCR4();
 
 BOOLEAN CheckBiosLock();
 
-VOID allocateVmcsRegion(UCHAR processorNumber);
+BOOLEAN allocateVmcsRegion(UCHAR processorNumber);
 
-VOID allocateVmxonRegion(UCHAR processorNumber);
+BOOLEAN allocateVmxonRegion(UCHAR processorNumber);
+
+BOOLEAN allocateVmExitStack(UCHAR processorNumber);
+
+BOOLEAN allocateMsrStack(UCHAR processorNumber);
 
 BOOLEAN VirtualizeAllProcessors();
 

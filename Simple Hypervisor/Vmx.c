@@ -45,10 +45,10 @@ BOOLEAN CheckBiosLock() {
 	return TRUE;
 }
 
-VOID allocateVmxonRegion(UCHAR processorNumber) {
+BOOLEAN allocateVmxonRegion(UCHAR processorNumber) {
 	if (!vmm_context) {
 		DbgPrint("[-] Unspecified VM context for processor %x\n", processorNumber);
-		return;
+		return FALSE;
 	}
 
 	PHYSICAL_ADDRESS physAddr;
@@ -60,7 +60,7 @@ VOID allocateVmxonRegion(UCHAR processorNumber) {
 	PVOID vmxon = MmAllocateContiguousMemory(vmx_basic.VmcsSizeInBytes, physAddr);
 	if (!vmxon) {
 		DbgPrint("[-] Allocating vmxon failed.\n");
-		return;
+		return FALSE;
 	}
 
 	RtlSecureZeroMemory(vmxon, vmx_basic.VmcsSizeInBytes);
@@ -78,18 +78,18 @@ VOID allocateVmxonRegion(UCHAR processorNumber) {
 	auto retVal = __vmx_on(&vmm_context[processorNumber].vmxonRegionPhys);
 	if (retVal > 0) {
 		DbgPrint("[-] Failed vmxon with error code %x\n", retVal);
-		return;
+		return FALSE;
 	}
 
 	DbgPrint("[*] vmxon initialized on logical processor %x\n", processorNumber);
-	return;
+	return TRUE;
 }
 
 
-VOID allocateVmcsRegion(UCHAR processorNumber) {
+BOOLEAN allocateVmcsRegion(UCHAR processorNumber) {
 	if (!vmm_context) {
 		DbgPrint("[-] Unspecified VM context for processor %x\n", processorNumber);
-		return;
+		return FALSE;
 	}
 
 	PHYSICAL_ADDRESS physAddr;
@@ -101,7 +101,7 @@ VOID allocateVmcsRegion(UCHAR processorNumber) {
 	PVOID vmcs = MmAllocateContiguousMemory(vmx_basic.VmcsSizeInBytes, physAddr);
 	if (!vmcs) {
 		DbgPrint("[-] Allocating vmcs failed.\n");
-		return;
+		return FALSE;
 	}
 
 	RtlSecureZeroMemory(vmcs, vmx_basic.VmcsSizeInBytes);
@@ -119,9 +119,43 @@ VOID allocateVmcsRegion(UCHAR processorNumber) {
 	auto retVal = __vmx_vmptrld(&vmm_context[processorNumber].vmcsRegionPhys);
 	if (retVal > 0) {
 		DbgPrint("[-] Failed vmcs with error code %x\n", retVal);
-		return;
+		return FALSE;
 	}
 
 	DbgPrint("[*] vmcs loaded on logical processor %x\n", processorNumber);
-	return;
+	return TRUE;
+}
+
+BOOLEAN allocateVmExitStack(UCHAR processorNumber) {
+	PHYSICAL_ADDRESS physAddr;
+	physAddr.QuadPart = (ULONGLONG)~0;
+	PVOID vmexitStack = MmAllocateContiguousMemory(STACK_SIZE, physAddr);
+	if (!vmexitStack) {
+		DbgPrint("[-] Failure allocating memory for VM EXIT Handler.\n");
+		return FALSE;
+	}
+	RtlSecureZeroMemory(vmexitStack, STACK_SIZE);
+
+	vmm_context[processorNumber].HostStack = (UINT64)vmexitStack;
+	DbgPrint("[*] vmm_context[processorNumber].HostStack : %llx\n", vmm_context[processorNumber].HostStack);
+
+	return TRUE;
+}
+
+BOOLEAN allocateMsrStack(UCHAR processorNumber) {
+	PHYSICAL_ADDRESS physAddr;
+	physAddr.QuadPart = (ULONGLONG)~0;
+	PVOID bitmap = MmAllocateContiguousMemory(PAGE_SIZE, physAddr);
+	if (!bitmap) {
+		DbgPrint("[-] Failure allocating memory for MSR Bitmap.\n");
+		return FALSE;
+	}
+	RtlSecureZeroMemory(bitmap, PAGE_SIZE);
+
+	vmm_context[processorNumber].bitmapVirt = (UINT64)bitmap;
+	vmm_context[processorNumber].bitmapPhys = VirtualToPhysicalAddress(bitmap);
+
+	DbgPrint("[*] vmm_context[processorNumber].bitmapVirt : %llx\n", vmm_context[processorNumber].bitmapVirt);
+
+	return TRUE;
 }
