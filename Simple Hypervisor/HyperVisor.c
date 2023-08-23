@@ -169,7 +169,7 @@ ULONG_PTR LaunchVm(_In_ ULONG_PTR Argument) {
 	//
 	// Save HOST RSP & RBP
 	//
-	//SaveHostRegisters();
+	SaveHostRegisters(vmm_context[processorNumber].g_StackPointerForReturning, vmm_context[processorNumber].g_BasePointerForReturning);
 
 	//
 	// Launch VM into Outer Space :)

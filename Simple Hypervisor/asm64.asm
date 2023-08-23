@@ -96,8 +96,12 @@ HostContinueExecution PROC
 HostContinueExecution ENDP
 
 SaveHostRegisters PROC
-	MOV g_StackPointerForReturning, RSP
-	MOV g_BasePointerForReturning, RBP
+	int 3
+	;MOV g_StackPointerForReturning, RSP
+	;MOV g_BasePointerForReturning, RBP
+
+	MOV RCX, RSP
+	MOV	RDX, RBP
 	RET
 SaveHostRegisters ENDP
 

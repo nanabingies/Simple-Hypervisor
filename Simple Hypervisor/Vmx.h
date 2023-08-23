@@ -1,6 +1,6 @@
 #pragma once
 
-VOID SaveHostRegisters();
+VOID SaveHostRegisters(UINT64, UINT64);
 ULONG_PTR HostTerminateHypervisor(ULONG_PTR);
 
 BOOLEAN IsVmxSupport();
