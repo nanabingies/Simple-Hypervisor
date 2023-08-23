@@ -12,6 +12,7 @@ VOID VmExitHandler(PVOID Param) {
 	VMX_VMEXIT_REASON VmExitInfo;
 	__vmx_vmread(VMCS_EXIT_REASON, (size_t*) & VmExitInfo);
 	DbgPrint("VMCS_EXIT_REASON : %lx\n", VmExitInfo.BasicExitReason);
+	DbgPrint("This came from processor : %lx\n", KeGetCurrentNodeNumber());
 
 	switch (VmExitInfo.BasicExitReason)
 	{

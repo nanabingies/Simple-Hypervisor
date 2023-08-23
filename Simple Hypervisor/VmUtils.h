@@ -24,6 +24,8 @@ struct _vmm_context {
 	UINT64	eptPtr;							// Pointer to the EPT
 
 	UINT64	HostStack;						// Stack of the VM Exit Handler
+
+	UINT64	GuestMemory;					// Guest RSP
 };
 
 
@@ -49,20 +51,6 @@ struct _GuestRegisters {
 	UINT64	R13;
 	UINT64	R14;
 	UINT64	R15;
-};
-
-union _VmexitInfo {
-	UINT32	AsUint;
-	struct {
-		UINT32	BasicExitReason : 16;
-		UINT32	Reserved1 : 1;
-		UINT32	NotDefined1 : 10;
-		UINT32	EnclaveMode : 1;
-		UINT32	PendingMTF : 1;
-		UINT32	VMXRootVmExit : 1;
-		UINT32	NotDefined2 : 1;
-		UINT32	VmEntryFailure : 1;
-	};
 };
 
 struct _vmm_context* vmm_context;
