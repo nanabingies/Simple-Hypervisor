@@ -105,8 +105,8 @@ EVmErrors SetupVmcs(ULONG processorNumber) {
 	//
 	// RSP, RIP, RFLAGS - Guest & Host
 	//
-	__vmx_vmwrite(VMCS_GUEST_RSP, (size_t)g_GuestMemory);	// vmm_context[processorNumber].GuestMemory
-	__vmx_vmwrite(VMCS_GUEST_RIP, (size_t)GuestContinueExecution);	// vmm_context[processorNumber].GuestMemory // g_GuestMemory
+	__vmx_vmwrite(VMCS_GUEST_RSP, (size_t)g_GuestMemory);
+	__vmx_vmwrite(VMCS_GUEST_RIP, (size_t)GuestContinueExecution);		// g_GuestMemory
 	__vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags());
 
 	__vmx_vmwrite(VMCS_HOST_RSP, ((size_t)vmm_context[processorNumber].HostStack + STACK_SIZE - 1));

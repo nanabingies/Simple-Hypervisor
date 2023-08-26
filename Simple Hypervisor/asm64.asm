@@ -18,15 +18,6 @@ EXTERN ResumeVm:PROC
 
 .code _text
 
-GetLdtr PROC
-	SLDT	RAX
-	RET
-GetLdtr ENDP
-
-GetTr PROC
-	STR		RAX
-	RET
-GetTr ENDP
 
 HostTerminateHypervisor PROC
 	VMXOFF
@@ -49,6 +40,8 @@ HostTerminateHypervisor PROC
 	RET
 
 HostTerminateHypervisor ENDP
+
+; ----------------------------------------------------------------------------------- ;
 
 HostContinueExecution PROC
 	int 3		; A VM Exit just occured
@@ -89,11 +82,13 @@ HostContinueExecution PROC
     POP R14
     POP R15
 
-	SUB RSP, 0100h ; to avoid error in future functions
+	SUB RSP, 0100h		; to avoid error in future functions
     JMP ResumeVm
 
 	RET
 HostContinueExecution ENDP
+
+; ----------------------------------------------------------------------------------- ;
 
 SaveHostRegisters PROC
 	int 3
@@ -106,7 +101,7 @@ SaveHostRegisters PROC
 SaveHostRegisters ENDP
 
 
-
+; ----------------------------------------------------------------------------------- ;
 
 
 GetIdtBase PROC
@@ -142,5 +137,15 @@ GetGdtBase PROC
 	MOV		RAX, QWORD PTR GDTR[2]
 	RET
 GetGdtBase ENDP
+
+GetLdtr PROC
+	SLDT	RAX
+	RET
+GetLdtr ENDP
+
+GetTr PROC
+	STR		RAX
+	RET
+GetTr ENDP
 
 END

@@ -126,6 +126,7 @@ BOOLEAN allocateVmcsRegion(UCHAR processorNumber) {
 	return TRUE;
 }
 
+
 BOOLEAN allocateVmExitStack(UCHAR processorNumber) {
 	PHYSICAL_ADDRESS physAddr;
 	physAddr.QuadPart = (ULONGLONG)~0;
@@ -141,6 +142,7 @@ BOOLEAN allocateVmExitStack(UCHAR processorNumber) {
 
 	return TRUE;
 }
+
 
 BOOLEAN allocateIoBitmapStack(UCHAR processorNumber) {
 	PHYSICAL_ADDRESS physAddr;
@@ -172,6 +174,7 @@ BOOLEAN allocateIoBitmapStack(UCHAR processorNumber) {
 	return TRUE;
 }
 
+
 BOOLEAN allocateMsrBitmap(UCHAR processorNumber) {
 	PHYSICAL_ADDRESS physAddr;
 	physAddr.QuadPart = (ULONGLONG)~0;
@@ -186,4 +189,9 @@ BOOLEAN allocateMsrBitmap(UCHAR processorNumber) {
 	vmm_context[processorNumber].msrBitmapPhys = VirtualToPhysicalAddress(bitmap);
 
 	return TRUE;
+}
+
+
+VOID GuestContinueExecution() {
+
 }

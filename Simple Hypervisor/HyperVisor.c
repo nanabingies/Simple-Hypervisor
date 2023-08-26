@@ -216,7 +216,7 @@ VOID ResumeVm() {
 	__vmx_vmwrite(VMCS_GUEST_RIP, Rip);
 
 	//
-	// the VMRESUME instruction requires a VMCS whose launch state is  launched .
+	// the VMRESUME instruction requires a VMCS whose launch state is set to launched .
 	// we're still in launch mode
 	//
 	__vmx_vmresume();
