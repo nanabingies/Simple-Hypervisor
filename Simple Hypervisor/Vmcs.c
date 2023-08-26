@@ -109,9 +109,9 @@ EVmErrors SetupVmcs(ULONG processorNumber) {
 	__vmx_vmwrite(VMCS_GUEST_RIP, (size_t)GuestContinueExecution);	// vmm_context[processorNumber].GuestMemory // g_GuestMemory
 	__vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags());
 
-	__vmx_vmwrite(VMCS_HOST_RSP, ((ULONG64)vmm_context[processorNumber].HostStack + STACK_SIZE - 1));
+	__vmx_vmwrite(VMCS_HOST_RSP, ((size_t)vmm_context[processorNumber].HostStack + STACK_SIZE - 1));
 	// Address host should point to, to kick things off when vmexit occurs
-	__vmx_vmwrite(VMCS_HOST_RIP, (UINT64)HostContinueExecution); 
+	__vmx_vmwrite(VMCS_HOST_RIP, (size_t)HostContinueExecution); 
 
 
 	//
