@@ -104,7 +104,10 @@ GuestContinueExecution PROC
 	POP R10
 	POP R9
 	POP R8
-	POP 
+	POP RBP
+
+	POPFQ
+	RET
 
 GuestContinueExecution ENDP
 
@@ -112,7 +115,26 @@ GuestContinueExecution ENDP
 
 SaveHostRegisters PROC
 	
+	PUSHFQ
+	PUSH	RAX
+	PUSH	RBX
+	PUSH	RCX
+	PUSH	RDX
+	PUSH	RBP
+	PUSH	RSI
+	PUSH	RDI
+	PUSH	R8
+	PUSH	R9
+	PUSH	R10
+	PUSH	R11
+	PUSH	R12
+	PUSH	R13
+	PUSH	R14
+	PUSH	R15
 
+	SUB		RSP, 100h
+	MOV		RAX, RSP
+	RET
 
 SaveHostRegisters ENDP
 

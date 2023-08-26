@@ -164,6 +164,11 @@ VOID LaunchVm(struct _KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, P
 	DbgPrint("[*] VMCS is current and active on processor %x\n", processorNumber);
 
 	//
+	// Save HOST Registers
+	//
+	vmm_context[processorNumber].GuestMemory = SaveHostRegisters();
+
+	//
 	// Setup VMCS structure fields for that logical processor
 	//
 	if (SetupVmcs(processorNumber) != VM_ERROR_OK) {
@@ -178,10 +183,7 @@ VOID LaunchVm(struct _KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, P
 	}
 	DbgPrint("[*] VMCS setup on processor %x done\n", processorNumber);
 
-	//
-	// Save HOST Registers
-	//
-	SaveHostRegisters();
+	
 
 	//
 	// Launch VM into Outer Space :)
