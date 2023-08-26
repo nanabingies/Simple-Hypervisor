@@ -15,11 +15,14 @@ struct _vmm_context {
 	UINT64	vmcsRegionVirt;					// virtual address of VMCS Region
 	UINT64	vmcsRegionPhys;					// Physical address of VMCS Region
 
-	UINT64  bitmapAVirt;                    // Virtual address of bitmap A
-	UINT64  bitmapAPhys;                    // Physical address
+	UINT64  ioBitmapAVirt;                    // Virtual address of I/O bitmap A
+	UINT64  ioBitmapAPhys;                    // Physical address
 
-	UINT64	bitmapBVirt;					// Virtual address of bitmap B
-	UINT64	bitmapBPhys;					// Plysical address
+	UINT64	ioBitmapBVirt;					// Virtual address of I/O bitmap B
+	UINT64	ioBitmapBPhys;					// Plysical address
+
+	UINT64	msrBitmapVirt;					// Virtual address of MSR bitmap
+	UINT64	msrBitmapPhys;					// Physical address
 
 	UINT64	eptPtr;							// Pointer to the EPT
 

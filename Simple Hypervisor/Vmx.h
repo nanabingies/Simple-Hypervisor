@@ -17,11 +17,15 @@ BOOLEAN allocateVmExitStack(UCHAR);
 
 BOOLEAN allocateIoBitmapStack(UCHAR);
 
+BOOLEAN allocateMsrBitmap(UCHAR);
+
 BOOLEAN VirtualizeAllProcessors();
 
 VOID DevirtualizeAllProcessors();
 
 VOID LaunchVm(struct _KDPC* Dpc, PVOID DeferredContext, PVOID, PVOID);
+
+VOID ContinueGuestExecution();
 
 VOID TerminateVm();
 

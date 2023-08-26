@@ -73,7 +73,9 @@ BOOLEAN VirtualizeAllProcessors() {
 
 		//
 		// Future: Add MSR Bitmap support
+		// Fix: Added MSR Bitmap support
 		//
+		if (!allocateMsrBitmap(processor_number.Number))			return FALSE;
 
 		KeLowerIrql(irql);
 		KeRevertToUserGroupAffinityThread(&old_affinity);
@@ -111,8 +113,8 @@ VOID DevirtualizeAllProcessors() {
 		if (vmm_context[processor_number.Number].HostStack)
 			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].HostStack);
 
-		if (vmm_context[processor_number.Number].bitmapAVirt)
-			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].bitmapAVirt);
+		if (vmm_context[processor_number.Number].ioBitmapAVirt)
+			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].ioBitmapAVirt);
 
 		if (vmm_context[processor_number.Number].bitmapBVirt)
 			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].bitmapBVirt);
@@ -144,7 +146,7 @@ VOID LaunchVm(struct _KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, P
 
 		//__vmx_off();
 		//VmOff = TRUE;
-		return 0;
+		return;
 	}
 	DbgPrint("[*] VMCS for processor %x set to inactive.\n", processorNumber);
 
@@ -157,7 +159,7 @@ VOID LaunchVm(struct _KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, P
 
 		//__vmx_off();
 		//VmOff = TRUE;
-		return 0;
+		return;
 	}
 	DbgPrint("[*] VMCS is current and active on processor %x\n", processorNumber);
 
@@ -172,7 +174,7 @@ VOID LaunchVm(struct _KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, P
 		DbgPrint("[-] Exiting with error code : %llx\n", ErrorCode);
 		//__vmx_off();
 		//VmOff = TRUE;
-		return 0;
+		return;
 	}
 	DbgPrint("[*] VMCS setup on processor %x done\n", processorNumber);
 

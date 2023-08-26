@@ -106,12 +106,13 @@ EVmErrors SetupVmcs(ULONG processorNumber) {
 	// RSP, RIP, RFLAGS - Guest & Host
 	//
 	__vmx_vmwrite(VMCS_GUEST_RSP, (size_t)g_GuestMemory);	// vmm_context[processorNumber].GuestMemory
-	__vmx_vmwrite(VMCS_GUEST_RIP, (size_t)g_GuestMemory);	// vmm_context[processorNumber].GuestMemory
+	__vmx_vmwrite(VMCS_GUEST_RIP, (size_t)GuestContinueExecution);	// vmm_context[processorNumber].GuestMemory // g_GuestMemory
 	__vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags());
 
 	__vmx_vmwrite(VMCS_HOST_RSP, ((ULONG64)vmm_context[processorNumber].HostStack + STACK_SIZE - 1));
 	// Address host should point to, to kick things off when vmexit occurs
-	__vmx_vmwrite(VMCS_HOST_RIP, (UINT64)HostContinueExecution); //  &HostTerminateHypervisor
+	__vmx_vmwrite(VMCS_HOST_RIP, (UINT64)HostContinueExecution); 
+
 
 	//
 	// CS, SS, DS, ES, FS, GS, LDTR, and TR -- Guest & Host
@@ -249,9 +250,11 @@ EVmErrors SetupVmcs(ULONG processorNumber) {
 	__vmx_vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
 		AdjustControls(IA32_VMX_PROCBASED_CTLS_HLT_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_USE_MSR_BITMAPS_FLAG |
 			IA32_VMX_PROCBASED_CTLS_CR3_LOAD_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_CR3_STORE_EXITING_FLAG |
+			IA32_VMX_PROCBASED_CTLS_USE_IO_BITMAPS_FLAG |
 			IA32_VMX_PROCBASED_CTLS_ACTIVATE_SECONDARY_CONTROLS_FLAG, IA32_VMX_PROCBASED_CTLS));
+
 	__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
-		AdjustControls(/*IA32_VMX_PROCBASED_CTLS2_ENABLE_EPT_FLAG |*/ IA32_VMX_PROCBASED_CTLS2_ENABLE_RDTSCP_FLAG,
+		AdjustControls(IA32_VMX_PROCBASED_CTLS2_ENABLE_XSAVES_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_RDTSCP_FLAG,
 			IA32_VMX_PROCBASED_CTLS2));
 
 	//
@@ -281,6 +284,11 @@ EVmErrors SetupVmcs(ULONG processorNumber) {
 	__vmx_vmwrite(VMCS_GUEST_ACTIVITY_STATE, 0);	// Active State
 	__vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY_STATE, 0);
 	__vmx_vmwrite(VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS, 0);
+
+	__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_A_ADDRESS, vmm_context[processorNumber].ioBitmapAPhys);
+	__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_B_ADDRESS, vmm_context[processorNumber].ioBitmapBPhys);
+
+	__vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, vmm_context[processorNumber].msrBitmapPhys);
 	
 	IA32_VMX_MISC_REGISTER misc;
 	misc.AsUInt = __readmsr(IA32_VMX_MISC);
