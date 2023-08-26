@@ -25,7 +25,7 @@ VOID DevirtualizeAllProcessors();
 
 VOID LaunchVm(struct _KDPC* Dpc, PVOID DeferredContext, PVOID, PVOID);
 
-VOID ContinueGuestExecution();
+VOID GuestContinueExecution();
 
 VOID TerminateVm();
 
