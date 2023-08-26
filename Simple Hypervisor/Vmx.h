@@ -21,7 +21,7 @@ BOOLEAN VirtualizeAllProcessors();
 
 VOID DevirtualizeAllProcessors();
 
-ULONG_PTR LaunchVm(_In_ ULONG_PTR);
+VOID LaunchVm(struct _KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2);
 
 VOID TerminateVm();
 

@@ -58,7 +58,8 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING Regi
 
 	InitializeEpt();
 	
-	KeIpiGenericCall((PKIPI_BROADCAST_WORKER)LaunchVm, 0);
+	//KeIpiGenericCall((PKIPI_BROADCAST_WORKER)LaunchVm, 0);
+	KeGenericCallDpc((PKDEFERRED_ROUTINE)LaunchVm, 0);
 
 	DbgPrint("[*] The hypervisor has been installed.\n");
 

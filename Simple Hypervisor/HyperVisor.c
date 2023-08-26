@@ -71,6 +71,10 @@ BOOLEAN VirtualizeAllProcessors() {
 		//
 		if (!allocateIoBitmapStack(processor_number.Number))			return FALSE;
 
+		//
+		// Future: Add MSR Bitmap support
+		//
+
 		KeLowerIrql(irql);
 		KeRevertToUserGroupAffinityThread(&old_affinity);
 	}
@@ -122,7 +126,8 @@ VOID DevirtualizeAllProcessors() {
 	return;
 }
 
-ULONG_PTR LaunchVm(_In_ ULONG_PTR Argument) {
+
+VOID LaunchVm(struct _KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2) {
 	ULONG processorNumber = KeGetCurrentProcessorNumber();
 
 	//
@@ -176,7 +181,10 @@ ULONG_PTR LaunchVm(_In_ ULONG_PTR Argument) {
 	//
 	__vmx_vmlaunch();
 
-	return Argument;
+	KeSignalCallDpcSynchronize(SystemArgument2);
+	KeSignalCallDpcDone(SystemArgument1);
+
+	return;
 }
 
 VOID TerminateVm() {
