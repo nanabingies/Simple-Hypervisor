@@ -127,7 +127,12 @@ VOID DevirtualizeAllProcessors() {
 }
 
 
-VOID LaunchVm(struct _KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2) {
+VOID LaunchVm(_In_ struct _KDPC* Dpc, _In_opt_ PVOID DeferredContext, _In_opt_ PVOID SystemArgument1, _In_opt_ PVOID SystemArgument2) {
+
+	__analysis_assume(DeferredContext != NULL);
+	__analysis_assume(SystemArgument1 != NULL);
+	__analysis_assume(SystemArgument2 != NULL);
+
 	ULONG processorNumber = KeGetCurrentProcessorNumber();
 
 	//
