@@ -127,7 +127,7 @@ VOID DevirtualizeAllProcessors() {
 }
 
 
-VOID LaunchVm(_In_ struct _KDPC* Dpc, _In_opt_ PVOID DeferredContext, _In_opt_ PVOID SystemArgument1, _In_opt_ PVOID SystemArgument2) {
+VOID LaunchVm(struct _KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2) {
 
 	__analysis_assume(DeferredContext != NULL);
 	__analysis_assume(SystemArgument1 != NULL);
@@ -179,13 +179,15 @@ VOID LaunchVm(_In_ struct _KDPC* Dpc, _In_opt_ PVOID DeferredContext, _In_opt_ P
 	//
 	// Save HOST RSP & RBP
 	//
-	SaveHostRegisters(vmm_context[processorNumber].g_StackPointerForReturning, vmm_context[processorNumber].g_BasePointerForReturning);
+	SaveHostRegisters(vmm_context[processorNumber].g_StackPointerForReturning, 
+			vmm_context[processorNumber].g_BasePointerForReturning);
 
 	//
 	// Launch VM into Outer Space :)
 	//
 	__vmx_vmlaunch();
 
+	DbgBreakPoint();
 	KeSignalCallDpcSynchronize(SystemArgument2);
 	KeSignalCallDpcDone(SystemArgument1);
 
