@@ -1,6 +1,7 @@
 #pragma once
 
-VOID SaveHostRegisters(UINT64, UINT64);
+VOID SaveHostRegisters();
+
 ULONG_PTR HostTerminateHypervisor(ULONG_PTR);
 
 BOOLEAN IsVmxSupport();
@@ -24,8 +25,6 @@ BOOLEAN VirtualizeAllProcessors();
 VOID DevirtualizeAllProcessors();
 
 VOID LaunchVm(struct _KDPC* Dpc, PVOID DeferredContext, PVOID, PVOID);
-
-VOID GuestContinueExecution();
 
 VOID TerminateVm();
 

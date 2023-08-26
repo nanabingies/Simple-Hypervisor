@@ -45,6 +45,8 @@ EVmErrors SetupVmcs(ULONG);
 
 UINT64 HostContinueExecution();
 
+VOID GuestContinueExecution();
+
 UINT64 inline GetGdtBase();
 UINT64 inline GetGdtBase();
 UINT64 inline GetIdtBase();

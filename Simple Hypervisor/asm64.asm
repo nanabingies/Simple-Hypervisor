@@ -1,20 +1,22 @@
 
-PUBLIC HostContinueExecution
-PUBLIC SaveHostRegisters
-PUBLIC HostTerminateHypervisor
+PUBLIC	HostContinueExecution
+PUBLIC	GuestContinueExecution
+PUBLIC	SaveHostRegisters
+PUBLIC	HostTerminateHypervisor
 
-PUBLIC GetTr
-PUBLIC GetLdtr
-PUBLIC GetIdtLimit
-PUBLIC GetGdtLimit
-PUBLIC GetIdtBase
-PUBLIC GetGdtBase
 
-EXTERN g_StackPointerForReturning:QWORD
-EXTERN g_BasePointerForReturning:QWORD
+PUBLIC	GetTr
+PUBLIC	GetLdtr
+PUBLIC	GetIdtLimit
+PUBLIC	GetGdtLimit
+PUBLIC	GetIdtBase
+PUBLIC	GetGdtBase
 
-EXTERN VmExitHandler:PROC
-EXTERN ResumeVm:PROC
+EXTERN	g_StackPointerForReturning:QWORD
+EXTERN	g_BasePointerForReturning:QWORD
+
+EXTERN	VmExitHandler:PROC
+EXTERN	ResumeVm:PROC
 
 .code _text
 
@@ -90,14 +92,28 @@ HostContinueExecution ENDP
 
 ; ----------------------------------------------------------------------------------- ;
 
-SaveHostRegisters PROC
-	int 3
-	;MOV g_StackPointerForReturning, RSP
-	;MOV g_BasePointerForReturning, RBP
+GuestContinueExecution PROC
 
-	MOV RCX, RSP
-	MOV	RDX, RBP
-	RET
+	ADD RSP, 0100h
+	POP R15
+	POP R14
+	POP R12
+	POP R13
+	POP R12
+	POP R11
+	POP R10
+	POP R9
+	POP R8
+	POP 
+
+GuestContinueExecution ENDP
+
+; ----------------------------------------------------------------------------------- ;
+
+SaveHostRegisters PROC
+	
+
+
 SaveHostRegisters ENDP
 
 

@@ -179,10 +179,9 @@ VOID LaunchVm(struct _KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, P
 	DbgPrint("[*] VMCS setup on processor %x done\n", processorNumber);
 
 	//
-	// Save HOST RSP & RBP
+	// Save HOST Registers
 	//
-	SaveHostRegisters(vmm_context[processorNumber].g_StackPointerForReturning, 
-			vmm_context[processorNumber].g_BasePointerForReturning);
+	SaveHostRegisters();
 
 	//
 	// Launch VM into Outer Space :)

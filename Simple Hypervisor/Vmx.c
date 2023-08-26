@@ -190,8 +190,3 @@ BOOLEAN allocateMsrBitmap(UCHAR processorNumber) {
 
 	return TRUE;
 }
-
-
-VOID GuestContinueExecution() {
-
-}
