@@ -5,7 +5,7 @@
 #define DOS_NAME	L"\\DosDevices\\Hypervisor"
 #define VMM_POOL	'tesT'
 
-#define STACK_SIZE  (8 * PAGE_SIZE)
+#define STACK_SIZE  (20 * PAGE_SIZE)
 BOOLEAN VmOff;
 
 struct _vmm_context {

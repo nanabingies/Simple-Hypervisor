@@ -105,7 +105,7 @@ EVmErrors SetupVmcs(ULONG processorNumber) {
 	//
 	// RSP, RIP, RFLAGS - Guest & Host
 	//
-	__vmx_vmwrite(VMCS_GUEST_RSP, (size_t)vmm_context[processorNumber].GuestMemory);	// g_GuestMemory
+	__vmx_vmwrite(VMCS_GUEST_RSP, (size_t)/*vmm_context[processorNumber].GuestMemory*/ g_GuestMemory);	// 
 	__vmx_vmwrite(VMCS_GUEST_RIP, (size_t)GuestContinueExecution);						// g_GuestMemory
 	__vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags());
 
@@ -248,7 +248,7 @@ EVmErrors SetupVmcs(ULONG processorNumber) {
 	__vmx_vmwrite(VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS, AdjustControls(0, IA32_VMX_PINBASED_CTLS));
 
 	__vmx_vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
-		AdjustControls(IA32_VMX_PROCBASED_CTLS_HLT_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_USE_MSR_BITMAPS_FLAG |
+		AdjustControls(IA32_VMX_PROCBASED_CTLS_HLT_EXITING_FLAG | //IA32_VMX_PROCBASED_CTLS_USE_MSR_BITMAPS_FLAG |
 			IA32_VMX_PROCBASED_CTLS_CR3_LOAD_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_CR3_STORE_EXITING_FLAG |
 			IA32_VMX_PROCBASED_CTLS_USE_IO_BITMAPS_FLAG |
 			IA32_VMX_PROCBASED_CTLS_ACTIVATE_SECONDARY_CONTROLS_FLAG, IA32_VMX_PROCBASED_CTLS));

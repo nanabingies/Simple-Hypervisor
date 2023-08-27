@@ -45,6 +45,7 @@ BOOLEAN CheckBiosLock() {
 	return TRUE;
 }
 
+
 BOOLEAN allocateVmxonRegion(UCHAR processorNumber) {
 	if (!vmm_context) {
 		DbgPrint("[-] Unspecified VM context for processor %x\n", processorNumber);

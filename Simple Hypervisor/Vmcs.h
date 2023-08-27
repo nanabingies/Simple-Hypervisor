@@ -43,9 +43,9 @@ ULONG AdjustControls(ULONG Ctl, ULONG Msr);
 
 EVmErrors SetupVmcs(ULONG);
 
-UINT64 HostContinueExecution();
+inline UINT64 HostContinueExecution();
 
-VOID GuestContinueExecution();
+inline VOID GuestContinueExecution();
 
 UINT64 inline GetGdtBase();
 UINT64 inline GetGdtBase();

@@ -84,7 +84,7 @@ HostContinueExecution PROC
     POP R14
     POP R15
 
-	SUB RSP, 080h		
+	;SUB RSP, 080h		
     JMP ResumeVm
 
 	RET
@@ -113,6 +113,7 @@ GuestContinueExecution PROC
 	POP		RAX
 
 	POPFQ
+	INT		3
 	RET
 
 GuestContinueExecution ENDP
