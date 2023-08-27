@@ -84,7 +84,7 @@ HostContinueExecution PROC
     POP R14
     POP R15
 
-	SUB RSP, 0100h		; to avoid error in future functions
+	SUB RSP, 080h		
     JMP ResumeVm
 
 	RET
@@ -94,7 +94,7 @@ HostContinueExecution ENDP
 
 GuestContinueExecution PROC
 
-	ADD		RSP, 0100h
+	SUB		RSP, 080h
 	POP		R15
 	POP		R14
 	POP		R12
@@ -138,7 +138,7 @@ SaveHostRegisters PROC
 	PUSH	R14
 	PUSH	R15
 
-	SUB		RSP, 100h
+	ADD		RSP, 080h
 	MOV		RAX, RSP
 	RET
 

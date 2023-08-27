@@ -116,8 +116,11 @@ VOID DevirtualizeAllProcessors() {
 		if (vmm_context[processor_number.Number].ioBitmapAVirt)
 			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].ioBitmapAVirt);
 
-		if (vmm_context[processor_number.Number].bitmapBVirt)
-			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].bitmapBVirt);
+		if (vmm_context[processor_number.Number].ioBitmapBVirt)
+			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].ioBitmapBVirt);
+
+		if (vmm_context[processor_number.Number].msrBitmapVirt)
+			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].msrBitmapVirt);
 		
 		ExFreePoolWithTag(vmm_context, VMM_POOL);
 
@@ -130,6 +133,9 @@ VOID DevirtualizeAllProcessors() {
 
 
 VOID LaunchVm(struct _KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2) {
+
+	UNREFERENCED_PARAMETER(Dpc);
+	UNREFERENCED_PARAMETER(DeferredContext);
 
 	__analysis_assume(DeferredContext != NULL);
 	__analysis_assume(SystemArgument1 != NULL);
@@ -162,6 +168,9 @@ VOID LaunchVm(struct _KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, P
 		return;
 	}
 	DbgPrint("[*] VMCS is current and active on processor %x\n", processorNumber);
+
+	DbgPrint("Return Address : %p\n", _ReturnAddress());
+	DbgBreakPoint();
 
 	//
 	// Save HOST Registers
