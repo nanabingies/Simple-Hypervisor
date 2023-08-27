@@ -36,7 +36,7 @@ BOOLEAN VirtualizeAllProcessors() {
 
 		DbgPrint("[*] Currently executing on processor : %x\n", processor_number.Number);
 
-		KIRQL irql = KeRaiseIrqlToDpcLevel();
+		//KIRQL irql = KeRaiseIrqlToDpcLevel();
 
 		//
 		// Check VMX Support for that Logical Processor
@@ -79,7 +79,7 @@ BOOLEAN VirtualizeAllProcessors() {
 
 		LaunchVm(processor_number.Number);
 
-		KeLowerIrql(irql);
+		//KeLowerIrql(irql);
 		KeRevertToUserGroupAffinityThread(&old_affinity);
 	}
 
