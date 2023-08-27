@@ -77,6 +77,8 @@ BOOLEAN VirtualizeAllProcessors() {
 		//
 		if (!allocateMsrBitmap(processor_number.Number))			return FALSE;
 
+		LaunchVm(processor_number.Number);
+
 		KeLowerIrql(irql);
 		KeRevertToUserGroupAffinityThread(&old_affinity);
 	}
@@ -132,16 +134,16 @@ VOID DevirtualizeAllProcessors() {
 }
 
 
-VOID LaunchVm(struct _KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2) {
+VOID LaunchVm(UCHAR processorNumber) {
 
-	UNREFERENCED_PARAMETER(Dpc);
-	UNREFERENCED_PARAMETER(DeferredContext);
+	//UNREFERENCED_PARAMETER(Dpc);
+	//UNREFERENCED_PARAMETER(DeferredContext);
 
-	__analysis_assume(DeferredContext != NULL);
-	__analysis_assume(SystemArgument1 != NULL);
-	__analysis_assume(SystemArgument2 != NULL);
+	//__analysis_assume(DeferredContext != NULL);
+	//__analysis_assume(SystemArgument1 != NULL);
+	//__analysis_assume(SystemArgument2 != NULL);
 
-	ULONG processorNumber = KeGetCurrentProcessorNumber();
+	//ULONG processorNumber = KeGetCurrentProcessorNumber();
 
 	//
 	// Set VMCS state to inactive
@@ -197,8 +199,8 @@ VOID LaunchVm(struct _KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, P
 	__vmx_vmlaunch();
 
 	DbgBreakPoint();
-	KeSignalCallDpcSynchronize(SystemArgument2);
-	KeSignalCallDpcDone(SystemArgument1);
+	//KeSignalCallDpcSynchronize(SystemArgument2);
+	//KeSignalCallDpcDone(SystemArgument1);
 
 	return;
 }

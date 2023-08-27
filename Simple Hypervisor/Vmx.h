@@ -24,7 +24,7 @@ BOOLEAN VirtualizeAllProcessors();
 
 VOID DevirtualizeAllProcessors();
 
-VOID LaunchVm(struct _KDPC* Dpc, PVOID DeferredContext, PVOID, PVOID);
+VOID LaunchVm(UCHAR);
 
 VOID TerminateVm();
 
