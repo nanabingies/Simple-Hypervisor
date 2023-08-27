@@ -46,7 +46,7 @@ HostTerminateHypervisor ENDP
 ; ----------------------------------------------------------------------------------- ;
 
 HostContinueExecution PROC
-	int 3		; A VM Exit just occured
+	;int 3		; A VM Exit just occured
 
 	PUSH R15
     PUSH R14

@@ -169,9 +169,6 @@ VOID LaunchVm(struct _KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, P
 	}
 	DbgPrint("[*] VMCS is current and active on processor %x\n", processorNumber);
 
-	DbgPrint("Return Address : %p\n", _ReturnAddress());
-	DbgBreakPoint();
-
 	//
 	// Save HOST Registers
 	//
