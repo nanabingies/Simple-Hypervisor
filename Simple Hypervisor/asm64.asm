@@ -65,6 +65,7 @@ HostContinueExecution PROC
 	PUSH RBX
     PUSH RAX
 
+	MOV RCX, RSP
 	CALL VmExitHandler
 
 	POP RAX
@@ -113,7 +114,6 @@ GuestContinueExecution PROC
 	POP		RAX
 
 	POPFQ
-	INT		3
 	RET
 
 GuestContinueExecution ENDP
