@@ -59,7 +59,11 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING Regi
 	InitializeEpt();
 	
 	//KeIpiGenericCall((PKIPI_BROADCAST_WORKER)LaunchVm, 0);
-	KeGenericCallDpc((PKDEFERRED_ROUTINE)LaunchVm, 0);
+	//KeGenericCallDpc((PKDEFERRED_ROUTINE)LaunchVm, 0);
+
+	//
+	// Remove KeGenericCallDpc and use the default virtualizer
+	//
 
 	DbgPrint("[*] The hypervisor has been installed.\n");
 
