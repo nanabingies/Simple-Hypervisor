@@ -135,16 +135,9 @@ VOID DevirtualizeAllProcessors() {
 }
 
 
-VOID LaunchVm(UCHAR processorNumber) {
+ULONG_PTR LaunchVm(_In_ ULONG_PTR Argument) {
 
-	//UNREFERENCED_PARAMETER(Dpc);
-	//UNREFERENCED_PARAMETER(DeferredContext);
-
-	//__analysis_assume(DeferredContext != NULL);
-	//__analysis_assume(SystemArgument1 != NULL);
-	//__analysis_assume(SystemArgument2 != NULL);
-
-	//ULONG processorNumber = KeGetCurrentProcessorNumber();
+	ULONG processorNumber = KeGetCurrentProcessorNumber();
 
 	//
 	// Set VMCS state to inactive
@@ -200,10 +193,8 @@ VOID LaunchVm(UCHAR processorNumber) {
 	__vmx_vmlaunch();
 
 	DbgBreakPoint();
-	//KeSignalCallDpcSynchronize(SystemArgument2);
-	//KeSignalCallDpcDone(SystemArgument1);
-
-	return;
+	
+	return Argument;
 }
 
 VOID TerminateVm() {
