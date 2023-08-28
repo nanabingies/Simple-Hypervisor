@@ -59,7 +59,7 @@ HostContinueExecution PROC
     PUSH RDI
     PUSH RSI
     PUSH RBP
-    PUSH RBP	; RSP Placeholder
+    ;PUSH RBP	; RSP Placeholder
     PUSH RDX
     PUSH RCX
 	PUSH RBX
@@ -72,7 +72,7 @@ HostContinueExecution PROC
 	POP RBX
     POP RCX
     POP RDX
-    POP RBP		; RSP Placeholder
+    ;POP RBP		; RSP Placeholder
     POP RBP
     POP RSI
     POP RDI 
