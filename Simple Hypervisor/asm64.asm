@@ -66,7 +66,9 @@ HostContinueExecution PROC
     PUSH RAX
 
 	MOV RCX, RSP
+	SUB RSP, 028h
 	CALL VmExitHandler
+	ADD RSP, 028h
 
 	POP RAX
 	POP RBX

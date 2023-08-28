@@ -148,7 +148,7 @@ ULONG_PTR LaunchVm(_In_ ULONG_PTR Argument) {
 
 		//__vmx_off();
 		//VmOff = TRUE;
-		return;
+		return Argument;
 	}
 	DbgPrint("[*] VMCS for processor %x set to inactive.\n", processorNumber);
 
@@ -161,7 +161,7 @@ ULONG_PTR LaunchVm(_In_ ULONG_PTR Argument) {
 
 		//__vmx_off();
 		//VmOff = TRUE;
-		return;
+		return Argument;
 	}
 	DbgPrint("[*] VMCS is current and active on processor %x\n", processorNumber);
 
@@ -181,7 +181,7 @@ ULONG_PTR LaunchVm(_In_ ULONG_PTR Argument) {
 		DbgPrint("[-] Exiting with error code : %llx\n", ErrorCode);
 		//__vmx_off();
 		//VmOff = TRUE;
-		return;
+		return Argument;
 	}
 	DbgPrint("[*] VMCS setup on processor %x done\n", processorNumber);
 
