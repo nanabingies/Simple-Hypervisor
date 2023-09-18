@@ -29,6 +29,12 @@ struct _vmm_context {
 	UINT64	HostStack;						// Stack of the VM Exit Handler
 
 	UINT64	GuestMemory;					// Guest RSP
+	
+	UINT64	GuestRsp;
+	UINT64	GuestRip;
+
+	UINT64	HostRsp;
+	UINT64	HostRip;
 
 	struct {
 		UINT64	g_StackPointerForReturning;

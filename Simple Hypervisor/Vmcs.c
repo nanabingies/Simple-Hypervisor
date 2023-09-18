@@ -105,13 +105,18 @@ EVmErrors SetupVmcs(ULONG processorNumber) {
 	//
 	// RSP, RIP, RFLAGS - Guest & Host
 	//
-	__vmx_vmwrite(VMCS_GUEST_RSP, (size_t)vmm_context[processorNumber].GuestMemory);	// g_GuestMemory
-	__vmx_vmwrite(VMCS_GUEST_RIP, (size_t)GuestContinueExecution);						// g_GuestMemory
+	vmm_context[processorNumber].GuestRip = (size_t)GuestContinueExecution;
+	vmm_context[processorNumber].HostRip = (size_t)HostContinueExecution;
+	vmm_context[processorNumber].HostRsp = ((size_t)vmm_context[processorNumber].HostStack + STACK_SIZE - 1);
+	vmm_context[processorNumber].GuestRsp = (size_t)vmm_context[processorNumber].GuestMemory;
+
+	__vmx_vmwrite(VMCS_GUEST_RSP, vmm_context[processorNumber].GuestRsp);	// g_GuestMemory
+	__vmx_vmwrite(VMCS_GUEST_RIP, vmm_context[processorNumber].GuestRip);						// g_GuestMemory
 	__vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags());
 
-	__vmx_vmwrite(VMCS_HOST_RSP, ((size_t)vmm_context[processorNumber].HostStack + STACK_SIZE - 1));
+	__vmx_vmwrite(VMCS_HOST_RSP, vmm_context[processorNumber].HostRsp);
 	// Address host should point to, to kick things off when vmexit occurs
-	__vmx_vmwrite(VMCS_HOST_RIP, (size_t)HostContinueExecution); 
+	__vmx_vmwrite(VMCS_HOST_RIP, vmm_context[processorNumber].HostRip);
 
 
 	//
