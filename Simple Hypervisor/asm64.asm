@@ -109,6 +109,7 @@ GuestContinueExecution PROC
 	POP		R8
 	POP		RDI
 	POP		RSI
+	POP		RBP		; Placeholder for RSP
 	POP		RBP
 	POP		RDX
 	POP		RCX
@@ -130,6 +131,7 @@ SaveHostRegisters PROC
 	PUSH	RCX
 	PUSH	RDX
 	PUSH	RBP
+	PUSH    -01h ; placeholder for rsp
 	PUSH	RSI
 	PUSH	RDI
 	PUSH	R8
@@ -141,7 +143,7 @@ SaveHostRegisters PROC
 	PUSH	R14
 	PUSH	R15
 
-	ADD		RSP, 080h
+	ADD		RSP, 080h		; Try and use sub as used in airhv
 	MOV		RAX, RSP
 	RET
 

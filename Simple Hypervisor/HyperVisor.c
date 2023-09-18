@@ -79,8 +79,6 @@ BOOLEAN VirtualizeAllProcessors() {
 
 		KeLowerIrql(irql);
 
-		LaunchVm(processor_number.Number);
-
 		KeRevertToUserGroupAffinityThread(&old_affinity);
 	}
 
