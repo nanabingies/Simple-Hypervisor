@@ -1,4 +1,4 @@
-#include "stdafx.h"
+/*#include "stdafx.h"
 #pragma warning(disable : 4996)
 
 void InitializeEpt() {
@@ -86,11 +86,6 @@ void InitializeEpt() {
 	g_GuestMemory = (UINT64)guest_memory;
 	RtlSecureZeroMemory(guest_memory, numPagesToAllocate * PAGE_SIZE);
 
-	/*for (size_t i = 0; i < (numPagesToAllocate * PAGE_SIZE) - 1; i++) {
-		void* TempAsm = "\xF4";     // HLT asm opcode
-		memcpy((void*)(g_GuestMemory + i), TempAsm, 1);
-	}*/
-
 	//
 	// Update PTE 
 	//
@@ -150,4 +145,4 @@ void InitializeEpt() {
 	DbgPrint("[*] EPT Setup Done.\n");
 
 	return;
-}
+}*/
