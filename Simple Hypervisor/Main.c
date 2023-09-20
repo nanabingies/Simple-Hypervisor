@@ -5,7 +5,7 @@ VOID DriverUnload(_In_ PDRIVER_OBJECT DriverObject) {
 	DbgPrint("[*] Terminating VMs on processors...\n");
 
 	// I'll work on this later
-	KeIpiGenericCall((PKIPI_BROADCAST_WORKER)HostTerminateHypervisor, 0);
+	//KeIpiGenericCall((PKIPI_BROADCAST_WORKER)HostTerminateHypervisor, 0);
 	
 	if (VmOff == FALSE)
 		DevirtualizeAllProcessors();

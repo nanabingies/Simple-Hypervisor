@@ -33,6 +33,7 @@ HostTerminateHypervisor PROC
 	MOV RAX, 1
 
 	; Return Section
+	int 3			; Debugging
 	LEA R11, [RSP+60h]
 	MOV RBX, [R11+18h]
 	MOV RSI, [R11+20h]
