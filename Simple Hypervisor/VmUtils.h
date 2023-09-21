@@ -54,7 +54,6 @@ struct _GuestRegisters {
 	UINT64	RCX;
 	UINT64	RDX;
 	UINT64	RBP;
-	UINT64	RSP;
 	UINT64	RSI;
 	UINT64	RDI;
 	UINT64	R8;

@@ -110,7 +110,6 @@ GuestContinueExecution PROC
 	POP		R8
 	POP		RDI
 	POP		RSI
-	POP		RBP		; Placeholder for RSP
 	POP		RBP
 	POP		RDX
 	POP		RCX
@@ -125,14 +124,13 @@ GuestContinueExecution ENDP
 ; ----------------------------------------------------------------------------------- ;
 
 SaveHostRegisters PROC
-	
+	int 3
 	PUSHFQ
 	PUSH	RAX
 	PUSH	RBX
 	PUSH	RCX
 	PUSH	RDX
 	PUSH	RBP
-	PUSH    -01h ; placeholder for rsp
 	PUSH	RSI
 	PUSH	RDI
 	PUSH	R8
