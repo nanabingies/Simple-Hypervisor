@@ -3,6 +3,7 @@ PUBLIC	AsmHostContinueExecution
 PUBLIC	AsmGuestContinueExecution
 PUBLIC	AsmSaveHostRegisters
 PUBLIC	HostTerminateHypervisor
+PUBLIC  AsmSetupVmcs
 
 
 PUBLIC	GetTr
@@ -17,6 +18,7 @@ EXTERN	g_BasePointerForReturning:QWORD
 
 EXTERN	VmExitHandler:PROC
 EXTERN	ResumeVm:PROC
+EXTERN	SetupVmcs:PROC
 
 .code _text
 
@@ -148,6 +150,57 @@ AsmSaveHostRegisters PROC
 	RET
 
 AsmSaveHostRegisters ENDP
+
+; ----------------------------------------------------------------------------------- ;
+
+AsmSetupVmcs PROC
+	int 3	; Local Debugging
+
+	PUSHFQ
+	PUSH	RAX
+	PUSH	RBX
+	PUSH	RCX
+	PUSH	RDX
+	PUSH	RBP
+	PUSH	-1				; Dummy for RSP
+	PUSH	RSI
+	PUSH	RDI
+	PUSH	R8
+	PUSH	R9
+	PUSH	R10
+	PUSH	R11
+	PUSH	R12
+	PUSH	R13
+	PUSH	R14
+	PUSH	R15
+
+	MOV		RDX, RSP
+	SUB		RSP, 020h
+    CALL	SetupVmcs
+    ADD		RSP, 020h
+
+	POP		R15
+	POP		R14
+	POP		R12
+	POP		R13
+	POP		R12
+	POP		R11
+	POP		R10
+	POP		R9
+	POP		R8
+	POP		RDI
+	POP		RSI
+	;ADD     RSP, 8    ; dummy for rsp
+	POP		RBP
+	POP		RDX
+	POP		RCX
+	POP		RBX
+	POP		RAX
+
+	POPFQ
+	RET
+
+AsmSetupVmcs ENDP
 
 
 ; ----------------------------------------------------------------------------------- ;

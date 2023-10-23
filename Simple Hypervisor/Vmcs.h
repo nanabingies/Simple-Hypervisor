@@ -38,10 +38,11 @@ UINT64 g_HostRip;
 UINT64 g_StackPointerForReturning;
 UINT64 g_BasePointerForReturning;
 
+EVmErrors inline AsmSetupVmcs(ULONG);
 
 ULONG AdjustControls(ULONG Ctl, ULONG Msr);
 
-EVmErrors SetupVmcs(ULONG);
+EVmErrors SetupVmcs(ULONG, PVOID);
 
 inline UINT64 AsmHostContinueExecution();
 

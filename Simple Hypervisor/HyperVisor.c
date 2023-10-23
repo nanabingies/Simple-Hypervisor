@@ -166,12 +166,13 @@ ULONG_PTR LaunchVm(_In_ ULONG_PTR Argument) {
 	//
 	// Save HOST Registers
 	//
-	vmm_context[processorNumber].GuestMemory = AsmSaveHostRegisters();
+	//vmm_context[processorNumber].GuestMemory = AsmSaveHostRegisters();
 
 	//
 	// Setup VMCS structure fields for that logical processor
 	//
-	if (SetupVmcs(processorNumber) != VM_ERROR_OK) {
+	// SetupVmcs(processorNumber)
+	if (AsmSetupVmcs(processorNumber) != VM_ERROR_OK) {
 		DbgPrint("[-] Failure setting Virtual Machine VMCS.\n");
 
 		size_t ErrorCode = 0;
@@ -207,6 +208,7 @@ VOID TerminateVm() {
 
 VOID ResumeVm() {
 
+	__debugbreak();
 	size_t Rip, InstLen;
 	__vmx_vmread(VMCS_GUEST_RIP, &Rip);
 	__vmx_vmread(VMCS_VMEXIT_INSTRUCTION_LENGTH, &InstLen);
