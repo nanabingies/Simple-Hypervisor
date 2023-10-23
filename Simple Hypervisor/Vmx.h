@@ -1,6 +1,6 @@
 #pragma once
 
-UINT64 inline SaveHostRegisters();
+UINT64 inline AsmSaveHostRegisters();
 
 ULONG_PTR HostTerminateHypervisor(ULONG_PTR);
 

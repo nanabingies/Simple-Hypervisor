@@ -166,7 +166,7 @@ ULONG_PTR LaunchVm(_In_ ULONG_PTR Argument) {
 	//
 	// Save HOST Registers
 	//
-	vmm_context[processorNumber].GuestMemory = SaveHostRegisters();
+	vmm_context[processorNumber].GuestMemory = AsmSaveHostRegisters();
 
 	//
 	// Setup VMCS structure fields for that logical processor

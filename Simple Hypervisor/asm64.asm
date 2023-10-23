@@ -1,7 +1,7 @@
 
 PUBLIC	HostContinueExecution
 PUBLIC	GuestContinueExecution
-PUBLIC	SaveHostRegisters
+PUBLIC	AsmSaveHostRegisters
 PUBLIC	HostTerminateHypervisor
 
 
@@ -123,7 +123,7 @@ GuestContinueExecution ENDP
 
 ; ----------------------------------------------------------------------------------- ;
 
-SaveHostRegisters PROC
+AsmSaveHostRegisters PROC
 	int 3
 	PUSHFQ
 	PUSH	RAX
@@ -146,7 +146,7 @@ SaveHostRegisters PROC
 	MOV		RAX, RSP
 	RET
 
-SaveHostRegisters ENDP
+AsmSaveHostRegisters ENDP
 
 
 ; ----------------------------------------------------------------------------------- ;
