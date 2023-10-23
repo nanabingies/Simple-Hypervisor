@@ -1,6 +1,6 @@
 
-PUBLIC	HostContinueExecution
-PUBLIC	GuestContinueExecution
+PUBLIC	AsmHostContinueExecution
+PUBLIC	AsmGuestContinueExecution
 PUBLIC	AsmSaveHostRegisters
 PUBLIC	HostTerminateHypervisor
 
@@ -46,8 +46,8 @@ HostTerminateHypervisor ENDP
 
 ; ----------------------------------------------------------------------------------- ;
 
-HostContinueExecution PROC
-	;int 3		; A VM Exit just occured
+AsmHostContinueExecution PROC
+	int 3		; A VM Exit just occured
 
 	PUSH R15
     PUSH R14
@@ -60,7 +60,6 @@ HostContinueExecution PROC
     PUSH RDI
     PUSH RSI
     PUSH RBP
-    ;PUSH RBP	; RSP Placeholder
     PUSH RDX
     PUSH RCX
 	PUSH RBX
@@ -75,7 +74,6 @@ HostContinueExecution PROC
 	POP RBX
     POP RCX
     POP RDX
-    ;POP RBP		; RSP Placeholder
     POP RBP
     POP RSI
     POP RDI 
@@ -92,11 +90,11 @@ HostContinueExecution PROC
     JMP ResumeVm
 
 	RET
-HostContinueExecution ENDP
+AsmHostContinueExecution ENDP
 
 ; ----------------------------------------------------------------------------------- ;
 
-GuestContinueExecution PROC
+AsmGuestContinueExecution PROC
 	int		3				; Local Kernel Debugging
 
 	SUB		RSP, 080h
@@ -111,6 +109,7 @@ GuestContinueExecution PROC
 	POP		R8
 	POP		RDI
 	POP		RSI
+	ADD     RSP, 8    ; dummy for rsp
 	POP		RBP
 	POP		RDX
 	POP		RCX
@@ -120,7 +119,7 @@ GuestContinueExecution PROC
 	POPFQ
 	RET
 
-GuestContinueExecution ENDP
+AsmGuestContinueExecution ENDP
 
 ; ----------------------------------------------------------------------------------- ;
 
