@@ -1,4 +1,4 @@
-#include "stdafx.h"
+/**#include "stdafx.h"
 #pragma warning(disable : 4996)
 
 void InitializeEpt() {
@@ -145,4 +145,4 @@ void InitializeEpt() {
 	DbgPrint("[*] EPT Setup Done.\n");
 
 	return;
-}
+}*/
