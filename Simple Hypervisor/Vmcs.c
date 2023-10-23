@@ -105,8 +105,8 @@ EVmErrors SetupVmcs(ULONG processorNumber) {
 	//
 	// RSP, RIP, RFLAGS - Guest & Host
 	//
-	vmm_context[processorNumber].GuestRip = (size_t)GuestContinueExecution;
-	vmm_context[processorNumber].HostRip = (size_t)HostContinueExecution;
+	vmm_context[processorNumber].GuestRip = (size_t)AsmGuestContinueExecution;
+	vmm_context[processorNumber].HostRip = (size_t)AsmHostContinueExecution;
 	vmm_context[processorNumber].HostRsp = ((size_t)vmm_context[processorNumber].HostStack + STACK_SIZE - 1);
 	vmm_context[processorNumber].GuestRsp = (size_t)vmm_context[processorNumber].GuestMemory;
 

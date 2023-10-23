@@ -97,6 +97,7 @@ HostContinueExecution ENDP
 ; ----------------------------------------------------------------------------------- ;
 
 GuestContinueExecution PROC
+	int		3				; Local Kernel Debugging
 
 	SUB		RSP, 080h
 	POP		R15
