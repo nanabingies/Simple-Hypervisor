@@ -97,7 +97,7 @@ AsmHostContinueExecution ENDP
 AsmGuestContinueExecution PROC
 	int		3				; Local Kernel Debugging
 
-	SUB		RSP, 080h
+	SUB		RSP, 088h
 	POP		R15
 	POP		R14
 	POP		R12
@@ -143,7 +143,7 @@ AsmSaveHostRegisters PROC
 	PUSH	R14
 	PUSH	R15
 
-	ADD		RSP, 080h		; Try and use sub as used in airhv
+	ADD		RSP, 088h		; Try and use sub as used in airhv
 	MOV		RAX, RSP
 	RET
 
