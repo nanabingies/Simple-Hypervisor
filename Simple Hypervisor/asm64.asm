@@ -131,6 +131,7 @@ AsmSaveHostRegisters PROC
 	PUSH	RCX
 	PUSH	RDX
 	PUSH	RBP
+	PUSH	-1				; Dummy for RSP
 	PUSH	RSI
 	PUSH	RDI
 	PUSH	R8
