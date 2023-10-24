@@ -84,6 +84,10 @@ BOOLEAN VirtualizeAllProcessors() {
 		//
 		if (!allocateMsrBitmap(processor_number.Number))			return FALSE;
 
+		//
+		// Build MTRR support
+		//
+
 		KeLowerIrql(irql);
 
 		KeRevertToUserGroupAffinityThread(&old_affinity);

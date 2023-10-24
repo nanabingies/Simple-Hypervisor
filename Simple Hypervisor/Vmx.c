@@ -1,6 +1,8 @@
 #include "stdafx.h"
 
 BOOLEAN IsVmxSupport() {
+	PAGED_CODE();
+
 	DbgPrint("[*] Checking Processor VMX support.....\n");
 
 	CPUID_EAX_01 args;
