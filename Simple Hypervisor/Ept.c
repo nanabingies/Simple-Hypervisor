@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #pragma warning(disable : 4996)
 
+static struct MtrrEntry* MtrrEntries;
+
 BOOLEAN CheckEPTSupport() {
 	PAGED_CODE();
 
@@ -18,9 +20,22 @@ BOOLEAN CheckEPTSupport() {
 }
 
 BOOLEAN EptBuildMTRRMap() {
+	PAGED_CODE();
+
+	DbgPrint("[*] [First] MtrrEntries : %p\n", MtrrEntries);
+	PHYSICAL_ADDRESS physAddr;
+	physAddr.QuadPart = (LONGLONG)~0;
+	MtrrEntries = (struct MtrrEntry*)MmAllocateContiguousMemory(numMtrrEntries, physAddr);
+	if (!MtrrEntries)
+		return FALSE;
+	DbgPrint("[*] [Second] MtrrEntries : %p\n", MtrrEntries);
+	RtlSecureZeroMemory(MtrrEntries, numMtrrEntries);
+
+
 	IA32_MTRR_CAPABILITIES_REGISTER mtrr_cap;
 	IA32_MTRR_PHYSBASE_REGISTER mtrr_phys_base;
 	IA32_MTRR_PHYSMASK_REGISTER mtrr_phys_mask;
+	INT index = 0;
 	
 	mtrr_cap.AsUInt = __readmsr(IA32_MTRR_CAPABILITIES);
 
@@ -30,14 +45,36 @@ BOOLEAN EptBuildMTRRMap() {
 	if (FixRangeSupport) {
 		// Handle Fix Ranged MTRR
 		DbgPrint("[*] Fixed Range MTRR supported.\n");
-		DbgPrint("[*] Add support.\n");
+		DbgPrint("[*] Add support later.\n");
+
+		//
+		//	TODO: Add Fixed Range MTRR
+		//
 	}
 
 	for (ULONG idx = 0; idx < varCnt; idx++) {
 		mtrr_phys_base.AsUInt = __readmsr(IA32_MTRR_PHYSBASE0 + (idx * 2));
 		mtrr_phys_mask.AsUInt = __readmsr(IA32_MTRR_PHYSMASK0 + (idx * 2));
+
+		// The range is invalid
+		if (!mtrr_phys_mask.Valid)
+			continue;
+
+		// Get the length this MTRR manages
+		ULONG length;
+		BitScanForward64(&length, mtrr_phys_mask.PageFrameNumber * PAGE_SIZE);
+
+		UINT64 physical_base_start, physical_base_end;
+		physical_base_start = mtrr_phys_base.PageFrameNumber * PAGE_SIZE;
+		physical_base_end = physical_base_start + ((1ull << length) - 1);
+
+		MtrrEntries->PhysicalAddressStart = physical_base_start;
+		MtrrEntries->PhysicalAddressEnd = physical_base_end;
+		MtrrEntries++;
+		index++;
 	}
 
+	DbgPrint("[*] MTRR built successfully.\n");
 	return TRUE;
 }
 

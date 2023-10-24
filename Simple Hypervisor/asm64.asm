@@ -154,7 +154,6 @@ AsmSaveHostRegisters ENDP
 ; ----------------------------------------------------------------------------------- ;
 
 AsmSetupVmcs PROC
-	int 3	; Local Debugging
 
 	PUSHFQ
 	PUSH	RAX
