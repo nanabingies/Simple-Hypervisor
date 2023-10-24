@@ -263,6 +263,11 @@ EVmErrors SetupVmcs(ULONG processorNumber, PVOID GuestRsp) {
 			IA32_VMX_PROCBASED_CTLS2_ENABLE_EPT_FLAG | IA32_VMX_PROCBASED_CTLS2_DESCRIPTOR_TABLE_EXITING_FLAG |
 			IA32_VMX_PROCBASED_CTLS2_ENABLE_VPID_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_INVPCID_FLAG,
 			IA32_VMX_PROCBASED_CTLS2));
+	
+	//
+	// Set EPTP for Address Translation
+	//
+	//__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vmm_context[processorNumber].eptPtr);
 
 	//
 	// VM-exit control fields. 
