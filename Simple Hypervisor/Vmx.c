@@ -188,21 +188,6 @@ BOOLEAN VmxAllocateVmExitStack(UCHAR processorNumber) {
 	vmm_context[processorNumber].HostStack = (UINT64)vmexitStack;
 	DbgPrint("[*] vmm_context[processorNumber].HostStack : %llx\n", vmm_context[processorNumber].HostStack);
 
-	PVOID guestStack = MmAllocateContiguousMemory(HOST_STACK_SIZE, physAddr);
-	if (!guestStack) {
-		DbgPrint("[-] Failure allocating memory for VM EXIT Handler.\n");
-		return FALSE;
-	}
-	RtlSecureZeroMemory(guestStack, HOST_STACK_SIZE);
-
-	for (auto idx = 0; idx < 100; idx++) {
-		memset((PVOID)((UCHAR*)guestStack + idx), 0xf4, sizeof(void*));
-	}
-	//vmm_context[processorNumber].GuestRsp = (UINT64)guestStack;
-	//vmm_context[processorNumber].GuestRip = (UINT64)guestStack;
-	DbgPrint("[*][Debugging] GuestStack : %p\n", guestStack);
-	MmFreeContiguousMemory(guestStack);
-
 	return TRUE;
 }
 

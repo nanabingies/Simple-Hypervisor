@@ -203,7 +203,6 @@ VOID TerminateVm() {
 
 VOID ResumeVm() {
 
-	__debugbreak();
 	size_t Rip, InstLen;
 	__vmx_vmread(VMCS_GUEST_RIP, &Rip);
 	__vmx_vmread(VMCS_VMEXIT_INSTRUCTION_LENGTH, &InstLen);

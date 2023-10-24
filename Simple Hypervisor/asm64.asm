@@ -48,7 +48,7 @@ HostTerminateHypervisor ENDP
 ; ----------------------------------------------------------------------------------- ;
 
 AsmHostContinueExecution PROC
-	int 3		; A VM Exit just occured
+	;int 3		; A VM Exit just occured
 
 	PUSHFQ
 	PUSH	RAX

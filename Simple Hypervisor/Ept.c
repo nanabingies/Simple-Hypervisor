@@ -69,17 +69,16 @@ BOOLEAN EptBuildMTRRMap() {
 	}
 
 	
-	struct MtrrEntry* temp = (struct MtrrEntry*)g_MtrrEntries;
+	/*struct MtrrEntry* temp = (struct MtrrEntry*)g_MtrrEntries;
 	do {
 		
 		temp = (struct MtrrEntry*)((UCHAR*)temp + sizeof(struct MtrrEntry));
-	} while (temp->PhysicalAddressEnd != 0x0);
+	} while (temp->PhysicalAddressEnd != 0x0);*/
 
 	return TRUE;
 }
 
 void InitializeEpt(UCHAR processorNumber) {
-	UNREFERENCED_PARAMETER(processorNumber);
 	PAGED_CODE();
 
 	EPT_POINTER* EptPtr = (EPT_POINTER*)
@@ -92,7 +91,7 @@ void InitializeEpt(UCHAR processorNumber) {
 	RtlSecureZeroMemory(EptPtr, PAGE_SIZE);
 	DbgPrint("[*] Pointer to EPT at : %llx\n", (UINT64)EptPtr);
 
-	vmm_context[processorNumber].eptPtr = (UINT64)EptPtr;
+	vmm_context[processorNumber].eptPtr = EptPtr->AsUInt;
 	//vmm_context->eptPtr = (UINT64)EptPtr;
 
 	EPT_PML4E* pml4e = (EPT_PML4E*)
