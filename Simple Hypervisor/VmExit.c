@@ -250,8 +250,8 @@ VOID VmExitHandler(PVOID Param) {
 	case VMX_EXIT_REASON_EXECUTE_IO_INSTRUCTION: {
 		VMX_EXIT_QUALIFICATION_IO_INSTRUCTION exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) &exitQualification);
-		break;
 	}
+											   break;
 
 	case VMX_EXIT_REASON_EXECUTE_RDMSR: {
 		if ((guestRegisters->RCX <= 0x00001FFF) ||
@@ -262,9 +262,8 @@ VOID VmExitHandler(PVOID Param) {
 			guestRegisters->RDX = msr.HighPart;
 			guestRegisters->RAX = msr.LowPart;
 		}
-
-		break;
 	}
+									  break;
 
 	case VMX_EXIT_REASON_EXECUTE_WRMSR: {
 		if ((guestRegisters->RCX <= 0x00001FFF) ||
@@ -275,67 +274,78 @@ VOID VmExitHandler(PVOID Param) {
 			msr.HighPart = (ULONG)guestRegisters->RDX;
 			__writemsr((ULONG)guestRegisters->RCX, msr.QuadPart);
 		}
-
-		break;
+	
 	}
+									  break;
 
 	case VMX_EXIT_REASON_ERROR_INVALID_GUEST_STATE: {
-		break;
+		
 	}
+												  break;
 
 	case VMX_EXIT_REASON_ERROR_MSR_LOAD: {
-		break;
+		
 	}
+									   break;
 
 	case VMX_EXIT_REASON_EXECUTE_MWAIT: {
-		break;
+		
 	}
+									  break;
 
 	case VMX_EXIT_REASON_MONITOR_TRAP_FLAG: {
-		break;
+		
 	}
+										  break;
 
 	case VMX_EXIT_REASON_EXECUTE_MONITOR: {
-		break;
+		
 	}
+										break;
 
 	case VMX_EXIT_REASON_EXECUTE_PAUSE: {
-		break;
+		
 	}
+									  break;
 
 	case VMX_EXIT_REASON_ERROR_MACHINE_CHECK: {
-		break;
+		
 	}
+											break;
 
 	case VMX_EXIT_REASON_TPR_BELOW_THRESHOLD: {
-		break;
+		
 	}
+											break;
 
 	case VMX_EXIT_REASON_APIC_ACCESS: {
 		VMX_EXIT_QUALIFICATION_APIC_ACCESS exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
-		break;
 	}
+									break;
 
 	case VMX_EXIT_REASON_VIRTUALIZED_EOI: {
-		break;
+		
 	}
+										break;
 
 	case VMX_EXIT_REASON_GDTR_IDTR_ACCESS: {
 		VMX_VMEXIT_INSTRUCTION_INFO_GDTR_IDTR_ACCESS exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
-		break;
 	}
+										 break;
 
 	case VMX_EXIT_REASON_LDTR_TR_ACCESS: {
 		VMX_VMEXIT_INSTRUCTION_INFO_LDTR_TR_ACCESS exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
-		break;
 	}
+									   break;
 
 	case VMX_EXIT_REASON_EPT_VIOLATION: {
 		VMX_EXIT_QUALIFICATION_EPT_VIOLATION exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
+		DbgPrint("EPT VIOLATION exit qualification : %llx\n", exitQualification.AsUInt);
+		__debugbreak();
 	}
 									  break;
 
