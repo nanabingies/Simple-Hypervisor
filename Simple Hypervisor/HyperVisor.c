@@ -53,6 +53,11 @@ BOOLEAN VirtualizeAllProcessors() {
 		//
 		EnableCR4();
 
+		//
+		// Check for EPT support
+		//
+		if (CheckEPTSupp() == FALSE)	return FALSE;
+
 		DbgPrint("[*] Initial checks completed.\n");
 
 		//
