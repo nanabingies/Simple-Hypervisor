@@ -162,14 +162,15 @@ VOID VmExitHandler(PVOID Param) {
 										break;
 
 	case VMX_EXIT_REASON_EXECUTE_VMXOFF: {
-		break;
+		
 	}
+									   break;
 
 	case VMX_EXIT_REASON_EXECUTE_VMXON: {
 		VMX_VMEXIT_INSTRUCTION_INFO_VMX_AND_XSAVES exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
-		break;
 	}
+									  break;
 
 	case VMX_EXIT_REASON_MOV_CR: {
 		//
@@ -183,63 +184,68 @@ VOID VmExitHandler(PVOID Param) {
 			case 0: {	// CR0
 				__vmx_vmwrite(VMCS_GUEST_CR0, __readcr0());
 				__vmx_vmwrite(VMCS_CTRL_CR0_READ_SHADOW, __readcr0());
-				break;
 			}
+				  break;
 
 			case 3: {	// CR3
 				__vmx_vmwrite(VMCS_GUEST_CR3, __readcr3());
-				break;
 			}
+				  break;
 
 			case 4: {	// CR4
 				__vmx_vmwrite(VMCS_GUEST_CR4, __readcr4());
 				__vmx_vmwrite(VMCS_CTRL_CR4_READ_SHADOW, __readcr4());
-				break;
 			}
+				  break;
 
 			default:
 				break;
 			}
-			break;
 		}
+			  break;
+
 		case 1: {	// MOV from CR
 			switch (exitQualification.ControlRegister) {
 			case 0: {		// CR0
 				__vmx_vmread(VMCS_GUEST_CR0, &guestRegisters->RCX);
-				break;
 			}
+				  break;
 
 			case 3: {		// CR3
 				__vmx_vmread(VMCS_GUEST_CR3, &guestRegisters->RCX);
-				break;
 			}
+				  break;
 
 			case 4: {		// CR4
 				__vmx_vmread(VMCS_GUEST_CR4, &guestRegisters->RCX);
-				break;
 			}
+				  break;
 			}
-			break;
 		}
+			  break;
+
 		case 2: {	// 2 = CLTS
-			break;
+			
 		}
+			  break;
+
 		case 3: {	// 3 = LMSW
-			break;
+			
 		}
-		default: {
+			  break;
+
+		default:
 			break;
-		}
 		}
 		
-		break;
 	}
+							   break;
 
 	case VMX_EXIT_REASON_MOV_DR: {
 		VMX_EXIT_QUALIFICATION_MOV_DR exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) &exitQualification);
-		break;
 	}
+							   break;
 
 	case VMX_EXIT_REASON_EXECUTE_IO_INSTRUCTION: {
 		VMX_EXIT_QUALIFICATION_IO_INSTRUCTION exitQualification;
