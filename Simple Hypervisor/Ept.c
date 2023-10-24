@@ -1,6 +1,22 @@
 #include "stdafx.h"
 #pragma warning(disable : 4996)
 
+BOOLEAN CheckEPTSupp() {
+	PAGED_CODE();
+
+	IA32_VMX_EPT_VPID_CAP_REGISTER ept_cap;
+	ept_cap.AsUInt = __readmsr(IA32_VMX_EPT_VPID_CAP);
+
+	if (!ept_cap.PageWalkLength4 || !ept_cap.MemoryTypeWriteBack || !ept_cap.Invept ||
+		!ept_cap.InveptSingleContext || !ept_cap.InveptAllContexts || !ept_cap.Invvpid ||
+		!ept_cap.InvvpidIndividualAddress || !ept_cap.InvvpidAllContexts ||
+		!ept_cap.InvvpidSingleContext || !ept_cap.InvvpidSingleContextRetainGlobals) {
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 void InitializeEpt() {
 	PAGED_CODE();
 

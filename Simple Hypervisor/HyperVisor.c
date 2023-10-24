@@ -3,6 +3,7 @@
 #pragma warning(disable : 4996)
 
 BOOLEAN VirtualizeAllProcessors() {
+	PAGED_CODE();
 
 	//
 	// This was more of an educational project so only one Logical Processor was chosen and virtualized
@@ -57,6 +58,7 @@ BOOLEAN VirtualizeAllProcessors() {
 		// Check for EPT support
 		//
 		if (CheckEPTSupp() == FALSE)	return FALSE;
+
 
 		DbgPrint("[*] Initial checks completed.\n");
 

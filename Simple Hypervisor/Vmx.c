@@ -16,6 +16,8 @@ BOOLEAN IsVmxSupport() {
 }
 
 VOID EnableCR4() {
+	PAGED_CODE();
+
 	CR4 _cr4;
 
 	_cr4.AsUInt = __readcr4();
@@ -27,6 +29,8 @@ VOID EnableCR4() {
 }
 
 BOOLEAN CheckBiosLock() {
+	PAGED_CODE();
+
 	IA32_FEATURE_CONTROL_REGISTER feature_control_msr;
 	feature_control_msr.AsUInt = __readmsr(IA32_FEATURE_CONTROL);
 
@@ -47,6 +51,8 @@ BOOLEAN CheckBiosLock() {
 
 
 BOOLEAN allocateVmxonRegion(UCHAR processorNumber) {
+	PAGED_CODE();
+
 	if (!vmm_context) {
 		DbgPrint("[-] Unspecified VM context for processor %x\n", processorNumber);
 		return FALSE;
@@ -88,6 +94,8 @@ BOOLEAN allocateVmxonRegion(UCHAR processorNumber) {
 
 
 BOOLEAN allocateVmcsRegion(UCHAR processorNumber) {
+	PAGED_CODE();
+
 	if (!vmm_context) {
 		DbgPrint("[-] Unspecified VM context for processor %x\n", processorNumber);
 		return FALSE;
@@ -129,6 +137,8 @@ BOOLEAN allocateVmcsRegion(UCHAR processorNumber) {
 
 
 BOOLEAN allocateVmExitStack(UCHAR processorNumber) {
+	PAGED_CODE();
+
 	PHYSICAL_ADDRESS physAddr;
 	physAddr.QuadPart = (ULONGLONG)~0;
 	PVOID vmexitStack = MmAllocateContiguousMemory(STACK_SIZE, physAddr);
@@ -146,6 +156,8 @@ BOOLEAN allocateVmExitStack(UCHAR processorNumber) {
 
 
 BOOLEAN allocateIoBitmapStack(UCHAR processorNumber) {
+	PAGED_CODE();
+
 	PHYSICAL_ADDRESS physAddr;
 	physAddr.QuadPart = (ULONGLONG)~0;
 	PVOID bitmap = MmAllocateContiguousMemory(PAGE_SIZE, physAddr);
@@ -177,6 +189,8 @@ BOOLEAN allocateIoBitmapStack(UCHAR processorNumber) {
 
 
 BOOLEAN allocateMsrBitmap(UCHAR processorNumber) {
+	PAGED_CODE();
+
 	PHYSICAL_ADDRESS physAddr;
 	physAddr.QuadPart = (ULONGLONG)~0;
 	PVOID bitmap = MmAllocateContiguousMemory(PAGE_SIZE, physAddr);
