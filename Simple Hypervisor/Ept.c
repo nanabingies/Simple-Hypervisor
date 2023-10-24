@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #pragma warning(disable : 4996)
 
-static struct MtrrEntry* MtrrEntries;
+static struct MtrrEntry g_MtrrEntries[numMtrrEntries];
 
 BOOLEAN CheckEPTSupport() {
 	PAGED_CODE();
@@ -22,20 +22,13 @@ BOOLEAN CheckEPTSupport() {
 BOOLEAN EptBuildMTRRMap() {
 	PAGED_CODE();
 
-	DbgPrint("[*] [First] MtrrEntries : %p\n", MtrrEntries);
-	PHYSICAL_ADDRESS physAddr;
-	physAddr.QuadPart = (LONGLONG)~0;
-	MtrrEntries = (struct MtrrEntry*)MmAllocateContiguousMemory(numMtrrEntries, physAddr);
-	if (!MtrrEntries)
-		return FALSE;
-	DbgPrint("[*] [Second] MtrrEntries : %p\n", MtrrEntries);
-	RtlSecureZeroMemory(MtrrEntries, numMtrrEntries);
-
-
+	struct MtrrEntry* mtrr_entry = g_MtrrEntries;
+	RtlSecureZeroMemory(mtrr_entry, numMtrrEntries * sizeof(struct MtrrEntry));
+	
 	IA32_MTRR_CAPABILITIES_REGISTER mtrr_cap;
 	IA32_MTRR_PHYSBASE_REGISTER mtrr_phys_base;
 	IA32_MTRR_PHYSMASK_REGISTER mtrr_phys_mask;
-	INT index = 0;
+	//INT index = 0;
 	
 	mtrr_cap.AsUInt = __readmsr(IA32_MTRR_CAPABILITIES);
 
@@ -68,13 +61,23 @@ BOOLEAN EptBuildMTRRMap() {
 		physical_base_start = mtrr_phys_base.PageFrameNumber * PAGE_SIZE;
 		physical_base_end = physical_base_start + ((1ull << length) - 1);
 
-		MtrrEntries->PhysicalAddressStart = physical_base_start;
-		MtrrEntries->PhysicalAddressEnd = physical_base_end;
-		MtrrEntries++;
-		index++;
+		mtrr_entry->MtrrEnabled = 0x1;
+		mtrr_entry->MemoryType = mtrr_phys_base.Type;
+		mtrr_entry->PhysicalAddressStart = physical_base_start;
+		mtrr_entry->PhysicalAddressEnd = physical_base_end;
+		mtrr_entry++;
 	}
 
-	DbgPrint("[*] MTRR built successfully.\n");
+	
+	struct MtrrEntry* temp = (struct MtrrEntry*)g_MtrrEntries;
+	do {
+		DbgPrint("[*] MemoryType : %llx\n", temp->MemoryType);
+		DbgPrint("[*] PhysicalAddressStart : %llx\n", temp->PhysicalAddressStart);
+		DbgPrint("PhysicalAddressEnd : %llx\n", temp->PhysicalAddressEnd);
+
+		temp = (struct MtrrEntry*)((UCHAR*)temp + sizeof(struct MtrrEntry));
+	} while (temp->PhysicalAddressEnd != 0x0);
+
 	return TRUE;
 }
 

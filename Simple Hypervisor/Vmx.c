@@ -18,8 +18,6 @@ BOOLEAN VmxIsVmxAvailable() {
 	//
 	VmxEnableCR4();
 
-
-
 	//
 	// Check for EPT support for that processor
 	//

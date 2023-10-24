@@ -62,8 +62,9 @@ BOOLEAN VirtualizeAllProcessors() {
 		if (!VmxAllocateMsrBitmap(processor_number.Number))			return FALSE;
 
 		//
-		// Build MTRR support
+		// Setup EPT support for that processor
 		//
+		//InitializeEpt();
 
 		KeLowerIrql(irql);
 
