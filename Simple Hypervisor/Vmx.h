@@ -4,23 +4,23 @@ UINT64 inline AsmSaveHostRegisters();
 
 ULONG_PTR HostTerminateHypervisor(ULONG_PTR);
 
-BOOLEAN IsVmxAvailable();
+BOOLEAN VmxIsVmxAvailable();
 
-BOOLEAN IsVmxSupport();
+BOOLEAN VmxIsVmxSupport();
 
-VOID EnableCR4();
+VOID VmxEnableCR4();
 
-BOOLEAN CheckBiosLock();
+BOOLEAN VmxCheckBiosLock();
 
-BOOLEAN allocateVmcsRegion(UCHAR);
+BOOLEAN VmxAllocateVmcsRegion(UCHAR);
 
-BOOLEAN allocateVmxonRegion(UCHAR);
+BOOLEAN VmxAllocateVmxonRegion(UCHAR);
 
-BOOLEAN allocateVmExitStack(UCHAR);
+BOOLEAN VmxAllocateVmExitStack(UCHAR);
 
-BOOLEAN allocateIoBitmapStack(UCHAR);
+BOOLEAN VmxAllocateIoBitmapStack(UCHAR);
 
-BOOLEAN allocateMsrBitmap(UCHAR);
+BOOLEAN VmxAllocateMsrBitmap(UCHAR);
 
 BOOLEAN VirtualizeAllProcessors();
 

@@ -17,6 +17,30 @@ BOOLEAN CheckEPTSupport() {
 	return TRUE;
 }
 
+BOOLEAN BuildMTRRMap() {
+	IA32_MTRR_CAPABILITIES_REGISTER mtrr_cap;
+	
+	mtrr_cap.AsUInt = __readmsr(IA32_MTRR_CAPABILITIES);
+	DbgPrint("[*][Debugging MTRR] VariableRangeCount : %llx\n", mtrr_cap.VariableRangeCount);
+	DbgPrint("[*][Debugging MTRR] FixedRangeSupported : %llx\n", mtrr_cap.FixedRangeSupported);
+	DbgPrint("[*][Debugging MTRR] WcSupported : %llx\n", mtrr_cap.WcSupported);
+	DbgPrint("[*][Debugging MTRR] SmrrSupported : %llx\n", mtrr_cap.SmrrSupported);
+	DbgPrint("[*][Debugging MTRR] AsUInt : %llx\n", mtrr_cap.AsUInt);
+
+	UINT64 varCnt = mtrr_cap.VariableRangeCount;
+	BOOLEAN FixRangeSupport = mtrr_cap.FixedRangeSupported;
+
+	if (FixRangeSupport) {
+		// Handle Fix Ranged MTRR
+	}
+
+	for (UINT64 idx = 0; idx < varCnt; idx++) {
+
+	}
+
+	return TRUE;
+}
+
 void InitializeEpt() {
 	PAGED_CODE();
 

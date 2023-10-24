@@ -42,24 +42,24 @@ BOOLEAN VirtualizeAllProcessors() {
 		//
 		// Allocate Memory for VMXON & VMCS regions and initialize
 		//
-		if (!allocateVmxonRegion(processor_number.Number))		return FALSE;
-		if (!allocateVmcsRegion(processor_number.Number))		return FALSE;
+		if (!VmxAllocateVmxonRegion(processor_number.Number))		return FALSE;
+		if (!VmxAllocateVmcsRegion(processor_number.Number))		return FALSE;
 
 		//
 		// Allocate space for VM EXIT Handler
 		//
-		if (!allocateVmExitStack(processor_number.Number))		return FALSE;
+		if (!VmxAllocateVmExitStack(processor_number.Number))		return FALSE;
 
 		//
 		// Allocate memory for IO Bitmap
 		//
-		if (!allocateIoBitmapStack(processor_number.Number))			return FALSE;
+		if (!VmxAllocateIoBitmapStack(processor_number.Number))			return FALSE;
 
 		//
 		// Future: Add MSR Bitmap support
 		// Fix: Added MSR Bitmap support
 		//
-		if (!allocateMsrBitmap(processor_number.Number))			return FALSE;
+		if (!VmxAllocateMsrBitmap(processor_number.Number))			return FALSE;
 
 		//
 		// Build MTRR support

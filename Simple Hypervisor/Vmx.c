@@ -27,6 +27,13 @@ BOOLEAN IsVmxAvailable() {
 
 
 	DbgPrint("[*] Initial checks completed.\n");
+
+	//
+	// Build MTRR Map
+	//
+	if (BuildMTRRMap() == FALSE)	return FALSE;
+	DbgPrint("[*] MTRR built successfully\n");
+
 	return TRUE;
 }
 

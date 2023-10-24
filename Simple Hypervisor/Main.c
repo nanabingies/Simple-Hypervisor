@@ -65,11 +65,6 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING Regi
 
 	if (!IsVmxAvailable())			return STATUS_FAILED_DRIVER_ENTRY;
 
-	//
-	// Build MTRR Map
-	//
-	BuildMTRRMap();
-
 	__debugbreak();
 
 	if (!VirtualizeAllProcessors())		return STATUS_FAILED_DRIVER_ENTRY;
