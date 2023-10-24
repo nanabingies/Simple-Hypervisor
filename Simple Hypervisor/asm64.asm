@@ -68,9 +68,9 @@ AsmHostContinueExecution PROC
     PUSH RAX
 
 	MOV RCX, RSP
-	SUB RSP, 028h
+	SUB RSP, 020h
 	CALL VmExitHandler
-	ADD RSP, 028h
+	ADD RSP, 020h
 
 	POP RAX
 	POP RBX

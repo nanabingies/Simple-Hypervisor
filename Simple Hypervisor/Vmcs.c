@@ -108,10 +108,10 @@ EVmErrors SetupVmcs(ULONG processorNumber, PVOID GuestRsp) {
 	vmm_context[processorNumber].GuestRip = (size_t)AsmGuestContinueExecution;
 	vmm_context[processorNumber].HostRip = (size_t)AsmHostContinueExecution;
 	vmm_context[processorNumber].HostRsp = ((size_t)vmm_context[processorNumber].HostStack + STACK_SIZE - 1);
-	vmm_context[processorNumber].GuestRsp = (size_t)vmm_context[processorNumber].GuestMemory;
+	vmm_context[processorNumber].GuestRsp = (size_t)GuestRsp;
 
-	__vmx_vmwrite(VMCS_GUEST_RSP, (size_t)GuestRsp);	// g_GuestMemory // vmm_context[processorNumber].GuestRsp
-	__vmx_vmwrite(VMCS_GUEST_RIP, vmm_context[processorNumber].GuestRip);						// g_GuestMemory
+	__vmx_vmwrite(VMCS_GUEST_RSP, vmm_context[processorNumber].GuestRsp);	// g_GuestMemory
+	__vmx_vmwrite(VMCS_GUEST_RIP, vmm_context[processorNumber].GuestRip);	// g_GuestMemory
 	__vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags());
 
 	__vmx_vmwrite(VMCS_HOST_RSP, vmm_context[processorNumber].HostRsp);
@@ -254,13 +254,14 @@ EVmErrors SetupVmcs(ULONG processorNumber, PVOID GuestRsp) {
 
 	__vmx_vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
 		AdjustControls(IA32_VMX_PROCBASED_CTLS_HLT_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_USE_MSR_BITMAPS_FLAG |
-			IA32_VMX_PROCBASED_CTLS_CR3_LOAD_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_CR3_STORE_EXITING_FLAG |
+			IA32_VMX_PROCBASED_CTLS_CR3_LOAD_EXITING_FLAG | /*IA32_VMX_PROCBASED_CTLS_CR3_STORE_EXITING_FLAG |*/
 			IA32_VMX_PROCBASED_CTLS_USE_IO_BITMAPS_FLAG |
 			IA32_VMX_PROCBASED_CTLS_ACTIVATE_SECONDARY_CONTROLS_FLAG, IA32_VMX_PROCBASED_CTLS));
 
 	__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
 		AdjustControls(IA32_VMX_PROCBASED_CTLS2_ENABLE_XSAVES_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_RDTSCP_FLAG |
-			IA32_VMX_PROCBASED_CTLS2_ENABLE_INVPCID_FLAG,
+			IA32_VMX_PROCBASED_CTLS2_ENABLE_EPT_FLAG | IA32_VMX_PROCBASED_CTLS2_DESCRIPTOR_TABLE_EXITING_FLAG |
+			IA32_VMX_PROCBASED_CTLS2_ENABLE_VPID_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_INVPCID_FLAG,
 			IA32_VMX_PROCBASED_CTLS2));
 
 	//
@@ -282,7 +283,8 @@ EVmErrors SetupVmcs(ULONG processorNumber, PVOID GuestRsp) {
 	// VM-exit information fields. 
 	// These fields receive information on VM exits and describe the cause and the nature of VM exits.
 	//
-	//__vmx_vmwrite(VMCS_VMEXIT_INSTRUCTION_INFO, AdjustControls(, IA32_VMX_EXIT_CTLS));
+	__vmx_vmwrite(VMCS_VMEXIT_INSTRUCTION_INFO, 
+		AdjustControls(IA32_VMX_EXIT_CTLS_HOST_ADDRESS_SPACE_SIZE_FLAG, IA32_VMX_EXIT_CTLS));
 
 	//
 	// Misc
@@ -305,6 +307,5 @@ EVmErrors SetupVmcs(ULONG processorNumber, PVOID GuestRsp) {
 	
 	}
 
-	__debugbreak();
 	return VM_ERROR_OK;
 }

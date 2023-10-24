@@ -54,8 +54,8 @@ VOID VmExitHandler(PVOID Param) {
 	case VMX_EXIT_REASON_TASK_SWITCH: {
 		VMX_EXIT_QUALIFICATION_TASK_SWITCH exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
-		break;
 	}
+									break;
 
 	case VMX_EXIT_REASON_EXECUTE_CPUID: {
 		int cpuInfo[4] = { 0 };
@@ -74,12 +74,13 @@ VOID VmExitHandler(PVOID Param) {
 		}
 
 		__cpuidex((int*)&cpuInfo, (int)guestRegisters->RAX, (int)guestRegisters->RCX);
-		break;
 	}
+									  break;
 
 	case VMX_EXIT_REASON_EXECUTE_GETSEC: {
-		break;
+		
 	}
+									   break;
 
 	case VMX_EXIT_REASON_EXECUTE_HLT: {
 		//DbgPrint("[*] Execution of HLT detected... \n");
@@ -88,66 +89,77 @@ VOID VmExitHandler(PVOID Param) {
 		// Terminate HyperVisor
 		//
 		//HostTerminateHypervisor();
-		break;
 	}
+									break;
 
 	case VMX_EXIT_REASON_EXECUTE_INVD: {
-		break;
+		
 	}
+									 break;
 
 	case VMX_EXIT_REASON_EXECUTE_INVLPG: {
-		break;
+		
 	}
+									   break;
 
 	case VMX_EXIT_REASON_EXECUTE_RDPMC: {
-		break;
+		
 	}
+									  break;
 
 	case VMX_EXIT_REASON_EXECUTE_RDTSC: {
-		break;
+		
 	}
+									  break;
 
 	case VMX_EXIT_REASON_EXECUTE_RSM_IN_SMM: {
-		break;
+		
 	}
+										   break;
+
 	case VMX_EXIT_REASON_EXECUTE_VMCALL: {
-		break;
+		
 	}
+									   break;
 
 	case VMX_EXIT_REASON_EXECUTE_VMCLEAR: {
-		break;
+		
 	}
+										break;
 
 	case VMX_EXIT_REASON_EXECUTE_VMLAUNCH: {
-		break;
+		
 	}
+										 break;
 
 	case VMX_EXIT_REASON_EXECUTE_VMPTRLD: {
 		VMX_VMEXIT_INSTRUCTION_INFO_VMX_AND_XSAVES exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
-		break;
 	}
+										break;
+
 	case VMX_EXIT_REASON_EXECUTE_VMPTRST: {
 		VMX_VMEXIT_INSTRUCTION_INFO_VMX_AND_XSAVES exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
-		break;
 	}
+										break;
 
 	case VMX_EXIT_REASON_EXECUTE_VMREAD: {
 		VMX_VMEXIT_INSTRUCTION_INFO_VMREAD_VMWRITE exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
-		break;
 	}
+									   break;
 
 	case VMX_EXIT_REASON_EXECUTE_VMRESUME: {
-		break;
+		
 	}
+										 break;
 
 	case VMX_EXIT_REASON_EXECUTE_VMWRITE: {
 		VMX_VMEXIT_INSTRUCTION_INFO_VMREAD_VMWRITE exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
-		break;
 	}
+										break;
 
 	case VMX_EXIT_REASON_EXECUTE_VMXOFF: {
 		break;
@@ -318,84 +330,94 @@ VOID VmExitHandler(PVOID Param) {
 	case VMX_EXIT_REASON_EPT_VIOLATION: {
 		VMX_EXIT_QUALIFICATION_EPT_VIOLATION exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
-		break;
 	}
+									  break;
 
 	case VMX_EXIT_REASON_EPT_MISCONFIGURATION: {
-		break;
+
 	}
+											 break;
 
 	case VMX_EXIT_REASON_EXECUTE_INVEPT: {
 		VMX_VMEXIT_INSTRUCTION_INFO_INVALIDATE exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
-		break;
 	}
+									   break;
 
 	case VMX_EXIT_REASON_EXECUTE_RDTSCP: {
-		break;
+		
 	}
+									   break;
 
 	case VMX_EXIT_REASON_VMX_PREEMPTION_TIMER_EXPIRED: {
-		break;
+		
 	}
+													 break;
 
 	case VMX_EXIT_REASON_EXECUTE_INVVPID: {
 		VMX_VMEXIT_INSTRUCTION_INFO_INVALIDATE exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
-		break;
 	}
+										break;
 
 	case VMX_EXIT_REASON_EXECUTE_WBINVD: {
-		break;
+		
 	}
+									   break;
 
 	case VMX_EXIT_REASON_EXECUTE_XSETBV: {
-		break;
+		
 	}
+									   break;
 
 	case VMX_EXIT_REASON_APIC_WRITE: {
-		break;
+		
 	}
+								   break;
 
 	case VMX_EXIT_REASON_EXECUTE_RDRAND: {
 		VMX_VMEXIT_INSTRUCTION_INFO_RDRAND_RDSEED exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
-		break;
 	}
+									   break;
 
 	case VMX_EXIT_REASON_EXECUTE_INVPCID: {
 		VMX_VMEXIT_INSTRUCTION_INFO_INVALIDATE exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
-		break;
 	}
+										break;
 
 	case VMX_EXIT_REASON_EXECUTE_VMFUNC: {
-		break;
+
 	}
+									   break;
 
 	case VMX_EXIT_REASON_EXECUTE_ENCLS: {
-		break;
+		
 	}
+									  break;
 
 	case VMX_EXIT_REASON_EXECUTE_RDSEED: {
-		break;
+		
 	}
+									   break;
 
 	case VMX_EXIT_REASON_PAGE_MODIFICATION_LOG_FULL: {
-		break;
+		
 	}
+												   break;
 
 	case VMX_EXIT_REASON_EXECUTE_XSAVES: {
 		VMX_VMEXIT_INSTRUCTION_INFO_VMX_AND_XSAVES exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
-		break;
 	}
+									   break;
 
 	case VMX_EXIT_REASON_EXECUTE_XRSTORS: {
 		VMX_VMEXIT_INSTRUCTION_INFO_VMX_AND_XSAVES exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
-		break;
 	}
+										break;
 
 	default:
 		break;
