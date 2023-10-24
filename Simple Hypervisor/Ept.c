@@ -17,25 +17,25 @@ BOOLEAN CheckEPTSupport() {
 	return TRUE;
 }
 
-BOOLEAN BuildMTRRMap() {
+BOOLEAN EptBuildMTRRMap() {
 	IA32_MTRR_CAPABILITIES_REGISTER mtrr_cap;
+	IA32_MTRR_PHYSBASE_REGISTER mtrr_phys_base;
+	IA32_MTRR_PHYSMASK_REGISTER mtrr_phys_mask;
 	
 	mtrr_cap.AsUInt = __readmsr(IA32_MTRR_CAPABILITIES);
-	DbgPrint("[*][Debugging MTRR] VariableRangeCount : %llx\n", mtrr_cap.VariableRangeCount);
-	DbgPrint("[*][Debugging MTRR] FixedRangeSupported : %llx\n", mtrr_cap.FixedRangeSupported);
-	DbgPrint("[*][Debugging MTRR] WcSupported : %llx\n", mtrr_cap.WcSupported);
-	DbgPrint("[*][Debugging MTRR] SmrrSupported : %llx\n", mtrr_cap.SmrrSupported);
-	DbgPrint("[*][Debugging MTRR] AsUInt : %llx\n", mtrr_cap.AsUInt);
 
 	UINT64 varCnt = mtrr_cap.VariableRangeCount;
-	BOOLEAN FixRangeSupport = mtrr_cap.FixedRangeSupported;
+	UINT64 FixRangeSupport = mtrr_cap.FixedRangeSupported;
 
 	if (FixRangeSupport) {
 		// Handle Fix Ranged MTRR
+		DbgPrint("[*] Fixed Range MTRR supported.\n");
+		DbgPrint("[*] Add support.\n");
 	}
 
-	for (UINT64 idx = 0; idx < varCnt; idx++) {
-
+	for (ULONG idx = 0; idx < varCnt; idx++) {
+		mtrr_phys_base.AsUInt = __readmsr(IA32_MTRR_PHYSBASE0 + (idx * 2));
+		mtrr_phys_mask.AsUInt = __readmsr(IA32_MTRR_PHYSMASK0 + (idx * 2));
 	}
 
 	return TRUE;

@@ -177,9 +177,15 @@ ULONG_PTR LaunchVm(_In_ ULONG_PTR Argument) {
 	//
 	// Launch VM into Outer Space :)
 	//
-	__vmx_vmlaunch();
+	if (__vmx_vmlaunch() != VM_ERROR_OK) {
+		DbgBreakPoint();
+		DbgPrint("[-] Failure launching Virtual Machine.\n");
 
-	DbgBreakPoint();
+		size_t ErrorCode = 0;
+		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &ErrorCode);
+		DbgPrint("[-] Exiting with error code : %llx\n", ErrorCode);
+		return Argument;
+	}
 	
 	return Argument;
 }

@@ -63,9 +63,7 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING Regi
 	// 
 	//InitializeEpt();
 
-	if (!IsVmxAvailable())			return STATUS_FAILED_DRIVER_ENTRY;
-
-	__debugbreak();
+	if (!VmxIsVmxAvailable())			return STATUS_FAILED_DRIVER_ENTRY;
 
 	if (!VirtualizeAllProcessors())		return STATUS_FAILED_DRIVER_ENTRY;
 	

@@ -1,22 +1,22 @@
 #include "stdafx.h"
 
-BOOLEAN IsVmxAvailable() {
+BOOLEAN VmxIsVmxAvailable() {
 	PAGED_CODE();
 
 	//
 	// Check VMX Support for that Logical Processor
 	//
-	if (IsVmxSupport() == FALSE)	return FALSE;
+	if (VmxIsVmxSupport() == FALSE)	return FALSE;
 
 	//
 	// Check Bios Lock Bit
 	//
-	if (CheckBiosLock() == FALSE)	return FALSE;
+	if (VmxCheckBiosLock() == FALSE)	return FALSE;
 
 	//
 	// Enable VMXE for that processor
 	//
-	EnableCR4();
+	VmxEnableCR4();
 
 
 
@@ -31,13 +31,13 @@ BOOLEAN IsVmxAvailable() {
 	//
 	// Build MTRR Map
 	//
-	if (BuildMTRRMap() == FALSE)	return FALSE;
+	if (EptBuildMTRRMap() == FALSE)	return FALSE;
 	DbgPrint("[*] MTRR built successfully\n");
 
 	return TRUE;
 }
 
-BOOLEAN IsVmxSupport() {
+BOOLEAN VmxIsVmxSupport() {
 	PAGED_CODE();
 
 	DbgPrint("[*] Checking Processor VMX support.....\n");
@@ -54,7 +54,7 @@ BOOLEAN IsVmxSupport() {
 	return TRUE;
 }
 
-VOID EnableCR4() {
+VOID VmxEnableCR4() {
 	PAGED_CODE();
 
 	CR4 _cr4;
@@ -67,7 +67,7 @@ VOID EnableCR4() {
 	return;
 }
 
-BOOLEAN CheckBiosLock() {
+BOOLEAN VmxCheckBiosLock() {
 	PAGED_CODE();
 
 	IA32_FEATURE_CONTROL_REGISTER feature_control_msr;
@@ -89,7 +89,7 @@ BOOLEAN CheckBiosLock() {
 }
 
 
-BOOLEAN allocateVmxonRegion(UCHAR processorNumber) {
+BOOLEAN VmxAllocateVmxonRegion(UCHAR processorNumber) {
 	PAGED_CODE();
 
 	if (!vmm_context) {
@@ -132,7 +132,7 @@ BOOLEAN allocateVmxonRegion(UCHAR processorNumber) {
 }
 
 
-BOOLEAN allocateVmcsRegion(UCHAR processorNumber) {
+BOOLEAN VmxAllocateVmcsRegion(UCHAR processorNumber) {
 	PAGED_CODE();
 
 	if (!vmm_context) {
@@ -175,7 +175,7 @@ BOOLEAN allocateVmcsRegion(UCHAR processorNumber) {
 }
 
 
-BOOLEAN allocateVmExitStack(UCHAR processorNumber) {
+BOOLEAN VmxAllocateVmExitStack(UCHAR processorNumber) {
 	PAGED_CODE();
 
 	PHYSICAL_ADDRESS physAddr;
@@ -194,7 +194,7 @@ BOOLEAN allocateVmExitStack(UCHAR processorNumber) {
 }
 
 
-BOOLEAN allocateIoBitmapStack(UCHAR processorNumber) {
+BOOLEAN VmxAllocateIoBitmapStack(UCHAR processorNumber) {
 	PAGED_CODE();
 
 	PHYSICAL_ADDRESS physAddr;
@@ -227,7 +227,7 @@ BOOLEAN allocateIoBitmapStack(UCHAR processorNumber) {
 }
 
 
-BOOLEAN allocateMsrBitmap(UCHAR processorNumber) {
+BOOLEAN VmxAllocateMsrBitmap(UCHAR processorNumber) {
 	PAGED_CODE();
 
 	PHYSICAL_ADDRESS physAddr;

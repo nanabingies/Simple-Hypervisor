@@ -5,4 +5,4 @@ BOOLEAN CheckEPTSupport();
 
 VOID InitializeEpt();
 
-BOOLEAN BuildMTRRMap();
+BOOLEAN EptBuildMTRRMap();
