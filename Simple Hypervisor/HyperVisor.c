@@ -64,7 +64,7 @@ BOOLEAN VirtualizeAllProcessors() {
 		//
 		// Setup EPT support for that processor
 		//
-		//InitializeEpt();
+		InitializeEpt(processor_number.Number);
 
 		KeLowerIrql(irql);
 

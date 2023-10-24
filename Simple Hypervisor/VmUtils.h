@@ -5,7 +5,7 @@
 #define DOS_NAME	L"\\DosDevices\\Hypervisor"
 #define VMM_POOL	'tesT'
 
-#define STACK_SIZE  (20 * PAGE_SIZE)
+#define HOST_STACK_SIZE  (20 * PAGE_SIZE)
 BOOLEAN VmOff;
 
 struct _vmm_context {
@@ -53,6 +53,7 @@ struct _GuestRegisters {
 	UINT64	RBX;
 	UINT64	RCX;
 	UINT64	RDX;
+	UINT64	RSP;
 	UINT64	RBP;
 	UINT64	RSI;
 	UINT64	RDI;

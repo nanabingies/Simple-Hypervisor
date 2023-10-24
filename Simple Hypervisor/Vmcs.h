@@ -44,7 +44,7 @@ ULONG AdjustControls(ULONG Ctl, ULONG Msr);
 
 EVmErrors SetupVmcs(ULONG, PVOID);
 
-inline UINT64 AsmHostContinueExecution();
+inline UINT64 __stdcall AsmHostContinueExecution();
 
 inline VOID AsmGuestContinueExecution();
 

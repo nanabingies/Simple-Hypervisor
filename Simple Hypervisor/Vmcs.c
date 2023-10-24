@@ -82,6 +82,7 @@ ULONG AdjustControls(ULONG Ctl, ULONG Msr) {
 }
 
 EVmErrors SetupVmcs(ULONG processorNumber, PVOID GuestRsp) {
+	PAGED_CODE();
 
 	//
 	// Control Registers - Guest & Host
@@ -105,9 +106,10 @@ EVmErrors SetupVmcs(ULONG processorNumber, PVOID GuestRsp) {
 	//
 	// RSP, RIP, RFLAGS - Guest & Host
 	//
-	vmm_context[processorNumber].GuestRip = (size_t)AsmGuestContinueExecution;
+	vmm_context[processorNumber].GuestRip = (size_t)GuestRsp; //AsmGuestContinueExecution;
 	vmm_context[processorNumber].HostRip = (size_t)AsmHostContinueExecution;
-	vmm_context[processorNumber].HostRsp = ((size_t)vmm_context[processorNumber].HostStack + STACK_SIZE - 1);
+	vmm_context[processorNumber].HostRsp = 
+		((size_t)vmm_context[processorNumber].HostStack + HOST_STACK_SIZE - sizeof(void*) - sizeof(struct _GuestRegisters));
 	vmm_context[processorNumber].GuestRsp = (size_t)GuestRsp;
 
 	__vmx_vmwrite(VMCS_GUEST_RSP, vmm_context[processorNumber].GuestRsp);	// g_GuestMemory
@@ -260,14 +262,10 @@ EVmErrors SetupVmcs(ULONG processorNumber, PVOID GuestRsp) {
 
 	__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
 		AdjustControls(IA32_VMX_PROCBASED_CTLS2_ENABLE_XSAVES_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_RDTSCP_FLAG |
-			IA32_VMX_PROCBASED_CTLS2_ENABLE_EPT_FLAG | IA32_VMX_PROCBASED_CTLS2_DESCRIPTOR_TABLE_EXITING_FLAG |
+			/**IA32_VMX_PROCBASED_CTLS2_ENABLE_EPT_FLAG*/ IA32_VMX_PROCBASED_CTLS2_DESCRIPTOR_TABLE_EXITING_FLAG |
 			IA32_VMX_PROCBASED_CTLS2_ENABLE_VPID_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_INVPCID_FLAG,
 			IA32_VMX_PROCBASED_CTLS2));
-	
-	//
-	// Set EPTP for Address Translation
-	//
-	//__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vmm_context[processorNumber].eptPtr);
+
 
 	//
 	// VM-exit control fields. 
@@ -302,6 +300,9 @@ EVmErrors SetupVmcs(ULONG processorNumber, PVOID GuestRsp) {
 	__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_B_ADDRESS, vmm_context[processorNumber].ioBitmapBPhys);
 
 	__vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, vmm_context[processorNumber].msrBitmapPhys);
+
+	__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vmm_context[processorNumber].eptPtr);
+	__vmx_vmwrite(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, KeGetCurrentProcessorNumberEx(NULL) + 1);
 	
 	IA32_VMX_MISC_REGISTER misc;
 	misc.AsUInt = __readmsr(IA32_VMX_MISC);

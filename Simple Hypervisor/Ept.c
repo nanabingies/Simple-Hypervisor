@@ -45,9 +45,9 @@ BOOLEAN EptBuildMTRRMap() {
 		//
 	}
 
-	for (ULONG idx = 0; idx < varCnt; idx++) {
-		mtrr_phys_base.AsUInt = __readmsr(IA32_MTRR_PHYSBASE0 + (idx * 2));
-		mtrr_phys_mask.AsUInt = __readmsr(IA32_MTRR_PHYSMASK0 + (idx * 2));
+	for (unsigned iter = 0; iter < varCnt; iter++) {
+		mtrr_phys_base.AsUInt = __readmsr(IA32_MTRR_PHYSBASE0 + (iter * 2));
+		mtrr_phys_mask.AsUInt = __readmsr(IA32_MTRR_PHYSMASK0 + (iter * 2));
 
 		// The range is invalid
 		if (!mtrr_phys_mask.Valid)
@@ -71,17 +71,15 @@ BOOLEAN EptBuildMTRRMap() {
 	
 	struct MtrrEntry* temp = (struct MtrrEntry*)g_MtrrEntries;
 	do {
-		DbgPrint("[*] MemoryType : %llx\n", temp->MemoryType);
-		DbgPrint("[*] PhysicalAddressStart : %llx\n", temp->PhysicalAddressStart);
-		DbgPrint("PhysicalAddressEnd : %llx\n", temp->PhysicalAddressEnd);
-
+		
 		temp = (struct MtrrEntry*)((UCHAR*)temp + sizeof(struct MtrrEntry));
 	} while (temp->PhysicalAddressEnd != 0x0);
 
 	return TRUE;
 }
 
-void InitializeEpt() {
+void InitializeEpt(UCHAR processorNumber) {
+	UNREFERENCED_PARAMETER(processorNumber);
 	PAGED_CODE();
 
 	EPT_POINTER* EptPtr = (EPT_POINTER*)
@@ -94,6 +92,7 @@ void InitializeEpt() {
 	RtlSecureZeroMemory(EptPtr, PAGE_SIZE);
 	DbgPrint("[*] Pointer to EPT at : %llx\n", (UINT64)EptPtr);
 
+	vmm_context[processorNumber].eptPtr = (UINT64)EptPtr;
 	//vmm_context->eptPtr = (UINT64)EptPtr;
 
 	EPT_PML4E* pml4e = (EPT_PML4E*)

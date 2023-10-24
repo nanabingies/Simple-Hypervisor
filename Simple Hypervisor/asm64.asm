@@ -1,7 +1,6 @@
 
 PUBLIC	AsmHostContinueExecution
 PUBLIC	AsmGuestContinueExecution
-PUBLIC	AsmSaveHostRegisters
 PUBLIC	HostTerminateHypervisor
 PUBLIC  AsmSetupVmcs
 
@@ -51,44 +50,48 @@ HostTerminateHypervisor ENDP
 AsmHostContinueExecution PROC
 	int 3		; A VM Exit just occured
 
-	PUSH R15
-    PUSH R14
-    PUSH R13
-    PUSH R12
-    PUSH R11
-    PUSH R10
-    PUSH R9
-    PUSH R8        
-    PUSH RDI
-    PUSH RSI
-    PUSH RBP
-    PUSH RDX
-    PUSH RCX
-	PUSH RBX
-    PUSH RAX
+	PUSHFQ
+	PUSH	RAX
+	PUSH	RBX
+	PUSH	RCX
+	PUSH	RDX
+	PUSH	RBP
+	PUSH	-1				; Dummy for RSP
+	PUSH	RSI
+	PUSH	RDI
+	PUSH	R8
+	PUSH	R9
+	PUSH	R10
+	PUSH	R11
+	PUSH	R12
+	PUSH	R13
+	PUSH	R14
+	PUSH	R15
 
 	MOV RCX, RSP
 	SUB RSP, 020h
 	CALL VmExitHandler
 	ADD RSP, 020h
 
-	POP RAX
-	POP RBX
-    POP RCX
-    POP RDX
-    POP RBP
-    POP RSI
-    POP RDI 
-    POP R8
-    POP R9
-    POP R10
-    POP R11
-    POP R12
-    POP R13
-    POP R14
-    POP R15
-
-	;SUB RSP, 080h		
+	POP		R15
+	POP		R14
+	POP		R12
+	POP		R13
+	POP		R12
+	POP		R11
+	POP		R10
+	POP		R9
+	POP		R8
+	POP		RDI
+	POP		RSI
+	;ADD     RSP, 8    ; dummy for rsp
+	POP		RBP
+	POP		RDX
+	POP		RCX
+	POP		RBX
+	POP		RAX
+	POPFQ
+		
     JMP ResumeVm
 
 	RET
@@ -125,36 +128,9 @@ AsmGuestContinueExecution ENDP
 
 ; ----------------------------------------------------------------------------------- ;
 
-AsmSaveHostRegisters PROC
-	int 3
-	PUSHFQ
-	PUSH	RAX
-	PUSH	RBX
-	PUSH	RCX
-	PUSH	RDX
-	PUSH	RBP
-	PUSH	-1				; Dummy for RSP
-	PUSH	RSI
-	PUSH	RDI
-	PUSH	R8
-	PUSH	R9
-	PUSH	R10
-	PUSH	R11
-	PUSH	R12
-	PUSH	R13
-	PUSH	R14
-	PUSH	R15
-
-	ADD		RSP, 088h		; Try and use sub as used in airhv
-	MOV		RAX, RSP
-	RET
-
-AsmSaveHostRegisters ENDP
-
-; ----------------------------------------------------------------------------------- ;
 
 AsmSetupVmcs PROC
-
+	
 	PUSHFQ
 	PUSH	RAX
 	PUSH	RBX
