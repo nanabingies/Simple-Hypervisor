@@ -3,4 +3,6 @@
 
 BOOLEAN CheckEPTSupport();
 
-void InitializeEpt();
+VOID InitializeEpt();
+
+VOID BuildMTRRMap();

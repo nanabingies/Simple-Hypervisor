@@ -34,6 +34,10 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING Regi
 	UNREFERENCED_PARAMETER(RegistryPath);
 	VmOff = FALSE;
 
+	// Opt-in to using non-executable pool memory on Windows 8 and later.
+	// https://msdn.microsoft.com/en-us/library/windows/hardware/hh920402(v=vs.85).aspx
+	ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
+
 	NTSTATUS status;
 	UNICODE_STRING drvName;
 	PDEVICE_OBJECT deviceObject;
@@ -60,6 +64,12 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING Regi
 	//InitializeEpt();
 
 	if (!IsVmxAvailable())			return STATUS_FAILED_DRIVER_ENTRY;
+
+	//
+	// Build MTRR Map
+	//
+	BuildMTRRMap();
+
 	__debugbreak();
 
 	if (!VirtualizeAllProcessors())		return STATUS_FAILED_DRIVER_ENTRY;
