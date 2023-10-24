@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #pragma warning(disable : 4996)
 
-BOOLEAN CheckEPTSupp() {
+BOOLEAN CheckEPTSupport() {
 	PAGED_CODE();
 
 	IA32_VMX_EPT_VPID_CAP_REGISTER ept_cap;

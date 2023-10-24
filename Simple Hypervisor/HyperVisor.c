@@ -6,6 +6,31 @@ BOOLEAN VirtualizeAllProcessors() {
 	PAGED_CODE();
 
 	//
+	// Check VMX Support for that Logical Processor
+	//
+	if (IsVmxSupport() == FALSE)	return FALSE;
+
+	//
+	// Check Bios Lock Bit
+	//
+	if (CheckBiosLock() == FALSE)	return FALSE;
+
+	//
+	// Enable VMXE for that processor
+	//
+	EnableCR4();
+
+	//
+	// Check for EPT support for that processor
+	//
+	if (CheckEPTSupport() == FALSE)	return FALSE;
+
+
+	DbgPrint("[*] Initial checks completed.\n");
+
+
+
+	//
 	// This was more of an educational project so only one Logical Processor was chosen and virtualized
 	// TODO : Add support for multiple processors
 	// Fix: Support for multiple processors added
@@ -38,29 +63,6 @@ BOOLEAN VirtualizeAllProcessors() {
 		DbgPrint("[*] Currently executing on processor : %x\n", processor_number.Number);
 
 		KIRQL irql = KeRaiseIrqlToDpcLevel();
-
-		//
-		// Check VMX Support for that Logical Processor
-		//
-		if (IsVmxSupport() == FALSE)	return FALSE;
-
-		//
-		// Check Bios Lock Bit
-		//
-		if (CheckBiosLock() == FALSE)	return FALSE;
-
-		//
-		// Enable VMXE for that processor
-		//
-		EnableCR4();
-
-		//
-		// Check for EPT support
-		//
-		if (CheckEPTSupp() == FALSE)	return FALSE;
-
-
-		DbgPrint("[*] Initial checks completed.\n");
 
 		//
 		// Allocate Memory for VMXON & VMCS regions and initialize

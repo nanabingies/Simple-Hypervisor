@@ -1,6 +1,6 @@
 #pragma once
 #define numPagesToAllocate	10
 
-BOOLEAN CheckEPTSupp();
+BOOLEAN CheckEPTSupport();
 
 void InitializeEpt();
