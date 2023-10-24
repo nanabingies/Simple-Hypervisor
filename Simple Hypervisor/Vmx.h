@@ -4,6 +4,8 @@ UINT64 inline AsmSaveHostRegisters();
 
 ULONG_PTR HostTerminateHypervisor(ULONG_PTR);
 
+BOOLEAN IsVmxAvailable();
+
 BOOLEAN IsVmxSupport();
 
 VOID EnableCR4();

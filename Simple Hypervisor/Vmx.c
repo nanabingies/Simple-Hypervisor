@@ -1,5 +1,35 @@
 #include "stdafx.h"
 
+BOOLEAN IsVmxAvailable() {
+	PAGED_CODE();
+
+	//
+	// Check VMX Support for that Logical Processor
+	//
+	if (IsVmxSupport() == FALSE)	return FALSE;
+
+	//
+	// Check Bios Lock Bit
+	//
+	if (CheckBiosLock() == FALSE)	return FALSE;
+
+	//
+	// Enable VMXE for that processor
+	//
+	EnableCR4();
+
+
+
+	//
+	// Check for EPT support for that processor
+	//
+	if (CheckEPTSupport() == FALSE)	return FALSE;
+
+
+	DbgPrint("[*] Initial checks completed.\n");
+	return TRUE;
+}
+
 BOOLEAN IsVmxSupport() {
 	PAGED_CODE();
 
