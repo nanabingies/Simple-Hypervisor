@@ -24,8 +24,6 @@ struct _vmm_context {
 	UINT64	msrBitmapVirt;					// Virtual address of MSR bitmap
 	UINT64	msrBitmapPhys;					// Physical address
 
-	UINT64	eptPtr;							// Pointer to the EPT
-
 	UINT64	HostStack;						// Stack of the VM Exit Handler
 
 	UINT64	GuestMemory;					// Guest RSP
@@ -39,6 +37,11 @@ struct _vmm_context {
 	struct {
 		UINT64	g_StackPointerForReturning;
 		UINT64	g_BasePointerForReturning;
+	};
+
+	struct {
+		UINT64	eptPtr;							// Pointer to the EPT
+		UINT64	pml4e;							// Pointer to pml4 entry
 	};
 };
 

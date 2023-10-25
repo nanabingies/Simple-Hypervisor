@@ -221,6 +221,11 @@ BOOLEAN VmxAllocateIoBitmapStack(UCHAR processorNumber) {
 	DbgPrint("[*] vmm_context[processorNumber].bitmapAVirt : %llx\n", vmm_context[processorNumber].ioBitmapAVirt);
 	DbgPrint("[*] vmm_context[processorNumber].bitmapBVirt : %llx\n", vmm_context[processorNumber].ioBitmapBVirt);
 
+	//
+	// We want to vmexit on every io and msr access
+	//memset(vmm_context[processorNumber].ioBitmapAVirt, 0xff, PAGE_SIZE);
+	//memset(vmm_context[processorNumber].ioBitmapBVirt, 0xff, PAGE_SIZE);
+
 	return TRUE;
 }
 

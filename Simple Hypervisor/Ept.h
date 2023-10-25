@@ -3,7 +3,7 @@
 #define numMtrrEntries		255
 
 enum MtrrMemoryType {
-	Uncacheable = 00,
+	Uncacheable = 0l,
 	WriteCombining,
 	Reserved1,
 	Reserved2,
@@ -18,6 +18,14 @@ struct MtrrEntry {
 	UINT64	PhysicalAddressStart;
 	UINT64	PhysicalAddressEnd;
 };
+
+struct EptState {
+	UINT64 EptPtr;
+};
+
+const ULONG MaxEptWalkLength = 0x4;
+
+UINT64 DefaultMemoryType;
 
 BOOLEAN CheckEPTSupport();
 

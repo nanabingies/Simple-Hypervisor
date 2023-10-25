@@ -26,16 +26,20 @@ BOOLEAN EptBuildMTRRMap() {
 	RtlSecureZeroMemory(mtrr_entry, numMtrrEntries * sizeof(struct MtrrEntry));
 	
 	IA32_MTRR_CAPABILITIES_REGISTER mtrr_cap;
+	IA32_MTRR_DEF_TYPE_REGISTER mtrr_def;
 	IA32_MTRR_PHYSBASE_REGISTER mtrr_phys_base;
 	IA32_MTRR_PHYSMASK_REGISTER mtrr_phys_mask;
 	//INT index = 0;
 	
 	mtrr_cap.AsUInt = __readmsr(IA32_MTRR_CAPABILITIES);
+	mtrr_def.AsUInt = __readmsr(IA32_MTRR_DEF_TYPE);
 
 	UINT64 varCnt = mtrr_cap.VariableRangeCount;
 	UINT64 FixRangeSupport = mtrr_cap.FixedRangeSupported;
+	UINT64 FixRangeEnable = mtrr_def.FixedRangeMtrrEnable;
+	g_DefaultMemoryType = mtrr_def.DefaultMemoryType;
 
-	if (FixRangeSupport) {
+	if (FixRangeSupport && FixRangeEnable) {
 		// Handle Fix Ranged MTRR
 		DbgPrint("[*] Fixed Range MTRR supported.\n");
 		DbgPrint("[*] Add support later.\n");
@@ -43,6 +47,15 @@ BOOLEAN EptBuildMTRRMap() {
 		//
 		//	TODO: Add Fixed Range MTRR
 		//
+		static const UINT64 k64kBase = IA32_MTRR_FIX64K_BASE;
+		static const UINT64 k64kManagedSize = IA32_MTRR_FIX64K_SIZE;	// 64K
+		static const UINT64 k16kBase = IA32_MTRR_FIX16K_BASE;
+		static const UINT64 k16kManagedSize = IA32_MTRR_FIX16K_SIZE;
+		static const UINT64 k4kBase = IA32_MTRR_FIX4K_BASE;
+		static const UINT64 k4kManagedSize = IA32_MTRR_FIX4K_SIZE;
+		
+		// Let's first set 64K page data
+		
 	}
 
 	for (unsigned iter = 0; iter < varCnt; iter++) {
@@ -91,8 +104,6 @@ void InitializeEpt(UCHAR processorNumber) {
 	RtlSecureZeroMemory(EptPtr, PAGE_SIZE);
 	DbgPrint("[*] Pointer to EPT at : %llx\n", (UINT64)EptPtr);
 
-	vmm_context[processorNumber].eptPtr = EptPtr->AsUInt;
-	//vmm_context->eptPtr = (UINT64)EptPtr;
 
 	EPT_PML4E* pml4e = (EPT_PML4E*)
 		(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL));
@@ -186,7 +197,7 @@ void InitializeEpt(UCHAR processorNumber) {
 	//
 	//pde->Accessed = 1;
 	pde->ExecuteAccess = 1;
-	pde->PageFrameNumber = (VirtualToPhysicalAddress(pte) / PAGE_SIZE);
+	pde->PageFrameNumber = (VirtualToPhysicalAddress(pte) >> PAGE_SHIFT);		// / PAGE_SIZE
 	pde->ReadAccess = 1;
 	pde->UserModeExecute = 1;
 	pde->WriteAccess = 1;
@@ -196,7 +207,7 @@ void InitializeEpt(UCHAR processorNumber) {
 	//
 	//pdpte->Accessed = 1;
 	pdpte->ExecuteAccess = 1;
-	pdpte->PageFrameNumber = (VirtualToPhysicalAddress(pde) / PAGE_SIZE);
+	pdpte->PageFrameNumber = (VirtualToPhysicalAddress(pde) >> PAGE_SHIFT);	// / PAGE_SIZE
 	pdpte->ReadAccess = 1;
 	pdpte->UserModeExecute = 1;
 	pdpte->WriteAccess = 1;
@@ -206,7 +217,7 @@ void InitializeEpt(UCHAR processorNumber) {
 	//
 	//pml4e->Accessed = 1;
 	pml4e->ExecuteAccess = 1;
-	pml4e->PageFrameNumber = (VirtualToPhysicalAddress(pdpte) / PAGE_SIZE);
+	pml4e->PageFrameNumber = (VirtualToPhysicalAddress(pdpte) >> PAGE_SHIFT);	// / PAGE_SIZE
 	pml4e->ReadAccess = 1;
 	pml4e->UserModeExecute = 1;
 	pml4e->WriteAccess = 1;
@@ -216,9 +227,12 @@ void InitializeEpt(UCHAR processorNumber) {
 	//
 	EptPtr->EnableAccessAndDirtyFlags = 1;
 	EptPtr->EnableSupervisorShadowStackPages = 1;
-	EptPtr->MemoryType = 6; // WriteBack
-	EptPtr->PageFrameNumber = (VirtualToPhysicalAddress(pml4e) / PAGE_SIZE);
-	EptPtr->PageWalkLength = 3;
+	EptPtr->MemoryType = g_DefaultMemoryType;	// WriteBack
+	EptPtr->PageFrameNumber = (VirtualToPhysicalAddress(pml4e) >> PAGE_SHIFT);	// / PAGE_SIZE
+	EptPtr->PageWalkLength = MaxEptWalkLength - 1;
+
+	vmm_context[processorNumber].eptPtr = EptPtr->AsUInt;
+	vmm_context[processorNumber].pml4e = pml4e->AsUInt;
 
 	DbgPrint("[*] EPT Setup Done.\n");
 
