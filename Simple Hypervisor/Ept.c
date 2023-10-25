@@ -55,7 +55,7 @@ BOOLEAN EptBuildMTRRMap() {
 		static const UINT64 k4kManagedSize = IA32_MTRR_FIX4K_SIZE;
 		
 		// Let's first set 64K page data
-		
+		IA32_MTRR_DEF_TYPE_FIXED_RANGE_MTRR_ENABLE
 	}
 
 	for (unsigned iter = 0; iter < varCnt; iter++) {
