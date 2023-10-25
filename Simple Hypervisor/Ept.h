@@ -20,7 +20,8 @@ enum MtrrMemoryType {
 };
 
 struct MtrrEntry {
-	UINT64	MtrrEnabled;
+	BOOLEAN	MtrrEnabled;
+	BOOLEAN MtrrFixed;
 	UINT64	MemoryType;
 	UINT64	PhysicalAddressStart;
 	UINT64	PhysicalAddressEnd;
@@ -30,7 +31,7 @@ struct EptState {
 	UINT64 EptPtr;
 };
 
-const ULONG MaxEptWalkLength = 0x4;
+static const ULONG MaxEptWalkLength = 0x4;
 
 UINT64 g_DefaultMemoryType;
 

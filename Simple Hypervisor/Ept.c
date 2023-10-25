@@ -53,19 +53,87 @@ BOOLEAN EptBuildMTRRMap() {
 		static const UINT64 k16kManagedSize = IA32_MTRR_FIX16K_SIZE;
 		static const UINT64 k4kBase = IA32_MTRR_FIX4K_BASE;
 		static const UINT64 k4kManagedSize = IA32_MTRR_FIX4K_SIZE;
+
+		UINT64 offset = 0x0;
 		
 		// Let's first set 64K page data
-		Ia32MtrrFixedRangeMsr msr;
-		msr.all = __readmsr(IA32_MTRR_FIX64K_00000);
+		Ia32MtrrFixedRangeMsr msr64k;
+		msr64k.all = __readmsr(IA32_MTRR_FIX64K_00000);
 		for (unsigned idx = 0; idx < 8; idx++) {
-			DbgPrint("[*][Debugging] type :  %x\n", msr.fields.types[idx]);
+			UINT64 base = k64kBase + offset;
+			offset += k64kManagedSize;
+
+			// save the MTRR
+			mtrr_entry->MtrrEnabled = TRUE;
+			mtrr_entry->MemoryType = msr64k.fields.types[idx];
+			mtrr_entry->MtrrFixed = TRUE;
+			mtrr_entry->PhysicalAddressStart = base;
+			mtrr_entry->PhysicalAddressEnd = base + k64kManagedSize - 1;
+
+			DbgPrint("[*][Debugging][%d] MemoryType :  %llx\n", idx, mtrr_entry->MemoryType);
+			DbgPrint("[*][Debugging][%d] PhysicalAddressStart :  %llx\n", idx, mtrr_entry->PhysicalAddressStart);
+			DbgPrint("[*][Debugging][%d] PhysicalAddressEnd :  %llx\n", idx, mtrr_entry->PhysicalAddressEnd);
+
+			mtrr_entry++;
 		}
 
+		DbgPrint("\n==================================================================================\n\n");
+
 		// let's set 16k page data
-		__readmsr(IA32_MTRR_FIX16K_80000);
+		Ia32MtrrFixedRangeMsr msr16k;
+		// start -- IA32_MTRR_FIX16K_80000	
+		// end   -- IA32_MTRR_FIX16K_A0000
+		offset = 0;
+
+		for (unsigned start = IA32_MTRR_FIX16K_80000; start <= IA32_MTRR_FIX16K_A0000; start++) {
+			msr16k.all = __readmsr(start);
+			for (unsigned idx = 0; idx < 8; idx++) {
+				UINT64 base = k16kBase + offset;
+				offset += k16kManagedSize;
+
+				// Save the MTRR
+				mtrr_entry->MemoryType = msr16k.fields.types[idx];
+				mtrr_entry->MtrrEnabled = TRUE;
+				mtrr_entry->MtrrFixed = TRUE;
+				mtrr_entry->PhysicalAddressStart = base;
+				mtrr_entry->PhysicalAddressEnd = base + k16kManagedSize - 1;
+
+				DbgPrint("[*][Debugging][%d] MemoryType :  %llx\n", idx, mtrr_entry->MemoryType);
+				DbgPrint("[*][Debugging][%d] PhysicalAddressStart :  %llx\n", idx, mtrr_entry->PhysicalAddressStart);
+				DbgPrint("[*][Debugging][%d] PhysicalAddressEnd :  %llx\n", idx, mtrr_entry->PhysicalAddressEnd);
+
+				mtrr_entry++;
+			}
+		}
+
+		DbgPrint("\n==================================================================================\n\n");
 
 		// let's set 4k page data
-		__readmsr(IA32_MTRR_FIX4K_C0000);
+		Ia32MtrrFixedRangeMsr msr4k;
+		// start -- IA32_MTRR_FIX4K_C0000	
+		// end   -- IA32_MTRR_FIX4K_F8000
+		offset = 0;
+
+		for (unsigned start = IA32_MTRR_FIX4K_C0000; start <= IA32_MTRR_FIX4K_F8000; start++) {
+			msr4k.all = __readmsr(start);
+			for (unsigned idx = 0; idx < 8; idx++) {
+				UINT64 base = k4kBase + offset;
+				offset += k4kManagedSize;
+
+				// Save the MTRR
+				mtrr_entry->MemoryType = msr4k.fields.types[idx];
+				mtrr_entry->MtrrEnabled = TRUE;
+				mtrr_entry->MtrrFixed = TRUE;
+				mtrr_entry->PhysicalAddressStart = base;
+				mtrr_entry->PhysicalAddressEnd = base + k4kManagedSize - 1;
+
+				DbgPrint("[*][Debugging][%d] MemoryType :  %llx\n", idx, mtrr_entry->MemoryType);
+				DbgPrint("[*][Debugging][%d] PhysicalAddressStart :  %llx\n", idx, mtrr_entry->PhysicalAddressStart);
+				DbgPrint("[*][Debugging][%d] PhysicalAddressEnd :  %llx\n", idx, mtrr_entry->PhysicalAddressEnd);
+
+				mtrr_entry++;
+			}
+		}
 	}
 	__debugbreak();
 
@@ -85,7 +153,7 @@ BOOLEAN EptBuildMTRRMap() {
 		physical_base_start = mtrr_phys_base.PageFrameNumber * PAGE_SIZE;
 		physical_base_end = physical_base_start + ((1ull << length) - 1);
 
-		mtrr_entry->MtrrEnabled = 0x1;
+		mtrr_entry->MtrrEnabled = TRUE;
 		mtrr_entry->MemoryType = mtrr_phys_base.Type;
 		mtrr_entry->PhysicalAddressStart = physical_base_start;
 		mtrr_entry->PhysicalAddressEnd = physical_base_end;
@@ -94,8 +162,14 @@ BOOLEAN EptBuildMTRRMap() {
 
 	
 	/*struct MtrrEntry* temp = (struct MtrrEntry*)g_MtrrEntries;
+	DbgPrint("[*][Debugging] temp : %p\n", (PVOID)temp);
 	do {
-		
+		/*DbgPrint("[*][Debugging] MtrrEnabled : %p\n", (PVOID)temp->MtrrEnabled);
+		DbgPrint("[*][Debugging] MemoryType : %p\n", (PVOID)temp->MemoryType);
+		DbgPrint("[*][Debugging] MtrrFixed : %p\n", (PVOID)temp->MtrrFixed);
+		DbgPrint("[*][Debugging] PhysicalAddressStart : %p\n", (PVOID)temp->PhysicalAddressStart);
+		DbgPrint("[*][Debugging] PhysicalAddressEnd : %p\n", (PVOID)temp->PhysicalAddressEnd);
+
 		temp = (struct MtrrEntry*)((UCHAR*)temp + sizeof(struct MtrrEntry));
 	} while (temp->PhysicalAddressEnd != 0x0);*/
 
