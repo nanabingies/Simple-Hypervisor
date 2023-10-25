@@ -55,7 +55,11 @@ BOOLEAN EptBuildMTRRMap() {
 		static const UINT64 k4kManagedSize = IA32_MTRR_FIX4K_SIZE;
 		
 		// Let's first set 64K page data
-		__readmsr(IA32_MTRR_FIX64K_00000);
+		Ia32MtrrFixedRangeMsr msr;
+		msr.all = __readmsr(IA32_MTRR_FIX64K_00000);
+		for (unsigned idx = 0; idx < 8; idx++) {
+			DbgPrint("[*][Debugging] type :  %x\n", msr.fields.types[idx]);
+		}
 
 		// let's set 16k page data
 		__readmsr(IA32_MTRR_FIX16K_80000);
@@ -63,6 +67,7 @@ BOOLEAN EptBuildMTRRMap() {
 		// let's set 4k page data
 		__readmsr(IA32_MTRR_FIX4K_C0000);
 	}
+	__debugbreak();
 
 	for (unsigned iter = 0; iter < varCnt; iter++) {
 		mtrr_phys_base.AsUInt = __readmsr(IA32_MTRR_PHYSBASE0 + (iter * 2));

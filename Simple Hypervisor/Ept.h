@@ -2,6 +2,13 @@
 #define numPagesToAllocate	10
 #define numMtrrEntries		255
 
+typedef union Ia32MtrrFixedRangeMsr {
+	UINT64 all;
+	struct {
+		UCHAR types[8];
+	} fields;
+} Ia32MtrrFixedRangeMsr;
+
 enum MtrrMemoryType {
 	Uncacheable = 0l,
 	WriteCombining,
