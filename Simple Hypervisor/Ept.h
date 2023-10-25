@@ -25,7 +25,7 @@ struct EptState {
 
 const ULONG MaxEptWalkLength = 0x4;
 
-UINT64 DefaultMemoryType;
+UINT64 g_DefaultMemoryType;
 
 BOOLEAN CheckEPTSupport();
 
