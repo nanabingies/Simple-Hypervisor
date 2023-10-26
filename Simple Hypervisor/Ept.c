@@ -63,7 +63,7 @@ BOOLEAN EptBuildMTRRMap() {
 			UINT64 base = k64kBase + offset;
 			offset += k64kManagedSize;
 
-			// save the MTRR
+			// Save the MTRR
 			mtrr_entry->MtrrEnabled = TRUE;
 			mtrr_entry->MemoryType = msr64k.fields.types[idx];
 			mtrr_entry->MtrrFixed = TRUE;
