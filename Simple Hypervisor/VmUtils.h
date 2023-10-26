@@ -39,10 +39,9 @@ struct _vmm_context {
 		UINT64	g_BasePointerForReturning;
 	};
 
-	struct {
-		UINT64	eptPtr;							// Pointer to the EPT
-		UINT64	pml4e;							// Pointer to pml4 entry
-	};
+	UINT64	EptPtr;
+	UINT64	EptPml4;
+	//EptState* EptState;
 };
 
 

@@ -64,7 +64,7 @@ BOOLEAN VirtualizeAllProcessors() {
 		//
 		// Setup EPT support for that processor
 		//
-		InitializeEpt(processor_number.Number);
+		if (!InitializeEpt(processor_number.Number))				return FALSE;
 
 		KeLowerIrql(irql);
 
@@ -111,6 +111,16 @@ VOID DevirtualizeAllProcessors() {
 
 		if (vmm_context[processor_number.Number].msrBitmapVirt)
 			MmFreeContiguousMemory((PVOID)vmm_context[processor_number.Number].msrBitmapVirt);
+
+		/*if (vmm_context[processor_number.Number].EptState) {
+			if (vmm_context[processor_number.Number].EptState->EptPageTable)
+				ExFreePoolWithTag(vmm_context[processor_number.Number].EptState->EptPageTable, VMM_POOL);
+
+			if (vmm_context[processor_number.Number].EptState->EptPtr)
+				ExFreePoolWithTag(vmm_context[processor_number.Number].EptState->EptPtr, VMM_POOL);
+
+			ExFreePoolWithTag(vmm_context[processor_number.Number].EptState, VMM_POOL);
+		}*/
 		
 		ExFreePoolWithTag(vmm_context, VMM_POOL);
 

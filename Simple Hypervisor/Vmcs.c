@@ -301,7 +301,8 @@ EVmErrors SetupVmcs(ULONG processorNumber, PVOID GuestRsp) {
 
 	__vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, vmm_context[processorNumber].msrBitmapPhys);
 
-	__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vmm_context[processorNumber].eptPtr);
+	__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vmm_context[processorNumber].EptPtr);
+	//__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vmm_context[processorNumber].EptState->EptPtr->AsUInt);
 	__vmx_vmwrite(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, KeGetCurrentProcessorNumberEx(NULL) + 1);
 	
 	IA32_VMX_MISC_REGISTER misc;

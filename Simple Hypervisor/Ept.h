@@ -1,9 +1,12 @@
 #pragma once
+#include "ia32.h"
+
 #define numPagesToAllocate	10
 #define numMtrrEntries		255
 
 #define EPTPML4ENTRIES		512
-#define EPTPDPTEENTRIE		512
+#define EPTPDPTEENTRIES		512
+#define EPTPDEENTRIES		512 * 512
 
 typedef union Ia32MtrrFixedRangeMsr {
 	UINT64 all;
@@ -30,13 +33,23 @@ typedef struct _MtrrEntry {
 	UINT64	PhysicalAddressEnd;
 }MtrrEntry;
 
+/*struct _EptPageTable {
+	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PML4E EptPml4[EPTPML4ENTRIES] ;
+	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PDPTE EptPdpte[EPTPDPTEENTRIES] ;
+	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PDE_2MB EptPde[EPTPML4ENTRIES][EPTPDPTEENTRIES] ;
+};*/
+
+typedef struct _EptPageTable {
+	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PML4E EptPml4[EPTPML4ENTRIES];
+	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PDPTE EptPdpte[EPTPDPTEENTRIES];
+	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PDE_2MB EptPde[EPTPML4ENTRIES][EPTPDPTEENTRIES];
+} EptPageTable;
+
 typedef struct _EptState {
-	UINT64	EptPtr;
-	UINT64	GuestAddressWidthValue;
-	DECLSPEC_ALIGN(PAGE_SIZE)	UINT64	EptPml4[EPTPML4ENTRIES];
-	DECLSPEC_ALIGN(PAGE_SIZE)	UINT64	EptPdpte[EPTPDPTEENTRIE];
-	DECLSPEC_ALIGN(PAGE_SIZE)	UINT64	EptPde[EPTPML4ENTRIES][EPTPDPTEENTRIE];
-}EptState;
+	UINT64			GuestAddressWidthValue;
+	EPT_POINTER*	EptPtr;
+	EptPageTable*	EptPageTable;
+} EptState;
 
 static const ULONG MaxEptWalkLength = 0x4;
 
@@ -44,6 +57,10 @@ UINT64 g_DefaultMemoryType;
 
 BOOLEAN CheckEPTSupport();
 
-VOID InitializeEpt(UCHAR);
+BOOLEAN InitializeEpt(UCHAR);
 
 BOOLEAN EptBuildMTRRMap();
+
+//EptPageTable* CreateEptState();
+
+BOOLEAN SetupPml2Entries();
