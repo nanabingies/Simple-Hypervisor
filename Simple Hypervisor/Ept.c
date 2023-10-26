@@ -156,7 +156,7 @@ BOOLEAN EptBuildMTRRMap() {
 	return TRUE;
 }
 
-BOOLEAN InitializeEpt(UCHAR processorNumber) {
+/*BOOLEAN InitializeEpt(UCHAR processorNumber) {
 	PAGED_CODE();
 
 	EPT_POINTER* EptPtr = (EPT_POINTER*)
@@ -300,9 +300,9 @@ BOOLEAN InitializeEpt(UCHAR processorNumber) {
 	vmm_context[processorNumber].EptPml4 = pml4e->AsUInt;
 
 	return TRUE;
-}
+}*/
 
-/*BOOLEAN InitializeEpt(UCHAR processorNumber) {
+BOOLEAN InitializeEpt(UCHAR processorNumber) {
 	PAGED_CODE();
 
 	EptState* ept_state = (EptState*)ExAllocatePoolWithTag(NonPagedPool, sizeof(struct _EptState), VMM_POOL);
@@ -318,33 +318,38 @@ BOOLEAN InitializeEpt(UCHAR processorNumber) {
 		DbgPrint("[-] Failed to allocate memory for pointer to Ept.\n");
 		return FALSE;
 	}
+	ept_state->EptPtr = ept_ptr;
 	RtlSecureZeroMemory(ept_ptr, PAGE_SIZE);
 
-	EptPageTable* page_table = CreateEptState();
-	if (!page_table) {
+	
+	if (CreateEptState(ept_state) == FALSE) {
 		DbgPrint("[-] Failed to set Ept Page Table Entries.\n");
 		ExFreePoolWithTag(ept_ptr, VMM_POOL);
 		ExFreePoolWithTag(ept_state, VMM_POOL);
 		return FALSE;
 	}
-
-	ept_state->EptPtr = ept_ptr;
-	ept_state->EptPageTable = page_table;
-	ept_state->GuestAddressWidthValue = MaxEptWalkLength - 1;
-	vmm_context[processorNumber].EptPtr = ept_state->EptPtr->AsUInt;
 	
+	vmm_context[processorNumber].EptPtr = ept_state->EptPtr->AsUInt;
+	vmm_context[processorNumber].EptState = ept_state;
+
+	
+	DbgPrint("[*] EPT initialized.\n");
 	return TRUE;
 }
 
-EptPageTable* CreateEptState() {
+BOOLEAN CreateEptState(EptState* ept_state) {
 	
 	EptPageTable* page_table = (EptPageTable*)ExAllocatePoolWithTag(NonPagedPool, sizeof(struct _EptPageTable), VMM_POOL);
 	if (!page_table)	return FALSE;
 
-	EPT_PML4E*	pml4e = (EPT_PML4E*)page_table->EptPml4[0];
-	EPT_PDPTE*	pdpte = (EPT_PDPTE*)page_table->EptPdpte[0];
-	EPT_PDE_2MB*	pde	  = (EPT_PDE_2MB*)page_table->EptPde[0];
-	//EPT_PTE*	pte   = (EPT_PTE*)page_table-
+	EPT_PML4E* pml4e = (EPT_PML4E*)&page_table->EptPml4[0];
+	EPT_PDPTE* pdpte = (EPT_PDPTE*)&page_table->EptPdpte[0];
+	EPT_PDE_2MB* pde = (EPT_PDE_2MB*)&page_table->EptPde[0];
+
+	ept_state->EptPtr->PageFrameNumber = (VirtualToPhysicalAddress(pml4e) >> PAGE_SHIFT);
+	ept_state->EptPtr->EnableAccessAndDirtyFlags = 0;
+	ept_state->EptPtr->MemoryType = WriteBack;
+	ept_state->EptPtr->PageWalkLength = MaxEptWalkLength - 1;
 
 	pml4e->PageFrameNumber = (VirtualToPhysicalAddress(pdpte) >> PAGE_SHIFT);
 	pml4e->ExecuteAccess = 1;
@@ -357,9 +362,10 @@ EptPageTable* CreateEptState() {
 	pdpte_template.WriteAccess = 1;
 	pdpte_template.ExecuteAccess = 1;
 
-	__stosq(&pdpte, pdpte_template.AsUInt, EPTPDPTEENTRIES);
+	__stosq(&pdpte->AsUInt, pdpte_template.AsUInt, EPTPDPTEENTRIES);
 	for (unsigned idx = 0; idx < EPTPDPTEENTRIES; idx++) {
-		pdpte->PageFrameNumber = (VirtualToPhysicalAddress(pde) >> PAGE_SHIFT);
+		//pdpte->PageFrameNumber = (VirtualToPhysicalAddress(pde) >> PAGE_SHIFT);
+		page_table->EptPml4[idx].PageFrameNumber = (VirtualToPhysicalAddress(page_table->EptPde[idx]) >> PAGE_SHIFT);
 	}
 
 	EPT_PDE_2MB pde_template = { 0 };
@@ -368,19 +374,22 @@ EptPageTable* CreateEptState() {
 	pde_template.ExecuteAccess = 1;
 	pde_template.LargePage = 1;
 	
-	__stosq(&pde, pde_template.AsUInt, EPTPDEENTRIES);
+	__stosq(&pde->AsUInt, pde_template.AsUInt, EPTPDEENTRIES);
 	for (unsigned i = 0; i < EPTPML4ENTRIES; i++) {
 		for (unsigned j = 0; j < EPTPDPTEENTRIES; j++) {
-			SetupPml2Entries();
-			//pde->PageFrameNumber = (VirtualToPhysicalAddress(pte[i][j]));
+			//SetupPml2Entries(ept_state, page_table->EptPde[i][j], (i * 512) + j);
 		}
 	}
+	__debugbreak();
 
-	//ept_state->EptPageTable = page_table;
-	//ept_state->GuestAddressWidthValue = 
-	return page_table;
+	ept_state->EptPageTable = page_table;
+	ept_state->GuestAddressWidthValue = MaxEptWalkLength - 1;
+	return TRUE;
 }
 
-BOOLEAN SetupPml2Entries() {
+BOOLEAN SetupPml2Entries(EptState* ept_state, EPT_PDE_2MB pde_entry, UINT64 pfn) {
+	UNREFERENCED_PARAMETER(ept_state);
+	UNREFERENCED_PARAMETER(pde_entry);
+	UNREFERENCED_PARAMETER(pfn);
 	return TRUE;
-}*/
+}

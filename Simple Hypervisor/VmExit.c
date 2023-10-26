@@ -365,7 +365,8 @@ VOID VmExitHandler(PVOID Param) {
 	case VMX_EXIT_REASON_EPT_MISCONFIGURATION: {
 		// Failure setting EPT
 		// Bugcheck and restart system
-		KeBugCheck(PFN_LIST_CORRUPT);	// Is this bug code even correct??
+		//KeBugCheck(PFN_LIST_CORRUPT);	// Is this bug code even correct??
+		__debugbreak();
 	}
 											 break;
 

@@ -33,12 +33,6 @@ typedef struct _MtrrEntry {
 	UINT64	PhysicalAddressEnd;
 }MtrrEntry;
 
-/*struct _EptPageTable {
-	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PML4E EptPml4[EPTPML4ENTRIES] ;
-	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PDPTE EptPdpte[EPTPDPTEENTRIES] ;
-	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PDE_2MB EptPde[EPTPML4ENTRIES][EPTPDPTEENTRIES] ;
-};*/
-
 typedef struct _EptPageTable {
 	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PML4E EptPml4[EPTPML4ENTRIES];
 	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PDPTE EptPdpte[EPTPDPTEENTRIES];
@@ -61,6 +55,6 @@ BOOLEAN InitializeEpt(UCHAR);
 
 BOOLEAN EptBuildMTRRMap();
 
-//EptPageTable* CreateEptState();
+BOOLEAN CreateEptState(EptState*);
 
-BOOLEAN SetupPml2Entries();
+BOOLEAN SetupPml2Entries(EptState*, EPT_PDE_2MB, UINT64);
