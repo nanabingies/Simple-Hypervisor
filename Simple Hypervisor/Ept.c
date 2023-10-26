@@ -144,7 +144,7 @@ BOOLEAN EptBuildMTRRMap() {
 	/*struct MtrrEntry* temp = (struct MtrrEntry*)g_MtrrEntries;
 	DbgPrint("[*][Debugging] temp : %p\n", (PVOID)temp);
 	do {
-		/*DbgPrint("[*][Debugging] MtrrEnabled : %p\n", (PVOID)temp->MtrrEnabled);
+		DbgPrint("[*][Debugging] MtrrEnabled : %p\n", (PVOID)temp->MtrrEnabled);
 		DbgPrint("[*][Debugging] MemoryType : %p\n", (PVOID)temp->MemoryType);
 		DbgPrint("[*][Debugging] MtrrFixed : %p\n", (PVOID)temp->MtrrFixed);
 		DbgPrint("[*][Debugging] PhysicalAddressStart : %p\n", (PVOID)temp->PhysicalAddressStart);
