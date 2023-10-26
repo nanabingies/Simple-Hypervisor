@@ -8,6 +8,8 @@
 #define EPTPDPTEENTRIES		512
 #define EPTPDEENTRIES		512 * 512
 
+#define PAGE2MB				512 * PAGE_SIZE
+
 typedef union Ia32MtrrFixedRangeMsr {
 	UINT64 all;
 	struct {

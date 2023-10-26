@@ -366,6 +366,7 @@ VOID VmExitHandler(PVOID Param) {
 		// Failure setting EPT
 		// Bugcheck and restart system
 		//KeBugCheck(PFN_LIST_CORRUPT);	// Is this bug code even correct??
+		DbgPrint("[*] EPT Misconfiguration\n");
 		__debugbreak();
 	}
 											 break;

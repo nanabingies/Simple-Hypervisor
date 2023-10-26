@@ -377,10 +377,9 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 	__stosq(&pde->AsUInt, pde_template.AsUInt, EPTPDEENTRIES);
 	for (unsigned i = 0; i < EPTPML4ENTRIES; i++) {
 		for (unsigned j = 0; j < EPTPDPTEENTRIES; j++) {
-			//SetupPml2Entries(ept_state, page_table->EptPde[i][j], (i * 512) + j);
+			SetupPml2Entries(ept_state, page_table->EptPde[i][j], (i * 512) + j);
 		}
 	}
-	__debugbreak();
 
 	ept_state->EptPageTable = page_table;
 	ept_state->GuestAddressWidthValue = MaxEptWalkLength - 1;
@@ -389,7 +388,14 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 
 BOOLEAN SetupPml2Entries(EptState* ept_state, EPT_PDE_2MB pde_entry, UINT64 pfn) {
 	UNREFERENCED_PARAMETER(ept_state);
-	UNREFERENCED_PARAMETER(pde_entry);
-	UNREFERENCED_PARAMETER(pfn);
+	
+	pde_entry.PageFrameNumber = pfn;
+	UINT64 AddressOfPage = pfn * PAGE2MB;
+
+	if (pfn == 0)
+		pde_entry.MemoryType = Uncacheable;
+
+
+
 	return TRUE;
 }
