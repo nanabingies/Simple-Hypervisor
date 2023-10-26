@@ -344,13 +344,23 @@ VOID VmExitHandler(PVOID Param) {
 	case VMX_EXIT_REASON_EPT_VIOLATION: {
 		VMX_EXIT_QUALIFICATION_EPT_VIOLATION exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
-		DbgPrint("EPT VIOLATION exit qualification : %llx\n", exitQualification.AsUInt);
+		DbgPrint("[*][Error] EPT VIOLATION exit qualification : %llx\n", exitQualification.AsUInt);
+
+		DbgPrint("[*][Error] EPT VIOLATION EptReadable : %llx\n", exitQualification.EptReadable);
+		DbgPrint("[*][Error] EPT VIOLATION EptWriteable : %llx\n", exitQualification.EptWriteable);
+		DbgPrint("[*][Error] EPT VIOLATION EptExecutable : %llx\n", exitQualification.EptExecutable);
+		DbgPrint("[*][Error] EPT VIOLATION ReadAccess : %llx\n", exitQualification.ReadAccess);
+		DbgPrint("[*][Error] EPT VIOLATION WriteAccess : %llx\n", exitQualification.WriteAccess);
+		DbgPrint("[*][Error] EPT VIOLATION ExecuteAccess : %llx\n", exitQualification.ExecuteAccess);
+		DbgPrint("[*][Error] EPT VIOLATION ExecuteDisablePage : %llx\n", exitQualification.ExecuteDisablePage);
+
 		__debugbreak();
 	}
 									  break;
 
 	case VMX_EXIT_REASON_EPT_MISCONFIGURATION: {
-
+		// Failure setting EPT
+		__debugbreak();
 	}
 											 break;
 

@@ -51,7 +51,7 @@ BOOLEAN EptBuildMTRRMap() {
 
 		UINT64 offset = 0x0;
 		
-		// Let's first set 64K page data
+		// Let's first set Fix64K MTRR
 		Ia32MtrrFixedRangeMsr msr64k;
 		msr64k.all = __readmsr(IA32_MTRR_FIX64K_00000);
 		for (unsigned idx = 0; idx < 8; idx++) {
@@ -69,7 +69,7 @@ BOOLEAN EptBuildMTRRMap() {
 		}
 
 		
-		// let's set 16k page data
+		// let's set Fix16k MTRR
 		Ia32MtrrFixedRangeMsr msr16k;
 		// start -- IA32_MTRR_FIX16K_80000	
 		// end   -- IA32_MTRR_FIX16K_A0000
@@ -93,7 +93,7 @@ BOOLEAN EptBuildMTRRMap() {
 		}
 
 		
-		// let's set 4k page data
+		// let's set Fix4k MTRR
 		Ia32MtrrFixedRangeMsr msr4k;
 		// start -- IA32_MTRR_FIX4K_C0000	
 		// end   -- IA32_MTRR_FIX4K_F8000
@@ -244,7 +244,7 @@ void InitializeEpt(UCHAR processorNumber) {
 	// Update PTE 
 	//
 	for (auto idx = 0; idx < numPagesToAllocate; ++idx) {
-		//pte[idx].Accessed = 1;
+		pte[idx].Accessed = 1;
 		pte[idx].Dirty = 1;
 		pte[idx].ExecuteAccess = 1;
 		pte[idx].MemoryType = 0x6; // WriteBack
@@ -260,7 +260,7 @@ void InitializeEpt(UCHAR processorNumber) {
 	//
 	// Update PDE
 	//
-	//pde->Accessed = 1;
+	pde->Accessed = 1;
 	pde->ExecuteAccess = 1;
 	pde->PageFrameNumber = (VirtualToPhysicalAddress(pte) >> PAGE_SHIFT);		// / PAGE_SIZE
 	pde->ReadAccess = 1;
@@ -270,7 +270,7 @@ void InitializeEpt(UCHAR processorNumber) {
 	// 
 	// Update PDPTE
 	//
-	//pdpte->Accessed = 1;
+	pdpte->Accessed = 1;
 	pdpte->ExecuteAccess = 1;
 	pdpte->PageFrameNumber = (VirtualToPhysicalAddress(pde) >> PAGE_SHIFT);	// / PAGE_SIZE
 	pdpte->ReadAccess = 1;
@@ -280,7 +280,7 @@ void InitializeEpt(UCHAR processorNumber) {
 	//
 	// Update PML4E
 	//
-	//pml4e->Accessed = 1;
+	pml4e->Accessed = 1;
 	pml4e->ExecuteAccess = 1;
 	pml4e->PageFrameNumber = (VirtualToPhysicalAddress(pdpte) >> PAGE_SHIFT);	// / PAGE_SIZE
 	pml4e->ReadAccess = 1;
@@ -291,15 +291,13 @@ void InitializeEpt(UCHAR processorNumber) {
 	// Update EPT Ptr
 	//
 	EptPtr->EnableAccessAndDirtyFlags = 1;
-	EptPtr->EnableSupervisorShadowStackPages = 1;
-	EptPtr->MemoryType = g_DefaultMemoryType;	// WriteBack
+	//EptPtr->EnableSupervisorShadowStackPages = 1;
+	EptPtr->MemoryType = WriteBack;
 	EptPtr->PageFrameNumber = (VirtualToPhysicalAddress(pml4e) >> PAGE_SHIFT);	// / PAGE_SIZE
 	EptPtr->PageWalkLength = MaxEptWalkLength - 1;
 
 	vmm_context[processorNumber].eptPtr = EptPtr->AsUInt;
 	vmm_context[processorNumber].pml4e = pml4e->AsUInt;
-
-	DbgPrint("[*] EPT Setup Done.\n");
 
 	return;
 }
