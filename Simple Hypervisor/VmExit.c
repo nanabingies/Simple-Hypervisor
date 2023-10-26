@@ -11,8 +11,8 @@ VOID VmExitHandler(PVOID Param) {
 
 	VMX_VMEXIT_REASON VmExitInfo;
 	__vmx_vmread(VMCS_EXIT_REASON, (size_t*) & VmExitInfo);
-	//DbgPrint("VMCS_EXIT_REASON : %lx\n", VmExitInfo.BasicExitReason);
-	//DbgPrint("This came from processor : %lx\n", KeGetCurrentNodeNumber());
+	//DbgPrint("[*] VMCS_EXIT_REASON : %lx\n", VmExitInfo.BasicExitReason);
+	//DbgPrint("[*] This came from processor : %lx\n", KeGetCurrentNodeNumber());
 
 	switch (VmExitInfo.BasicExitReason)
 	{
@@ -342,13 +342,6 @@ VOID VmExitHandler(PVOID Param) {
 									   break;
 
 	case VMX_EXIT_REASON_EPT_VIOLATION: {
-		UINT64 guestRip, guestRsp;
-		__vmx_vmread(VMCS_GUEST_RIP, &guestRip);
-		__vmx_vmread(VMCS_GUEST_RSP, &guestRsp);
-		DbgPrint("[*][Error] Guest rip : %llx\n", guestRip);
-		DbgPrint("[*][Error] Guest rsp : %llx\n", guestRsp);
-		DbgPrint("[*][Error] Host rsp : %llx\n", guestRegisters->RSP);
-
 		VMX_EXIT_QUALIFICATION_EPT_VIOLATION exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*)&exitQualification);
 		//DbgPrint("[*][Error] EPT VIOLATION exit qualification : %llx\n", exitQualification.AsUInt);
@@ -371,13 +364,15 @@ VOID VmExitHandler(PVOID Param) {
 
 	case VMX_EXIT_REASON_EPT_MISCONFIGURATION: {
 		// Failure setting EPT
-		__debugbreak();
+		// Bugcheck and restart system
+		KeBugCheck(PFN_LIST_CORRUPT);	// Is this bug code even correct??
 	}
 											 break;
 
 	case VMX_EXIT_REASON_EXECUTE_INVEPT: {
 		VMX_VMEXIT_INSTRUCTION_INFO_INVALIDATE exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
+		__debugbreak();
 	}
 									   break;
 

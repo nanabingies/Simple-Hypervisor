@@ -2,6 +2,9 @@
 #define numPagesToAllocate	10
 #define numMtrrEntries		255
 
+#define EPTPML4ENTRIES		512
+#define EPTPDPTEENTRIE		512
+
 typedef union Ia32MtrrFixedRangeMsr {
 	UINT64 all;
 	struct {
@@ -19,20 +22,21 @@ enum MtrrMemoryType {
 	WriteBack,
 };
 
-struct MtrrEntry {
+typedef struct _MtrrEntry {
 	BOOLEAN	MtrrEnabled;
 	BOOLEAN MtrrFixed;
 	UINT64	MemoryType;
 	UINT64	PhysicalAddressStart;
 	UINT64	PhysicalAddressEnd;
-};
+}MtrrEntry;
 
-struct EptState {
+typedef struct _EptState {
 	UINT64	EptPtr;
 	UINT64	GuestAddressWidthValue;
-	UINT64	EptPml4[512];
-	UINT64	EptPdpte[512 * 512];
-};
+	DECLSPEC_ALIGN(PAGE_SIZE)	UINT64	EptPml4[EPTPML4ENTRIES];
+	DECLSPEC_ALIGN(PAGE_SIZE)	UINT64	EptPdpte[EPTPDPTEENTRIE];
+	DECLSPEC_ALIGN(PAGE_SIZE)	UINT64	EptPde[EPTPML4ENTRIES][EPTPDPTEENTRIE];
+}EptState;
 
 static const ULONG MaxEptWalkLength = 0x4;
 

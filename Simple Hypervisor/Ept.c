@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #pragma warning(disable : 4996)
 
-static struct MtrrEntry g_MtrrEntries[numMtrrEntries];
+static MtrrEntry g_MtrrEntries[numMtrrEntries];
 
 BOOLEAN CheckEPTSupport() {
 	PAGED_CODE();
@@ -22,8 +22,8 @@ BOOLEAN CheckEPTSupport() {
 BOOLEAN EptBuildMTRRMap() {
 	PAGED_CODE();
 
-	struct MtrrEntry* mtrr_entry = g_MtrrEntries;
-	RtlSecureZeroMemory(mtrr_entry, numMtrrEntries * sizeof(struct MtrrEntry));
+	MtrrEntry* mtrr_entry = g_MtrrEntries;
+	RtlSecureZeroMemory(mtrr_entry, numMtrrEntries * sizeof(struct _MtrrEntry));
 	
 	IA32_MTRR_CAPABILITIES_REGISTER mtrr_cap;
 	IA32_MTRR_DEF_TYPE_REGISTER mtrr_def;
@@ -141,7 +141,7 @@ BOOLEAN EptBuildMTRRMap() {
 	}
 
 	
-	/*struct MtrrEntry* temp = (struct MtrrEntry*)g_MtrrEntries;
+	/*MtrrEntry* temp = (MtrrEntry*)g_MtrrEntries;
 	DbgPrint("[*][Debugging] temp : %p\n", (PVOID)temp);
 	do {
 		DbgPrint("[*][Debugging] MtrrEnabled : %p\n", (PVOID)temp->MtrrEnabled);
@@ -150,13 +150,13 @@ BOOLEAN EptBuildMTRRMap() {
 		DbgPrint("[*][Debugging] PhysicalAddressStart : %p\n", (PVOID)temp->PhysicalAddressStart);
 		DbgPrint("[*][Debugging] PhysicalAddressEnd : %p\n", (PVOID)temp->PhysicalAddressEnd);
 
-		temp = (struct MtrrEntry*)((UCHAR*)temp + sizeof(struct MtrrEntry));
+		temp = (MtrrEntry*)((UCHAR*)temp + sizeof(struct _MtrrEntry));
 	} while (temp->PhysicalAddressEnd != 0x0);*/
 
 	return TRUE;
 }
 
-void InitializeEpt(UCHAR processorNumber) {
+/**void InitializeEpt(UCHAR processorNumber) {
 	PAGED_CODE();
 
 	EPT_POINTER* EptPtr = (EPT_POINTER*)
@@ -244,10 +244,10 @@ void InitializeEpt(UCHAR processorNumber) {
 	// Update PTE 
 	//
 	for (auto idx = 0; idx < numPagesToAllocate; ++idx) {
-		pte[idx].Accessed = 1;
-		pte[idx].Dirty = 1;
+		//pte[idx].Accessed = 1;
+		//pte[idx].Dirty = 1;
 		pte[idx].ExecuteAccess = 1;
-		pte[idx].MemoryType = 0x6; // WriteBack
+		pte[idx].MemoryType = WriteBack;
 		pte[idx].PageFrameNumber = (VirtualToPhysicalAddress(guest_memory + (idx * PAGE_SIZE)) / PAGE_SIZE);
 		pte[idx].PagingWriteAccess = 1;
 		pte[idx].ReadAccess = 1;
@@ -260,7 +260,7 @@ void InitializeEpt(UCHAR processorNumber) {
 	//
 	// Update PDE
 	//
-	pde->Accessed = 1;
+	//pde->Accessed = 1;
 	pde->ExecuteAccess = 1;
 	pde->PageFrameNumber = (VirtualToPhysicalAddress(pte) >> PAGE_SHIFT);		// / PAGE_SIZE
 	pde->ReadAccess = 1;
@@ -270,7 +270,7 @@ void InitializeEpt(UCHAR processorNumber) {
 	// 
 	// Update PDPTE
 	//
-	pdpte->Accessed = 1;
+	//pdpte->Accessed = 1;
 	pdpte->ExecuteAccess = 1;
 	pdpte->PageFrameNumber = (VirtualToPhysicalAddress(pde) >> PAGE_SHIFT);	// / PAGE_SIZE
 	pdpte->ReadAccess = 1;
@@ -280,7 +280,7 @@ void InitializeEpt(UCHAR processorNumber) {
 	//
 	// Update PML4E
 	//
-	pml4e->Accessed = 1;
+	//pml4e->Accessed = 1;
 	pml4e->ExecuteAccess = 1;
 	pml4e->PageFrameNumber = (VirtualToPhysicalAddress(pdpte) >> PAGE_SHIFT);	// / PAGE_SIZE
 	pml4e->ReadAccess = 1;
@@ -290,7 +290,7 @@ void InitializeEpt(UCHAR processorNumber) {
 	//
 	// Update EPT Ptr
 	//
-	EptPtr->EnableAccessAndDirtyFlags = 1;
+	EptPtr->EnableAccessAndDirtyFlags = 0;	//
 	//EptPtr->EnableSupervisorShadowStackPages = 1;
 	EptPtr->MemoryType = WriteBack;
 	EptPtr->PageFrameNumber = (VirtualToPhysicalAddress(pml4e) >> PAGE_SHIFT);	// / PAGE_SIZE
@@ -300,4 +300,21 @@ void InitializeEpt(UCHAR processorNumber) {
 	vmm_context[processorNumber].pml4e = pml4e->AsUInt;
 
 	return;
+}*/
+
+void InitializeEpt(UCHAR processorNumber) {
+	PAGED_CODE();
+
+	EPT_POINTER* EptPtr = (EPT_POINTER*)
+		(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL));
+	if (!EptPtr) {
+		DbgPrint("[-] Failed to allocate memory for pointer to Ept.\n");
+		return;
+	}
+
+	RtlSecureZeroMemory(EptPtr, PAGE_SIZE);
+
+	
+
+	UNREFERENCED_PARAMETER(processorNumber);
 }
