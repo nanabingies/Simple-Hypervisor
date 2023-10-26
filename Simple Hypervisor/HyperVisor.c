@@ -122,7 +122,7 @@ VOID DevirtualizeAllProcessors() {
 }
 
 
-ULONG_PTR LaunchVm(_In_ ULONG_PTR Argument) {
+ULONG_PTR LaunchVm(ULONG_PTR Argument) {
 
 	ULONG processorNumber = KeGetCurrentProcessorNumber();
 
@@ -132,9 +132,6 @@ ULONG_PTR LaunchVm(_In_ ULONG_PTR Argument) {
 	unsigned char retVal = __vmx_vmclear(&vmm_context[processorNumber].vmcsRegionPhys);
 	if (retVal > 0) {
 		DbgPrint("[-] VMCLEAR operation failed.\n");
-
-		//__vmx_off();
-		//VmOff = TRUE;
 		return Argument;
 	}
 	DbgPrint("[*] VMCS for processor %x set to inactive.\n", processorNumber);
@@ -145,17 +142,9 @@ ULONG_PTR LaunchVm(_In_ ULONG_PTR Argument) {
 	retVal = __vmx_vmptrld(&vmm_context[processorNumber].vmcsRegionPhys);
 	if (retVal > 0) {
 		DbgPrint("[-] VMPTRLD operation failed.\n");
-
-		//__vmx_off();
-		//VmOff = TRUE;
 		return Argument;
 	}
 	DbgPrint("[*] VMCS is current and active on processor %x\n", processorNumber);
-
-	//
-	// Save HOST Registers
-	//
-	//vmm_context[processorNumber].GuestMemory = AsmSaveHostRegisters();
 
 	//
 	// Setup VMCS structure fields for that logical processor
@@ -167,8 +156,6 @@ ULONG_PTR LaunchVm(_In_ ULONG_PTR Argument) {
 		size_t ErrorCode = 0;
 		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &ErrorCode);
 		DbgPrint("[-] Exiting with error code : %llx\n", ErrorCode);
-		//__vmx_off();
-		//VmOff = TRUE;
 		return Argument;
 	}
 	DbgPrint("[*] VMCS setup on processor %x done\n", processorNumber);
@@ -187,7 +174,7 @@ ULONG_PTR LaunchVm(_In_ ULONG_PTR Argument) {
 	size_t ErrorCode = 0;
 	__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &ErrorCode);
 	DbgPrint("[-] Exiting with error code : %llx\n", ErrorCode);
-	
+
 	return Argument;
 }
 

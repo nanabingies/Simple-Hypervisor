@@ -58,10 +58,6 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING Regi
 	}
 	DriverObject->DriverUnload = DriverUnload;
 
-	//
-	// Todo: Add support for EPT
-	// 
-	//InitializeEpt();
 
 	if (!VmxIsVmxAvailable())			return STATUS_FAILED_DRIVER_ENTRY;
 

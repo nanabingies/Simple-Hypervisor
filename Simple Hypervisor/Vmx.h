@@ -26,7 +26,7 @@ BOOLEAN VirtualizeAllProcessors();
 
 VOID DevirtualizeAllProcessors();
 
-ULONG_PTR LaunchVm(_In_ ULONG_PTR Argument);
+ULONG_PTR LaunchVm(ULONG_PTR);
 
 VOID TerminateVm();
 
