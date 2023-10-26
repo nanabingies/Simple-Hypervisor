@@ -28,8 +28,10 @@ struct MtrrEntry {
 };
 
 struct EptState {
-	UINT64 EptPtr;
-	UINT64 GuestAddressWidthValue;
+	UINT64	EptPtr;
+	UINT64	GuestAddressWidthValue;
+	UINT64	EptPml4[512];
+	UINT64	EptPdpte[512 * 512];
 };
 
 static const ULONG MaxEptWalkLength = 0x4;

@@ -342,9 +342,16 @@ VOID VmExitHandler(PVOID Param) {
 									   break;
 
 	case VMX_EXIT_REASON_EPT_VIOLATION: {
+		UINT64 guestRip, guestRsp;
+		__vmx_vmread(VMCS_GUEST_RIP, &guestRip);
+		__vmx_vmread(VMCS_GUEST_RSP, &guestRsp);
+		DbgPrint("[*][Error] Guest rip : %llx\n", guestRip);
+		DbgPrint("[*][Error] Guest rsp : %llx\n", guestRsp);
+		DbgPrint("[*][Error] Host rsp : %llx\n", guestRegisters->RSP);
+
 		VMX_EXIT_QUALIFICATION_EPT_VIOLATION exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
-		DbgPrint("[*][Error] EPT VIOLATION exit qualification : %llx\n", exitQualification.AsUInt);
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*)&exitQualification);
+		//DbgPrint("[*][Error] EPT VIOLATION exit qualification : %llx\n", exitQualification.AsUInt);
 
 		DbgPrint("[*][Error] EPT VIOLATION EptReadable : %llx\n", exitQualification.EptReadable);
 		DbgPrint("[*][Error] EPT VIOLATION EptWriteable : %llx\n", exitQualification.EptWriteable);
@@ -353,6 +360,10 @@ VOID VmExitHandler(PVOID Param) {
 		DbgPrint("[*][Error] EPT VIOLATION WriteAccess : %llx\n", exitQualification.WriteAccess);
 		DbgPrint("[*][Error] EPT VIOLATION ExecuteAccess : %llx\n", exitQualification.ExecuteAccess);
 		DbgPrint("[*][Error] EPT VIOLATION ExecuteDisablePage : %llx\n", exitQualification.ExecuteDisablePage);
+		DbgPrint("[*][Error] EPT VIOLATION ValidGuestLinearAddress : %llx\n", exitQualification.ValidGuestLinearAddress);
+		DbgPrint("[*][Error] EPT VIOLATION CausedByTranslation : %llx\n", exitQualification.CausedByTranslation);
+		DbgPrint("[*][Error] EPT VIOLATION UserModeLinearAddress : %llx\n", exitQualification.UserModeLinearAddress);
+		DbgPrint("[*][Error] EPT VIOLATION GuestPagingVerification : %llx\n", exitQualification.GuestPagingVerification);
 
 		__debugbreak();
 	}
