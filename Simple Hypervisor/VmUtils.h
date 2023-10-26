@@ -41,7 +41,7 @@ struct _vmm_context {
 
 	UINT64	EptPtr;
 	UINT64	EptPml4;
-	//EptState* EptState;
+	EptState* EptState;
 };
 
 
