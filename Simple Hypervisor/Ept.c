@@ -397,47 +397,58 @@ VOID SetupPml2Entries(EptState* ept_state, EPT_PDE_2MB pde_entry, UINT64 pfn) {
 	UNREFERENCED_PARAMETER(ept_state);
 	
 	pde_entry.PageFrameNumber = pfn;
-
-	/*if (pfn == 0) {
-		pde_entry.MemoryType = Uncacheable;
-		return;
-	}
-
-	UINT64 memory_type = WriteBack;
-	UINT64 AddressOfPage = pfn * PAGE2MB;
-
-	// loop MTRR and set memory types
-	MtrrEntry* temp = (MtrrEntry*)g_MtrrEntries;
-	do {
-		 
-		if (IsInRange(AddressOfPage, temp->PhysicalAddressStart, temp->PhysicalAddressEnd)) {
-			memory_type = temp->MemoryType;
-			if (memory_type == Uncacheable) {
-				// If this is going to be marked uncacheable, then we stop the search as UC always takes precedent.
-				break;
-			}
-		}
-
-		temp = (MtrrEntry*)((UCHAR*)temp + sizeof(struct _MtrrEntry));
-	} while (temp->PhysicalAddressEnd != 0x0);
-
-	pde_entry.MemoryType = memory_type;*/
-
 	if (IsValidForLargePage(pfn)) {
 		pde_entry.MemoryType = GetMemoryType(pfn, TRUE);
-		return TRUE;
+		DbgPrint("[*] Success with pde entry %llx and pfn %llx\n", pde_entry.PageFrameNumber, pfn);
 	}
 	else {
-
+		DbgPrint("[-] Failed with pde entry %llx and pfn %llx\n", pde_entry.PageFrameNumber, pfn);
 	}
 
 	return;
 }
 
 BOOLEAN IsValidForLargePage(UINT64 pfn) {
+	UNREFERENCED_PARAMETER(pfn);
 
+	UINT64 page_start = pfn * PAGE2MB;
+	UINT64 page_end = (pfn * PAGE2MB) + (PAGE2MB - 1);
+
+	MtrrEntry* temp = (MtrrEntry*)g_MtrrEntries;
+	do {
+
+		if (page_start <= temp->PhysicalAddressEnd && page_end > temp->PhysicalAddressEnd)
+			return FALSE;
+
+		else if (page_start < temp->PhysicalAddressStart && page_end >= temp->PhysicalAddressStart)
+			return FALSE;
+
+		temp = (MtrrEntry*)((UCHAR*)temp + sizeof(struct _MtrrEntry));
+	} while (temp->PhysicalAddressEnd != 0x0);
+
+	return TRUE;
 }
 
 UINT64 GetMemoryType(UINT64 pfn, BOOLEAN large_page) {
+	UINT64 page_start = large_page == TRUE ? pfn * PAGE2MB : pfn * PAGE_SIZE;
+	UINT64 page_end = large_page == TRUE ? (pfn * PAGE2MB) + (PAGE2MB - 1) : (pfn * PAGE_SIZE) + (PAGE_SIZE - 1);
+	UINT64 memory_type = g_DefaultMemoryType;
 
+	MtrrEntry* temp = (MtrrEntry*)g_MtrrEntries;
+	do {
+
+		if (page_start >= temp->PhysicalAddressStart && page_end <= temp->PhysicalAddressEnd) {
+			memory_type = temp->MemoryType;
+
+			if (temp->MtrrFixed == TRUE)
+				break;
+
+			if (memory_type == Uncacheable)
+				break;
+		}
+		
+		temp = (MtrrEntry*)((UCHAR*)temp + sizeof(struct _MtrrEntry));
+	} while (temp->PhysicalAddressEnd != 0x0);
+
+	return memory_type;
 }
