@@ -348,6 +348,7 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 	
 	EptPageTable* page_table = (EptPageTable*)ExAllocatePoolWithTag(NonPagedPool, sizeof(struct _EptPageTable), VMM_POOL);
 	if (!page_table)	return FALSE;
+	ept_state->EptPageTable = page_table;
 
 	EPT_PML4E* pml4e = (EPT_PML4E*)&page_table->EptPml4[0];
 	EPT_PDPTE* pdpte = (EPT_PDPTE*)&page_table->EptPdpte[0];
@@ -384,26 +385,30 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 	__stosq(&pde->AsUInt, pde_template.AsUInt, EPTPDEENTRIES);
 	for (unsigned i = 0; i < EPTPML4ENTRIES; i++) {
 		for (unsigned j = 0; j < EPTPDPTEENTRIES; j++) {
-			SetupPml2Entries(ept_state, page_table->EptPde[i][j], (i * 512) + j);
+			SetupPml2Entries(ept_state, &page_table->EptPde[i][j], (i * 512) + j);
 		}
 	}
 
-	ept_state->EptPageTable = page_table;
 	ept_state->GuestAddressWidthValue = MaxEptWalkLength - 1;
 	return TRUE;
 }
 
-VOID SetupPml2Entries(EptState* ept_state, EPT_PDE_2MB pde_entry, UINT64 pfn) {
-	UNREFERENCED_PARAMETER(ept_state);
+VOID SetupPml2Entries(EptState* ept_state, EPT_PDE_2MB* pde_entry, UINT64 pfn) {
+
+	pde_entry->PageFrameNumber = pfn;
 	
-	pde_entry.PageFrameNumber = pfn;
-	if (IsValidForLargePage(pfn)) {
-		pde_entry.MemoryType = GetMemoryType(pfn, TRUE);
-		DbgPrint("[*] Success with pde entry %llx and pfn %llx\n", pde_entry.PageFrameNumber, pfn);
+	if (IsValidForLargePage(pfn) == TRUE) {
+		pde_entry->MemoryType = GetMemoryType(pfn, TRUE);
+		return;
 	}
-	else {
-		DbgPrint("[-] Failed with pde entry %llx and pfn %llx\n", pde_entry.PageFrameNumber, pfn);
+	
+	DbgPrint("[-] Not valid for pfn %llx\n", pfn);
+	PVOID buffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(struct _EptSplitPage), VMM_POOL);
+	if (!buffer) {
+		DbgPrint("[-] Failed with pde entry %llx and pfn %llx\n", pde_entry->PageFrameNumber, pfn);
+		return;
 	}
+	SplitPde(ept_state, buffer, pfn * PAGE2MB);
 
 	return;
 }
@@ -451,4 +456,57 @@ UINT64 GetMemoryType(UINT64 pfn, BOOLEAN large_page) {
 	} while (temp->PhysicalAddressEnd != 0x0);
 
 	return memory_type;
+}
+
+EPT_PDE_2MB* GetPdeEntry(EptState* ept_state, UINT64 pfn) {
+	UINT64 pml4_index = MASK_EPT_PML4_INDEX(pfn);
+	UINT64 pml3_index = MASK_EPT_PML3_INDEX(pfn);
+	UINT64 pml2_index = MASK_EPT_PML2_INDEX(pfn);
+
+	if (pml4_index > 0) {
+		DbgPrint("Address above 512GB is invalid\n");
+		return NULL;
+	}
+	
+	return &ept_state->EptPageTable->EptPde[pml3_index][pml2_index];
+}
+
+VOID SplitPde(EptState* ept_state, PVOID buffer, UINT64 pfn) {
+	EPT_PDE_2MB* pde_entry = GetPdeEntry(ept_state, pfn);
+	if (pde_entry == NULL) {
+		DbgPrint("[-] Invalid pde address passed.\n");
+		return;
+	}
+
+	EptSplitPage* split_page = (EptSplitPage*)buffer;
+	RtlSecureZeroMemory(split_page, sizeof(struct _EptSplitPage));
+
+	// Set all pages as rwx to prevent unwanted ept violation
+	split_page->EptPde = pde_entry;
+
+	EPT_PTE entry_template = { 0 };
+	entry_template.ReadAccess = 1;
+	entry_template.WriteAccess = 1;
+	entry_template.ExecuteAccess = 1;
+	entry_template.MemoryType = pde_entry->MemoryType;
+	entry_template.IgnorePat = pde_entry->IgnorePat;
+	entry_template.SuppressVe = pde_entry->SuppressVe;
+
+	__stosq(&split_page->EptPte[0].AsUInt, entry_template.AsUInt, 512);
+	for (unsigned idx = 0; idx < 512; idx++) {
+		UINT64 page_number = ((pde_entry->PageFrameNumber * PAGE2MB) >> PAGE_SHIFT) + idx;
+		split_page->EptPte[idx].PageFrameNumber = page_number;
+		split_page->EptPte[idx].MemoryType = GetMemoryType(page_number, FALSE);
+	}
+
+	EPT_PDE_2MB pde_2;
+	pde_2.ReadAccess = 1;
+	pde_2.WriteAccess = 1;
+	pde_2.ExecuteAccess = 1;
+
+	pde_2.PageFrameNumber = (VirtualToPhysicalAddress((void*) & split_page->EptPte[0]) >> PAGE_SHIFT);
+
+	RtlCopyMemory(pde_entry, &pde_2, sizeof(pde_2));
+
+	return;
 }

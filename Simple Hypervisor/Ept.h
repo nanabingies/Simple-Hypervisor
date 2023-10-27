@@ -10,6 +10,10 @@
 
 #define PAGE2MB				512 * PAGE_SIZE
 
+#define MASK_EPT_PML2_INDEX(_VAR_) ((_VAR_ & 0x3FE00000ULL) >> 21)
+#define MASK_EPT_PML3_INDEX(_VAR_) ((_VAR_ & 0x7FC0000000ULL) >> 30)
+#define MASK_EPT_PML4_INDEX(_VAR_) ((_VAR_ & 0xFF8000000000ULL) >> 39)
+
 typedef union Ia32MtrrFixedRangeMsr {
 	UINT64 all;
 	struct {
@@ -35,6 +39,12 @@ typedef struct _MtrrEntry {
 	UINT64	PhysicalAddressEnd;
 }MtrrEntry;
 
+typedef struct _EptSplitPage {
+	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PTE EptPte[512];
+	EPT_PDE_2MB*				EptPde;
+	LIST_ENTRY					SplitPages;
+}EptSplitPage;
+
 typedef struct _EptPageTable {
 	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PML4E EptPml4[EPTPML4ENTRIES];
 	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PDPTE EptPdpte[EPTPDPTEENTRIES];
@@ -59,10 +69,12 @@ BOOLEAN EptBuildMTRRMap();
 
 BOOLEAN CreateEptState(EptState*);
 
-VOID SetupPml2Entries(EptState*, EPT_PDE_2MB, UINT64);
+VOID SetupPml2Entries(EptState*, EPT_PDE_2MB*, UINT64);
 
 BOOLEAN IsInRange(UINT64, UINT64, UINT64);
 
 BOOLEAN IsValidForLargePage(UINT64);
 
 UINT64 GetMemoryType(UINT64, BOOLEAN);
+
+VOID SplitPde(EptState*, PVOID, UINT64);
