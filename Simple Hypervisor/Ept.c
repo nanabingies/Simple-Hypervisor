@@ -372,7 +372,6 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 
 	__stosq(&pdpte->AsUInt, pdpte_template.AsUInt, EPTPDPTEENTRIES);
 	for (unsigned idx = 0; idx < EPTPDPTEENTRIES; idx++) {
-		//pdpte->PageFrameNumber = (VirtualToPhysicalAddress(pde) >> PAGE_SHIFT);
 		page_table->EptPml4[idx].PageFrameNumber = (VirtualToPhysicalAddress(page_table->EptPde[idx]) >> PAGE_SHIFT);
 	}
 
@@ -402,7 +401,6 @@ VOID SetupPml2Entries(EptState* ept_state, EPT_PDE_2MB* pde_entry, UINT64 pfn) {
 		return;
 	}
 	
-	DbgPrint("[-] Not valid for pfn %llx\n", pfn);
 	PVOID buffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(struct _EptSplitPage), VMM_POOL);
 	if (!buffer) {
 		DbgPrint("[-] Failed with pde entry %llx and pfn %llx\n", pde_entry->PageFrameNumber, pfn);
