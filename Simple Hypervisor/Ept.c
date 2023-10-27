@@ -3,6 +3,13 @@
 
 static MtrrEntry g_MtrrEntries[numMtrrEntries];
 
+BOOLEAN IsInRange(UINT64 val, UINT64 start, UINT64 end) {
+	if (val > start && val <= end)
+		return TRUE;
+
+	return FALSE;
+}
+
 BOOLEAN CheckEPTSupport() {
 	PAGED_CODE();
 
@@ -386,16 +393,51 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 	return TRUE;
 }
 
-BOOLEAN SetupPml2Entries(EptState* ept_state, EPT_PDE_2MB pde_entry, UINT64 pfn) {
+VOID SetupPml2Entries(EptState* ept_state, EPT_PDE_2MB pde_entry, UINT64 pfn) {
 	UNREFERENCED_PARAMETER(ept_state);
 	
 	pde_entry.PageFrameNumber = pfn;
+
+	/*if (pfn == 0) {
+		pde_entry.MemoryType = Uncacheable;
+		return;
+	}
+
+	UINT64 memory_type = WriteBack;
 	UINT64 AddressOfPage = pfn * PAGE2MB;
 
-	if (pfn == 0)
-		pde_entry.MemoryType = Uncacheable;
+	// loop MTRR and set memory types
+	MtrrEntry* temp = (MtrrEntry*)g_MtrrEntries;
+	do {
+		 
+		if (IsInRange(AddressOfPage, temp->PhysicalAddressStart, temp->PhysicalAddressEnd)) {
+			memory_type = temp->MemoryType;
+			if (memory_type == Uncacheable) {
+				// If this is going to be marked uncacheable, then we stop the search as UC always takes precedent.
+				break;
+			}
+		}
 
+		temp = (MtrrEntry*)((UCHAR*)temp + sizeof(struct _MtrrEntry));
+	} while (temp->PhysicalAddressEnd != 0x0);
 
+	pde_entry.MemoryType = memory_type;*/
 
-	return TRUE;
+	if (IsValidForLargePage(pfn)) {
+		pde_entry.MemoryType = GetMemoryType(pfn, TRUE);
+		return TRUE;
+	}
+	else {
+
+	}
+
+	return;
+}
+
+BOOLEAN IsValidForLargePage(UINT64 pfn) {
+
+}
+
+UINT64 GetMemoryType(UINT64 pfn, BOOLEAN large_page) {
+
 }

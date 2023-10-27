@@ -59,4 +59,10 @@ BOOLEAN EptBuildMTRRMap();
 
 BOOLEAN CreateEptState(EptState*);
 
-BOOLEAN SetupPml2Entries(EptState*, EPT_PDE_2MB, UINT64);
+VOID SetupPml2Entries(EptState*, EPT_PDE_2MB, UINT64);
+
+BOOLEAN IsInRange(UINT64, UINT64, UINT64);
+
+BOOLEAN IsValidForLargePage(UINT64);
+
+UINT64 GetMemoryType(UINT64, BOOLEAN)
