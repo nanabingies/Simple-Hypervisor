@@ -409,20 +409,6 @@ VOID SetupPml2Entries(EptState* ept_state, EPT_PDE_2MB* pde_entry, UINT64 pfn) {
 
 	pde_entry->MemoryType = memory_type;
 
-	// airhv
-	
-	/*if (IsValidForLargePage(pfn) == TRUE) {
-		pde_entry->MemoryType = GetMemoryType(pfn, TRUE);
-		return;
-	}
-	
-	PVOID buffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(struct _EptSplitPage), VMM_POOL);
-	if (!buffer) {
-		DbgPrint("[-] Failed with pde entry %llx and pfn %llx\n", pde_entry->PageFrameNumber, pfn);
-		return;
-	}
-	SplitPde(ept_state, buffer, pfn * PAGE2MB);*/
-
 	return;
 }
 
@@ -433,16 +419,6 @@ BOOLEAN IsValidForLargePage(UINT64 pfn) {
 	UINT64 page_end = (pfn * PAGE2MB) + (PAGE2MB - 1);
 
 	MtrrEntry* temp = (MtrrEntry*)g_MtrrEntries;
-	/*do {
-
-		if (page_start <= temp->PhysicalAddressEnd && page_end > temp->PhysicalAddressEnd)
-			return FALSE;
-
-		else if (page_start < temp->PhysicalAddressStart && page_end >= temp->PhysicalAddressStart)
-			return FALSE;
-
-		temp = (MtrrEntry*)((UCHAR*)temp + sizeof(struct _MtrrEntry));
-	} while (temp->PhysicalAddressEnd != 0x0);*/
 
 	for (unsigned idx = 0; idx < gMtrrNum; idx++) {
 		if (page_start <= temp[idx].PhysicalAddressEnd && page_end > temp[idx].PhysicalAddressEnd)
@@ -461,20 +437,6 @@ UINT64 GetMemoryType(UINT64 pfn, BOOLEAN large_page) {
 	UINT64 memory_type = g_DefaultMemoryType;
 
 	MtrrEntry* temp = (MtrrEntry*)g_MtrrEntries;
-	/*do {
-
-		if (page_start >= temp->PhysicalAddressStart && page_end <= temp->PhysicalAddressEnd) {
-			memory_type = temp->MemoryType;
-
-			if (temp->MtrrFixed == TRUE)
-				break;
-
-			if (memory_type == Uncacheable)
-				break;
-		}
-		
-		temp = (MtrrEntry*)((UCHAR*)temp + sizeof(struct _MtrrEntry));
-	} while (temp->PhysicalAddressEnd != 0x0);*/
 
 	for (unsigned idx = 0; idx < gMtrrNum; idx++) {
 		if (page_start >= temp[idx].PhysicalAddressStart && page_end <= temp[idx].PhysicalAddressEnd) {
