@@ -57,6 +57,7 @@ typedef struct _EptState {
 	EptPageTable*	EptPageTable;
 } EptState;
 
+static UINT64 gMtrrNum = 0;
 static const ULONG MaxEptWalkLength = 0x4;
 
 UINT64 g_DefaultMemoryType;

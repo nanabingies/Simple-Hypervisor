@@ -72,6 +72,7 @@ BOOLEAN EptBuildMTRRMap() {
 			mtrr_entry->PhysicalAddressStart = base;
 			mtrr_entry->PhysicalAddressEnd = base + k64kManagedSize - 1;
 
+			gMtrrNum += 1;
 			mtrr_entry++;
 		}
 
@@ -95,6 +96,7 @@ BOOLEAN EptBuildMTRRMap() {
 				mtrr_entry->PhysicalAddressStart = base;
 				mtrr_entry->PhysicalAddressEnd = base + k16kManagedSize - 1;
 
+				gMtrrNum += 1;
 				mtrr_entry++;
 			}
 		}
@@ -141,24 +143,13 @@ BOOLEAN EptBuildMTRRMap() {
 		physical_base_end = physical_base_start + ((1ull << length) - 1);
 
 		mtrr_entry->MtrrEnabled = TRUE;
+		mtrr_entry->MtrrFixed = FALSE;
 		mtrr_entry->MemoryType = mtrr_phys_base.Type;
 		mtrr_entry->PhysicalAddressStart = physical_base_start;
 		mtrr_entry->PhysicalAddressEnd = physical_base_end;
+		gMtrrNum++;
 		mtrr_entry++;
 	}
-
-	
-	/*MtrrEntry* temp = (MtrrEntry*)g_MtrrEntries;
-	DbgPrint("[*][Debugging] temp : %p\n", (PVOID)temp);
-	do {
-		DbgPrint("[*][Debugging] MtrrEnabled : %p\n", (PVOID)temp->MtrrEnabled);
-		DbgPrint("[*][Debugging] MemoryType : %p\n", (PVOID)temp->MemoryType);
-		DbgPrint("[*][Debugging] MtrrFixed : %p\n", (PVOID)temp->MtrrFixed);
-		DbgPrint("[*][Debugging] PhysicalAddressStart : %p\n", (PVOID)temp->PhysicalAddressStart);
-		DbgPrint("[*][Debugging] PhysicalAddressEnd : %p\n", (PVOID)temp->PhysicalAddressEnd);
-
-		temp = (MtrrEntry*)((UCHAR*)temp + sizeof(struct _MtrrEntry));
-	} while (temp->PhysicalAddressEnd != 0x0);*/
 
 	return TRUE;
 }
@@ -352,14 +343,14 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 
 	EPT_PML4E* pml4e = (EPT_PML4E*)&page_table->EptPml4[0];
 	EPT_PDPTE* pdpte = (EPT_PDPTE*)&page_table->EptPdpte[0];
-	EPT_PDE_2MB* pde = (EPT_PDE_2MB*)&page_table->EptPde[0];
+	//EPT_PDE_2MB* pde = (EPT_PDE_2MB*)&page_table->EptPde[0];
 
-	ept_state->EptPtr->PageFrameNumber = (VirtualToPhysicalAddress(pml4e) >> PAGE_SHIFT);
+	ept_state->EptPtr->PageFrameNumber = (VirtualToPhysicalAddress(&pml4e) >> PAGE_SHIFT);
 	ept_state->EptPtr->EnableAccessAndDirtyFlags = 0;
 	ept_state->EptPtr->MemoryType = WriteBack;
 	ept_state->EptPtr->PageWalkLength = MaxEptWalkLength - 1;
 
-	pml4e->PageFrameNumber = (VirtualToPhysicalAddress(pdpte) >> PAGE_SHIFT);
+	pml4e->PageFrameNumber = (VirtualToPhysicalAddress(&pdpte) >> PAGE_SHIFT);
 	pml4e->ExecuteAccess = 1;
 	pml4e->ReadAccess = 1;
 	pml4e->UserModeExecute = 1;
@@ -370,9 +361,9 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 	pdpte_template.WriteAccess = 1;
 	pdpte_template.ExecuteAccess = 1;
 
-	__stosq(&pdpte->AsUInt, pdpte_template.AsUInt, EPTPDPTEENTRIES);
+	__stosq(/*&pdpte->AsUInt*/ (SIZE_T*) & page_table->EptPdpte[0], pdpte_template.AsUInt, EPTPDPTEENTRIES);
 	for (unsigned idx = 0; idx < EPTPDPTEENTRIES; idx++) {
-		page_table->EptPml4[idx].PageFrameNumber = (VirtualToPhysicalAddress(page_table->EptPde[idx]) >> PAGE_SHIFT);
+		page_table->EptPdpte[idx].PageFrameNumber = (VirtualToPhysicalAddress(&page_table->EptPde[idx][0]) >> PAGE_SHIFT);
 	}
 
 	EPT_PDE_2MB pde_template = { 0 };
@@ -381,7 +372,7 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 	pde_template.ExecuteAccess = 1;
 	pde_template.LargePage = 1;
 	
-	__stosq(&pde->AsUInt, pde_template.AsUInt, EPTPDEENTRIES);
+	__stosq(/*&pde->AsUInt*/ (SIZE_T*) & page_table->EptPde[0], pde_template.AsUInt, EPTPDEENTRIES);
 	for (unsigned i = 0; i < EPTPML4ENTRIES; i++) {
 		for (unsigned j = 0; j < EPTPDPTEENTRIES; j++) {
 			SetupPml2Entries(ept_state, &page_table->EptPde[i][j], (i * 512) + j);
@@ -393,10 +384,34 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 }
 
 VOID SetupPml2Entries(EptState* ept_state, EPT_PDE_2MB* pde_entry, UINT64 pfn) {
+	UNREFERENCED_PARAMETER(ept_state);
 
 	pde_entry->PageFrameNumber = pfn;
+
+	UINT64 addrOfPage = pfn * PAGE2MB;
+	if (pfn == 0) {
+		pde_entry->MemoryType = Uncacheable;
+		return;
+	}
+
+	UINT64 memory_type = WriteBack;
+	MtrrEntry* temp = (MtrrEntry*)g_MtrrEntries;
+	for (unsigned idx = 0; idx < gMtrrNum; idx++) {
+		if (addrOfPage <= temp[idx].PhysicalAddressEnd) {
+			if ((addrOfPage + PAGE2MB - 1) >= temp[idx].PhysicalAddressStart) {
+				memory_type = temp[idx].MemoryType;
+				if (memory_type == Uncacheable) {
+					break;
+				}
+			}
+		}
+	}
+
+	pde_entry->MemoryType = memory_type;
+
+	// airhv
 	
-	if (IsValidForLargePage(pfn) == TRUE) {
+	/*if (IsValidForLargePage(pfn) == TRUE) {
 		pde_entry->MemoryType = GetMemoryType(pfn, TRUE);
 		return;
 	}
@@ -406,7 +421,7 @@ VOID SetupPml2Entries(EptState* ept_state, EPT_PDE_2MB* pde_entry, UINT64 pfn) {
 		DbgPrint("[-] Failed with pde entry %llx and pfn %llx\n", pde_entry->PageFrameNumber, pfn);
 		return;
 	}
-	SplitPde(ept_state, buffer, pfn * PAGE2MB);
+	SplitPde(ept_state, buffer, pfn * PAGE2MB);*/
 
 	return;
 }
@@ -418,7 +433,7 @@ BOOLEAN IsValidForLargePage(UINT64 pfn) {
 	UINT64 page_end = (pfn * PAGE2MB) + (PAGE2MB - 1);
 
 	MtrrEntry* temp = (MtrrEntry*)g_MtrrEntries;
-	do {
+	/*do {
 
 		if (page_start <= temp->PhysicalAddressEnd && page_end > temp->PhysicalAddressEnd)
 			return FALSE;
@@ -427,7 +442,15 @@ BOOLEAN IsValidForLargePage(UINT64 pfn) {
 			return FALSE;
 
 		temp = (MtrrEntry*)((UCHAR*)temp + sizeof(struct _MtrrEntry));
-	} while (temp->PhysicalAddressEnd != 0x0);
+	} while (temp->PhysicalAddressEnd != 0x0);*/
+
+	for (unsigned idx = 0; idx < gMtrrNum; idx++) {
+		if (page_start <= temp[idx].PhysicalAddressEnd && page_end > temp[idx].PhysicalAddressEnd)
+			return FALSE;
+
+		else if (page_start < temp[idx].PhysicalAddressStart && page_end >= temp[idx].PhysicalAddressStart)
+			return FALSE;
+	}
 
 	return TRUE;
 }
@@ -438,7 +461,7 @@ UINT64 GetMemoryType(UINT64 pfn, BOOLEAN large_page) {
 	UINT64 memory_type = g_DefaultMemoryType;
 
 	MtrrEntry* temp = (MtrrEntry*)g_MtrrEntries;
-	do {
+	/*do {
 
 		if (page_start >= temp->PhysicalAddressStart && page_end <= temp->PhysicalAddressEnd) {
 			memory_type = temp->MemoryType;
@@ -451,7 +474,19 @@ UINT64 GetMemoryType(UINT64 pfn, BOOLEAN large_page) {
 		}
 		
 		temp = (MtrrEntry*)((UCHAR*)temp + sizeof(struct _MtrrEntry));
-	} while (temp->PhysicalAddressEnd != 0x0);
+	} while (temp->PhysicalAddressEnd != 0x0);*/
+
+	for (unsigned idx = 0; idx < gMtrrNum; idx++) {
+		if (page_start >= temp[idx].PhysicalAddressStart && page_end <= temp[idx].PhysicalAddressEnd) {
+			memory_type = temp[idx].MemoryType;
+
+			if (temp[idx].MtrrFixed == TRUE)
+				break;
+
+			if (memory_type == Uncacheable)
+				break;
+		}
+	}
 
 	return memory_type;
 }
