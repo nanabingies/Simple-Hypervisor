@@ -371,9 +371,11 @@ VOID VmExitHandler(PVOID Param) {
 		DbgPrint("[*] ept violation\n");
 		VMX_EXIT_QUALIFICATION_EPT_VIOLATION exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*)&exitQualification);
-		//DbgPrint("[*][Error] EPT VIOLATION exit qualification : %llx\n", exitQualification.AsUInt);
+		
+		UINT64 phys_addr;
+		__vmx_vmread(VMCS_GUEST_PHYSICAL_ADDRESS, &phys_addr);
 
-		//__debugbreak();
+		__debugbreak();
 	}
 									  break;
 
