@@ -196,8 +196,7 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 
 	EPT_PML4E* pml4e = (EPT_PML4E*)&page_table->EptPml4[0];
 	EPT_PDPTE* pdpte = (EPT_PDPTE*)&page_table->EptPdpte[0];
-	EPT_PDE_2MB* pde = (EPT_PDE_2MB*)&page_table->EptPde[0];
-
+	
 	ept_state->EptPtr->PageFrameNumber = (VirtualToPhysicalAddress(&pml4e) >> PAGE_SHIFT);
 	ept_state->EptPtr->EnableAccessAndDirtyFlags = 0;
 	ept_state->EptPtr->MemoryType = WriteBack;
@@ -214,7 +213,7 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 	pdpte_template.WriteAccess = 1;
 	pdpte_template.ExecuteAccess = 1;
 
-	__stosq((SIZE_T*) & pdpte->AsUInt, pdpte_template.AsUInt, EPTPDPTEENTRIES);
+	__stosq((SIZE_T*) & page_table->EptPdpte[0], pdpte_template.AsUInt, EPTPDPTEENTRIES);
 	for (unsigned idx = 0; idx < EPTPDPTEENTRIES; idx++) {
 		page_table->EptPdpte[idx].PageFrameNumber = (VirtualToPhysicalAddress(&page_table->EptPde[idx][0]) >> PAGE_SHIFT);
 	}
@@ -225,7 +224,7 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 	pde_template.ExecuteAccess = 1;
 	pde_template.LargePage = 1;
 	
-	__stosq((SIZE_T*) & pde->AsUInt, pde_template.AsUInt, EPTPDEENTRIES);
+	__stosq((SIZE_T*) & page_table->EptPde[0], pde_template.AsUInt, EPTPDEENTRIES);
 	for (unsigned i = 0; i < EPTPML4ENTRIES; i++) {
 		for (unsigned j = 0; j < EPTPDPTEENTRIES; j++) {
 			SetupPml2Entries(ept_state, &page_table->EptPde[i][j], (i * 512) + j);
