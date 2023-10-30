@@ -236,7 +236,6 @@ GetTr ENDP
 ; ----------------------------------------------------------------------------------- ;
 
 AsmInveptGlobal PROC
-	INT		3
 	INVEPT	RCX,	OWORD PTR [RDX]
 	JZ errorWithCode						; if (ZF) jmp
     JC errorWithoutCode						; if (CF) jmp
