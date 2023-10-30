@@ -416,6 +416,6 @@ VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
 	return;
 }
 
-EPT_ENTRY* EptpConstructTables(UINT64 pml4e, UINT64 level, UINT64 phys_addr, EptPageTable* page_table) {
+static EPT_ENTRY* EptpConstructTables(EPT_ENTRY* pml4e, UINT64 level, UINT64 phys_addr, EptPageTable* page_table) {
 
 }
