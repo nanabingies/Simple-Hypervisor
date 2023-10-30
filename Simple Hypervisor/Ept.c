@@ -202,6 +202,8 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 	ept_state->EptPtr->MemoryType = WriteBack;
 	ept_state->EptPtr->PageWalkLength = MaxEptWalkLength - 1;
 
+	vmm_context[KeGetCurrentProcessorNumber()].EptPml4 = pml4e->AsUInt;
+
 	pml4e->PageFrameNumber = (VirtualToPhysicalAddress(&pdpte) >> PAGE_SHIFT);
 	pml4e->ExecuteAccess = 1;
 	pml4e->ReadAccess = 1;
@@ -412,4 +414,8 @@ VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
 	EptInvGlobalEntry();
 
 	return;
+}
+
+EPT_ENTRY* EptpConstructTables(UINT64 pml4e, UINT64 level, UINT64 phys_addr, EptPageTable* page_table) {
+
 }
