@@ -80,4 +80,6 @@ BOOLEAN IsValidForLargePage(UINT64);
 
 UINT64 GetMemoryType(UINT64, BOOLEAN);
 
+EVmErrors EptInvGlobalEntry();
+
 VOID SplitPde(EptState*, PVOID, UINT64);

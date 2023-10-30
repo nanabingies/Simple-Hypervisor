@@ -358,8 +358,24 @@ VOID SplitPde(EptState* ept_state, PVOID buffer, UINT64 pfn) {
 	return;
 }
 
+EVmErrors EptInvGlobalEntry() {
+
+}
+
 VOID HandleEptViolation(VMX_EXIT_QUALIFICATION_EPT_VIOLATION exit_qual, UINT64 phys_addr, UINT64 linear_addr) {
 	if (exit_qual.EptExecutable || exit_qual.EptReadable || exit_qual.EptWriteable) {
-
+		__debugbreak();
+		DbgPrint("Error: VA = %llx, PA = %llx", linear_addr, phys_addr);
+		return;
 	}
+
+	// Get faulting page table entry (PTE)
+
+	// EPT entry miss
+	//EptpConstructTables(ept_data->ept_pml4, 4, fault_pa, ept_data);
+
+	// invalidate Global EPT entries
+	EptInvGlobalEntry();
+
+	return;
 }
