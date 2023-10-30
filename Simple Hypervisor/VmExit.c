@@ -375,16 +375,19 @@ VOID VmExitHandler(PVOID Param) {
 		UINT64 phys_addr;
 		__vmx_vmread(VMCS_GUEST_PHYSICAL_ADDRESS, &phys_addr);
 
-		__debugbreak();
+		UINT64 linear_addr;
+		__vmx_vmread(VMCS_EXIT_GUEST_LINEAR_ADDRESS, &linear_addr);
+
+		HandleEptViolation(exitQualification, phys_addr, linear_addr);
 	}
 									  break;
 
 	case VMX_EXIT_REASON_EPT_MISCONFIGURATION: {
+		DbgPrint("[*] EPT Misconfiguration\n");
+
 		// Failure setting EPT
 		// Bugcheck and restart system
-		//KeBugCheck(PFN_LIST_CORRUPT);	// Is this bug code even correct??
-		DbgPrint("[*] EPT Misconfiguration\n");
-		__debugbreak();
+		KeBugCheck(PFN_LIST_CORRUPT);	// Is this bug code even correct??
 	}
 											 break;
 

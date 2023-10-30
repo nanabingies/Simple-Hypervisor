@@ -339,7 +339,7 @@ VOID SplitPde(EptState* ept_state, PVOID buffer, UINT64 pfn) {
 	entry_template.IgnorePat = pde_entry->IgnorePat;
 	entry_template.SuppressVe = pde_entry->SuppressVe;
 
-	__stosq(&split_page->EptPte[0].AsUInt, entry_template.AsUInt, 512);
+	__stosq((SIZE_T*) & split_page->EptPte[0], entry_template.AsUInt, 512);
 	for (unsigned idx = 0; idx < 512; idx++) {
 		UINT64 page_number = ((pde_entry->PageFrameNumber * PAGE2MB) >> PAGE_SHIFT) + idx;
 		split_page->EptPte[idx].PageFrameNumber = page_number;
@@ -356,4 +356,10 @@ VOID SplitPde(EptState* ept_state, PVOID buffer, UINT64 pfn) {
 	RtlCopyMemory(pde_entry, &pde_2, sizeof(pde_2));
 
 	return;
+}
+
+VOID HandleEptViolation(VMX_EXIT_QUALIFICATION_EPT_VIOLATION exit_qual, UINT64 phys_addr, UINT64 linear_addr) {
+	if (exit_qual.EptExecutable || exit_qual.EptReadable || exit_qual.EptWriteable) {
+
+	}
 }
