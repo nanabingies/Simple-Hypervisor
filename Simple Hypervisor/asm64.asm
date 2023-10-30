@@ -21,6 +21,11 @@ EXTERN	VmExitHandler:PROC
 EXTERN	ResumeVm:PROC
 EXTERN	SetupVmcs:PROC
 
+.CONST
+VM_ERROR_OK				EQU		00h
+VM_ERROR_ERR_INFO_OK	EQU		01h
+VM_ERROR_ERR_INFO_ERR	EQU		02h
+
 .code _text
 
 
@@ -232,7 +237,7 @@ GetTr ENDP
 
 AsmInveptGlobal PROC
 	INT		3
-	INVEPT	02h,	OWORD PTR [RCX]
+	INVEPT	RCX,	OWORD PTR [RDX]
 	JZ errorWithCode						; if (ZF) jmp
     JC errorWithoutCode						; if (CF) jmp
     XOR		RAX,	RAX						; VM_ERROR_OK

@@ -358,8 +358,9 @@ VOID SplitPde(EptState* ept_state, PVOID buffer, UINT64 pfn) {
 	return;
 }
 
-EVmErrors EptInvGlobalEntry() {
-	return AsmInveptGlobal();
+UINT64 EptInvGlobalEntry() {
+	struct _eptErr err = { 0 };
+	return AsmInveptGlobal(GlobalInvalidation , &err);
 }
 
 VOID HandleEptViolation(VMX_EXIT_QUALIFICATION_EPT_VIOLATION exit_qual, UINT64 phys_addr, UINT64 linear_addr) {

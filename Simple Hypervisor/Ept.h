@@ -31,6 +31,11 @@ enum MtrrMemoryType {
 	WriteBack,
 };
 
+enum InvEptType {
+	SingleContextInvalidation = 1,
+	GlobalInvalidation = 2,
+};
+
 typedef struct _MtrrEntry {
 	BOOLEAN	MtrrEnabled;
 	BOOLEAN MtrrFixed;
@@ -80,6 +85,6 @@ BOOLEAN IsValidForLargePage(UINT64);
 
 UINT64 GetMemoryType(UINT64, BOOLEAN);
 
-EVmErrors EptInvGlobalEntry();
+UINT64 EptInvGlobalEntry();
 
 VOID SplitPde(EptState*, PVOID, UINT64);

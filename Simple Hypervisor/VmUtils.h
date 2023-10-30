@@ -44,6 +44,10 @@ struct _vmm_context {
 	EptState* EptState;
 };
 
+struct _eptErr {
+	PVOID	Param1;
+	PVOID	Param2;
+};
 
 struct driverGlobals {
 	PDEVICE_OBJECT	g_DeviceObject;
@@ -75,7 +79,7 @@ UINT64 g_GuestMemory;
 UINT64 g_GuestRip;
 UINT64 g_GuestRsp;
 
-inline EVmErrors AsmInveptGlobal();
+inline EVmErrors AsmInveptGlobal(UINT64, const struct _eptErr*);
 inline EVmErrors AsmInveptContext();
 
 ULONG64 PhysicalToVirtualAddress(UINT64 physical_address);
