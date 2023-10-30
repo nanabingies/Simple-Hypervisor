@@ -407,7 +407,7 @@ VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
 	}
 
 	// EPT entry miss
-	UINT64 pml4e = vmm_context[KeGetCurrentProcessorNumber()].EptPml4;
+	EPT_ENTRY* pml4e = (EPT_ENTRY*)vmm_context[KeGetCurrentProcessorNumber()].EptPml4;
 	EptpConstructTables(pml4e, 4, phys_addr, ept_state->EptPageTable);
 
 	// invalidate Global EPT entries
@@ -416,6 +416,6 @@ VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
 	return;
 }
 
-static EPT_ENTRY* EptpConstructTables(EPT_ENTRY* pml4e, UINT64 level, UINT64 phys_addr, EptPageTable* page_table) {
+EPT_ENTRY* EptpConstructTables(EPT_ENTRY* pml4e, UINT64 level, UINT64 phys_addr, EptPageTable* page_table) {
 
 }
