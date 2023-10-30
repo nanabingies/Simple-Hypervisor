@@ -75,6 +75,9 @@ UINT64 g_GuestMemory;
 UINT64 g_GuestRip;
 UINT64 g_GuestRsp;
 
+inline EVmErrors AsmInveptGlobal();
+inline EVmErrors AsmInveptContext();
+
 ULONG64 PhysicalToVirtualAddress(UINT64 physical_address);
 UINT64 VirtualToPhysicalAddress(void* virtual_address);
 

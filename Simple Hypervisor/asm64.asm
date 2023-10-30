@@ -3,6 +3,8 @@ PUBLIC	AsmHostContinueExecution
 PUBLIC	AsmGuestContinueExecution
 PUBLIC	HostTerminateHypervisor
 PUBLIC  AsmSetupVmcs
+PUBLIC	AsmInveptGlobal
+PUBLIC	AsmInveptContext
 
 
 PUBLIC	GetTr
@@ -224,5 +226,31 @@ GetTr PROC
 	STR		RAX
 	RET
 GetTr ENDP
+
+
+; ----------------------------------------------------------------------------------- ;
+
+AsmInveptGlobal PROC
+	INT		3
+	INVEPT	02h,	OWORD PTR [RCX]
+	JZ errorWithCode						; if (ZF) jmp
+    JC errorWithoutCode						; if (CF) jmp
+    XOR		RAX,	RAX						; VM_ERROR_OK
+    RET
+
+errorWithCode:
+	MOV		RAX,	VM_ERROR_ERR_INFO_ERR
+    RET
+
+errorWithoutCode:
+	MOV		RAX,	VM_ERROR_ERR_INFO_OK
+	RET
+
+AsmInveptGlobal	ENDP
+
+AsmInveptContext PROC
+
+AsmInveptContext ENDP
+
 
 END
