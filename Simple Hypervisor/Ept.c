@@ -416,6 +416,64 @@ VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
 	return;
 }
 
-EPT_ENTRY* EptpConstructTables(EPT_ENTRY* pml4e, UINT64 level, UINT64 phys_addr, EptPageTable* page_table) {
+EPT_ENTRY* EptpConstructTables(EPT_ENTRY* ept_entry, UINT64 level, UINT64 pfn, EptPageTable* page_table) {
+	switch (level) {
+	case 4: {
+		// table == PML4 (512 GB)
+		const UINT64 pml4_index = MASK_EPT_PML4_INDEX(pfn);
+		const EPT_ENTRY* pml4_entry = &ept_entry[pml4_index];
+		if (!pml4_entry->AsUInt) {
+			const EPT_PDPTE* ept_pdpt = (EPT_PDPTE*)EptpAllocateEptEntry(page_table);
+			if (!ept_pdpt)
+				return NULL;
 
+			EptpInitTableEntry(ept_pml4_entry, table_level, UtilPaFromVa(ept_pdpt));
+		}
+
+		return EptpConstructTables(pml4_entry->PageFrameNumber << PAGE_SHIFT, level - 1, pfn, page_table);
+	}
+
+	case 3: {
+		// table == PDPT (1 GB)
+		const UINT64 pml3_index = MASK_EPT_PML3_INDEX(pfn);
+		const EPT_ENTRY* pdpt_entry = &ept_entry[pml3_index];
+		if (!pdpt_entry->AsUInt) {
+			const auto ept_pdt = EptpAllocateEptEntry(ept_data);
+			if (!ept_pdt)
+				return NULL;
+
+			EptpInitTableEntry(ept_pdpt_entry, table_level, UtilPaFromVa(ept_pdt));
+		}
+
+		return EptpConstructTables(pdpt_entry->AsUInt << PAGE_SHIFT, level - 1, pfn, page_table);
+	}
+
+	case 2: {
+		// table == PDT (2 MB)
+		const UINT64 pml2_index = MASK_EPT_PML2_INDEX(pfn);
+		const EPT_ENTRY* pde_entry = &ept_entry[pml2_index];
+		if (!pde_entry) {
+			const auto ept_pt = EptpAllocateEptEntry(ept_data);
+			if (!ept_pt)
+				return NULL;
+
+			EptpInitTableEntry(ept_pdt_entry, table_level, UtilPaFromVa(ept_pt));
+		}
+
+		return EptpConstructTables(pde_entry->PageFrameNumber << PAGE_SHIFT, level - 1, pfn, page_table);
+	}
+
+	case 1: {
+		// table == PT (4 KB)
+		const UINT64 pte_index = MASK_EPT_PML1_INDEX(pfn);
+		const EPT_ENTRY* pte_entry = &ept_entry[pte_index];
+		NT_ASSERT(!pte_entry->AsUInt);
+		EptpInitTableEntry(ept_pt_entry, table_level, physical_address);
+		return ept_pt_entry;
+	}
+
+	default:
+		__debugbreak();
+		return NULL;
+	}
 }
