@@ -305,7 +305,7 @@ UINT64 GetMemoryType(UINT64 pfn, BOOLEAN large_page) {
 	return memory_type;
 }
 
-EPT_PDE_2MB* GetPdeEntry(EptState* ept_state, UINT64 pfn) {
+EPT_PDE_2MB* GetPdeEntry(EptPageTable* page_table, UINT64 pfn) {
 	UINT64 pml4_index = MASK_EPT_PML4_INDEX(pfn);
 	UINT64 pml3_index = MASK_EPT_PML3_INDEX(pfn);
 	UINT64 pml2_index = MASK_EPT_PML2_INDEX(pfn);
@@ -315,13 +315,40 @@ EPT_PDE_2MB* GetPdeEntry(EptState* ept_state, UINT64 pfn) {
 		return NULL;
 	}
 	
-	return &ept_state->EptPageTable->EptPde[pml3_index][pml2_index];
+	return &page_table->EptPde[pml3_index][pml2_index];
 }
 
-VOID SplitPde(EptState* ept_state, PVOID buffer, UINT64 pfn) {
-	EPT_PDE_2MB* pde_entry = GetPdeEntry(ept_state, pfn);
+EPT_PTE* GetPteEntry(EptPageTable* page_table, UINT64 pfn) {
+	EPT_PDE_2MB* pde_entry = GetPdeEntry(page_table, pfn);
 	if (pde_entry == NULL) {
 		DbgPrint("[-] Invalid pde address passed.\n");
+		return NULL;
+	}
+
+	// Check to ensure the page is split
+	if (pde_entry->LargePage) {
+		return NULL;
+	}
+
+	EPT_PTE* pte_entry = (EPT_PTE*)PhysicalToVirtualAddress(pde_entry->PageFrameNumber << PAGE_SHIFT);
+	if (pte_entry == NULL)	return NULL;
+
+	UINT64 pte_index = MASK_EPT_PML1_INDEX(pfn);
+
+	pte_entry = &pte_entry[pte_index];
+	return pte_entry;
+}
+
+VOID SplitPde(EptPageTable* page_table, PVOID buffer, UINT64 pfn) {
+	EPT_PDE_2MB* pde_entry = GetPdeEntry(page_table, pfn);
+	if (pde_entry == NULL) {
+		DbgPrint("[-] Invalid pde address passed.\n");
+		return;
+	}
+
+	// If this large page is not marked a large page, that means it's a pointer already.
+	// That page is therefore already split.
+	if (!pde_entry->LargePage) {
 		return;
 	}
 
@@ -343,10 +370,10 @@ VOID SplitPde(EptState* ept_state, PVOID buffer, UINT64 pfn) {
 	for (unsigned idx = 0; idx < 512; idx++) {
 		UINT64 page_number = ((pde_entry->PageFrameNumber * PAGE2MB) >> PAGE_SHIFT) + idx;
 		split_page->EptPte[idx].PageFrameNumber = page_number;
-		split_page->EptPte[idx].MemoryType = GetMemoryType(page_number, FALSE);
+		//split_page->EptPte[idx].MemoryType = GetMemoryType(page_number, FALSE);
 	}
 
-	EPT_PDE_2MB pde_2;
+	EPT_PDE_2MB pde_2 = { 0 };
 	pde_2.ReadAccess = 1;
 	pde_2.WriteAccess = 1;
 	pde_2.ExecuteAccess = 1;
@@ -355,22 +382,25 @@ VOID SplitPde(EptState* ept_state, PVOID buffer, UINT64 pfn) {
 
 	RtlCopyMemory(pde_entry, &pde_2, sizeof(pde_2));
 
+	// Add our allocation to the linked list of dynamic splits for later deallocation 
+	InsertHeadList(&page_table->DynamicPages, &split_page->SplitPages);
+
 	return;
 }
 
 UINT64 EptInvGlobalEntry() {
-	struct _eptErr err = { 0 };
-	return AsmInveptGlobal(GlobalInvalidation , &err);
+	ept_err err = { 0 };
+	return AsmInveptGlobal(InveptAllContext, &err);
 }
 
-VOID HandleEptViolation(VMX_EXIT_QUALIFICATION_EPT_VIOLATION exit_qual, UINT64 phys_addr, UINT64 linear_addr) {
-	if (exit_qual.EptExecutable || exit_qual.EptReadable || exit_qual.EptWriteable) {
+VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
+	// Get faulting page table entry (PTE)
+	const EPT_PTE* pte_entry = { 0 }; //GetPteEntry(NULL, phys_addr);
+	if (pte_entry && pte_entry->AsUInt) {
 		__debugbreak();
-		DbgPrint("Error: VA = %llx, PA = %llx", linear_addr, phys_addr);
+		DbgPrint("PteEntry: VA = %llx, PA = %llx", linear_addr, phys_addr);
 		return;
 	}
-
-	// Get faulting page table entry (PTE)
 
 	// EPT entry miss
 	//EptpConstructTables(ept_data->ept_pml4, 4, fault_pa, ept_data);

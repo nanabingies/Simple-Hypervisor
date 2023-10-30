@@ -10,6 +10,7 @@
 
 #define PAGE2MB				512 * PAGE_SIZE
 
+#define MASK_EPT_PML1_INDEX(_VAR_) ((_VAR_ & 0x1FF000ULL) >> 12)
 #define MASK_EPT_PML2_INDEX(_VAR_) ((_VAR_ & 0x3FE00000ULL) >> 21)
 #define MASK_EPT_PML3_INDEX(_VAR_) ((_VAR_ & 0x7FC0000000ULL) >> 30)
 #define MASK_EPT_PML4_INDEX(_VAR_) ((_VAR_ & 0xFF8000000000ULL) >> 39)
@@ -31,10 +32,12 @@ enum MtrrMemoryType {
 	WriteBack,
 };
 
-enum InvEptType {
+/*enum InvEptType {
+	IndividualAddressInvalidation = 0,
 	SingleContextInvalidation = 1,
 	GlobalInvalidation = 2,
-};
+	SingleContextInvalidationExceptGlobal = 3,
+};*/
 
 typedef struct _MtrrEntry {
 	BOOLEAN	MtrrEnabled;
@@ -54,6 +57,7 @@ typedef struct _EptPageTable {
 	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PML4E EptPml4[EPTPML4ENTRIES];
 	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PDPTE EptPdpte[EPTPDPTEENTRIES];
 	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PDE_2MB EptPde[EPTPML4ENTRIES][EPTPDPTEENTRIES];
+	LIST_ENTRY					DynamicPages;
 } EptPageTable;
 
 typedef struct _EptState {
@@ -61,6 +65,10 @@ typedef struct _EptState {
 	EPT_POINTER*	EptPtr;
 	EptPageTable*	EptPageTable;
 } EptState;
+
+typedef struct _VmxNonRootMemory {
+	PVOID	PreAllocatedBuffer;
+} VmxNonRootMemory;
 
 static UINT64 gMtrrNum = 0;
 static const ULONG MaxEptWalkLength = 0x4;
@@ -75,7 +83,7 @@ BOOLEAN EptBuildMTRRMap();
 
 BOOLEAN CreateEptState(EptState*);
 
-VOID HandleEptViolation(VMX_EXIT_QUALIFICATION_EPT_VIOLATION, UINT64, UINT64);
+VOID HandleEptViolation(UINT64, UINT64);
 
 VOID SetupPml2Entries(EptState*, EPT_PDE_2MB*, UINT64);
 
@@ -83,8 +91,12 @@ BOOLEAN IsInRange(UINT64, UINT64, UINT64);
 
 BOOLEAN IsValidForLargePage(UINT64);
 
+EPT_PTE* GetPteEntry(EptPageTable*, UINT64);
+
+EPT_PDE_2MB* GetPdeEntry(EptPageTable*, UINT64);
+
 UINT64 GetMemoryType(UINT64, BOOLEAN);
 
 UINT64 EptInvGlobalEntry();
 
-VOID SplitPde(EptState*, PVOID, UINT64);
+VOID SplitPde(EptPageTable*, PVOID, UINT64);

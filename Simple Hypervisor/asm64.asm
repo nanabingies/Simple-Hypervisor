@@ -75,10 +75,26 @@ AsmHostContinueExecution PROC
 	PUSH	R14
 	PUSH	R15
 
+	SUB     RSP, 060h
+	MOVDQA  xmmword ptr [RSP], XMM0
+    MOVDQA  xmmword ptr [RSP + 10h], XMM1
+    MOVDQA  xmmword ptr [RSP + 20h], XMM2
+    MOVDQA  xmmword ptr [RSP + 30h], XMM3
+    MOVDQA  xmmword ptr [RSP + 40h], XMM4
+    MOVDQA  xmmword ptr [RSP + 50h], XMM5
+
 	MOV RCX, RSP
 	SUB RSP, 020h
 	CALL VmExitHandler
 	ADD RSP, 020h
+
+	MOVDQA  XMM0, xmmword ptr [RSP]
+    MOVDQA  XMM1, xmmword ptr [RSP + 10h]
+    MOVDQA  XMM2, xmmword ptr [RSP + 20h]
+    MOVDQA  XMM3, xmmword ptr [RSP + 30h]
+    MOVDQA  XMM4, xmmword ptr [RSP + 40h]
+    MOVDQA  XMM5, xmmword ptr [RSP + 50h]
+	ADD     RSP,  060h
 
 	POP		R15
 	POP		R14
@@ -156,10 +172,26 @@ AsmSetupVmcs PROC
 	PUSH	R14
 	PUSH	R15
 
+	SUB     RSP, 060h
+	MOVDQA  xmmword ptr [RSP], XMM0
+    MOVDQA  xmmword ptr [RSP + 10h], XMM1
+    MOVDQA  xmmword ptr [RSP + 20h], XMM2
+    MOVDQA  xmmword ptr [RSP + 30h], XMM3
+    MOVDQA  xmmword ptr [RSP + 40h], XMM4
+    MOVDQA  xmmword ptr [RSP + 50h], XMM5
+
 	MOV		RDX, RSP
 	SUB		RSP, 020h
     CALL	SetupVmcs
     ADD		RSP, 020h
+
+	MOVDQA  XMM0, xmmword ptr [RSP]
+    MOVDQA  XMM1, xmmword ptr [RSP + 10h]
+    MOVDQA  XMM2, xmmword ptr [RSP + 20h]
+    MOVDQA  XMM3, xmmword ptr [RSP + 30h]
+    MOVDQA  XMM4, xmmword ptr [RSP + 40h]
+    MOVDQA  XMM5, xmmword ptr [RSP + 50h]
+	ADD     RSP,  060h
 
 	POP		R15
 	POP		R14

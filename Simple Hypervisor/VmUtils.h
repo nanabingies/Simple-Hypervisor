@@ -44,17 +44,17 @@ struct _vmm_context {
 	EptState* EptState;
 };
 
-struct _eptErr {
+typedef struct _eptErr {
 	PVOID	Param1;
 	PVOID	Param2;
-};
+} ept_err;
 
 struct driverGlobals {
 	PDEVICE_OBJECT	g_DeviceObject;
 	LIST_ENTRY		g_ListofDevices;
 };
 
-struct _GuestRegisters {
+typedef struct _GuestRegisters {
 	UINT64	RAX;
 	UINT64	RBX;
 	UINT64	RCX;
@@ -71,7 +71,13 @@ struct _GuestRegisters {
 	UINT64	R13;
 	UINT64	R14;
 	UINT64	R15;
-};
+	__m128	xmm[6];
+} GuestRegisters;
+
+typedef struct _GuestContext {
+	GuestRegisters*	registers;
+	UINT64			ip;
+} GuestContext;
 
 struct _vmm_context* vmm_context;
 struct driverGlobals g_DriverGlobals;
@@ -79,7 +85,7 @@ UINT64 g_GuestMemory;
 UINT64 g_GuestRip;
 UINT64 g_GuestRsp;
 
-inline EVmErrors AsmInveptGlobal(UINT64, const struct _eptErr*);
+inline EVmErrors AsmInveptGlobal(UINT64, const ept_err*);
 inline EVmErrors AsmInveptContext();
 
 ULONG64 PhysicalToVirtualAddress(UINT64 physical_address);

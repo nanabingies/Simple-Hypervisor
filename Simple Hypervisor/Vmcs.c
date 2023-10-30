@@ -107,10 +107,11 @@ EVmErrors SetupVmcs(ULONG processorNumber, PVOID GuestRsp) {
 	// RSP, RIP, RFLAGS - Guest & Host
 	//
 	vmm_context[processorNumber].GuestRip = (size_t)GuestRsp; //AsmGuestContinueExecution;
+	vmm_context[processorNumber].GuestRsp = (size_t)GuestRsp;
+
 	vmm_context[processorNumber].HostRip = (size_t)AsmHostContinueExecution;
 	vmm_context[processorNumber].HostRsp = 
 		((size_t)vmm_context[processorNumber].HostStack + HOST_STACK_SIZE - sizeof(void*) - sizeof(struct _GuestRegisters));
-	vmm_context[processorNumber].GuestRsp = (size_t)GuestRsp;
 
 	__vmx_vmwrite(VMCS_GUEST_RSP, vmm_context[processorNumber].GuestRsp);
 	__vmx_vmwrite(VMCS_GUEST_RIP, vmm_context[processorNumber].GuestRip);

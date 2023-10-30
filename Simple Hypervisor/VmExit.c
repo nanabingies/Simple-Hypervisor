@@ -7,14 +7,14 @@
 //
 
 VOID VmExitHandler(PVOID Param) {
-	struct _GuestRegisters* guestRegisters = (struct _GuestRegisters*)Param;
+	GuestRegisters* guestRegisters = (GuestRegisters*)Param;
 
-	VMX_VMEXIT_REASON VmExitInfo;
-	__vmx_vmread(VMCS_EXIT_REASON, (size_t*) & VmExitInfo);
+	VMX_VMEXIT_REASON VmExitReason;
+	__vmx_vmread(VMCS_EXIT_REASON, (size_t*) & VmExitReason);
 	//DbgPrint("[*] VMCS_EXIT_REASON : %lx\n", VmExitInfo.BasicExitReason);
 	//DbgPrint("[*] This came from processor : %lx\n", KeGetCurrentNodeNumber());
 
-	switch (VmExitInfo.BasicExitReason)
+	switch (VmExitReason.BasicExitReason)
 	{
 	case VMX_EXIT_REASON_EXCEPTION_OR_NMI: {
 		DbgPrint("[*] exception or nmi\n");
@@ -374,11 +374,18 @@ VOID VmExitHandler(PVOID Param) {
 		
 		UINT64 phys_addr;
 		__vmx_vmread(VMCS_GUEST_PHYSICAL_ADDRESS, &phys_addr);
+		//phys_addr = PAGE_ALIGN((PVOID)phys_addr);
 
 		UINT64 linear_addr;
 		__vmx_vmread(VMCS_EXIT_GUEST_LINEAR_ADDRESS, &linear_addr);
 
-		HandleEptViolation(exitQualification, phys_addr, linear_addr);
+		if (exitQualification.EptExecutable || exitQualification.EptReadable || exitQualification.EptWriteable) {
+			__debugbreak();
+			DbgPrint("Error: VA = %llx, PA = %llx", linear_addr, phys_addr);
+			return;
+		}
+
+		HandleEptViolation(phys_addr, linear_addr);
 	}
 									  break;
 
