@@ -369,12 +369,14 @@ VOID VmExitHandler(PVOID Param) {
 
 	case VMX_EXIT_REASON_EPT_VIOLATION: {
 		DbgPrint("[*] ept violation\n");
+
 		VMX_EXIT_QUALIFICATION_EPT_VIOLATION exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*)&exitQualification);
 		
 		UINT64 phys_addr;
 		__vmx_vmread(VMCS_GUEST_PHYSICAL_ADDRESS, &phys_addr);
 		//phys_addr = PAGE_ALIGN((PVOID)phys_addr);
+		
 
 		UINT64 linear_addr;
 		__vmx_vmread(VMCS_EXIT_GUEST_LINEAR_ADDRESS, &linear_addr);

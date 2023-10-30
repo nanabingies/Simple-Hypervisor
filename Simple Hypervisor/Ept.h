@@ -95,6 +95,8 @@ EPT_PTE* GetPteEntry(EptPageTable*, UINT64);
 
 EPT_PDE_2MB* GetPdeEntry(EptPageTable*, UINT64);
 
+EPT_ENTRY* EptpConstructTables(UINT64, UINT64, UINT64, EptPageTable*);
+
 UINT64 GetMemoryType(UINT64, BOOLEAN);
 
 UINT64 EptInvGlobalEntry();

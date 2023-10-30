@@ -394,8 +394,10 @@ UINT64 EptInvGlobalEntry() {
 }
 
 VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
+	EptState* ept_state = vmm_context[KeGetCurrentProcessorNumber()].EptState;
+
 	// Get faulting page table entry (PTE)
-	const EPT_PTE* pte_entry = { 0 }; //GetPteEntry(NULL, phys_addr);
+	const EPT_PTE* pte_entry = GetPteEntry(ept_state->EptPageTable, phys_addr);
 	if (pte_entry && pte_entry->AsUInt) {
 		__debugbreak();
 		DbgPrint("PteEntry: VA = %llx, PA = %llx", linear_addr, phys_addr);
@@ -403,7 +405,8 @@ VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
 	}
 
 	// EPT entry miss
-	//EptpConstructTables(ept_data->ept_pml4, 4, fault_pa, ept_data);
+	UINT64 pml4e = vmm_context[KeGetCurrentProcessorNumber()].EptPml4;
+	EptpConstructTables(pml4e, 4, phys_addr, ept_state->EptPageTable);
 
 	// invalidate Global EPT entries
 	EptInvGlobalEntry();
