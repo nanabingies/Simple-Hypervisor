@@ -385,7 +385,7 @@ VOID SplitPde(EptPageTable* page_table, PVOID buffer, UINT64 pfn) {
 	RtlCopyMemory(pde_entry, &pde_2, sizeof(pde_2));
 
 	// Add our allocation to the linked list of dynamic splits for later deallocation 
-	InsertHeadList(&page_table->DynamicPages, &split_page->SplitPages);
+	InsertHeadList((PLIST_ENTRY) & page_table->DynamicPages, &split_page->SplitPages);
 
 	return;
 }
@@ -406,17 +406,17 @@ VOID EptInitTableEntry(EPT_ENTRY* ept_entry, UINT64 level, UINT64 pfn) {
 EPT_ENTRY* EptAllocateEptEntry(EptPageTable* page_table) {
 	if (page_table == NULL) {
 		static const UINT64 kAllocSize = 512 * sizeof(EPT_ENTRY*);
-		const EPT_ENTRY* entry = (EPT_ENTRY*)
+		EPT_ENTRY* entry = (EPT_ENTRY*)
 			ExAllocatePoolZero(NonPagedPool, kAllocSize, VMM_POOL);
 		if (!entry)
-			return entry;
+			return NULL;
 
-		RtlZeroMemory(entry, kAllocSize);
+		RtlSecureZeroMemory(entry, kAllocSize);
 		return entry;
 	}
 
 	else {
-		const UINT64 count = InterlockedIncrement(&page_table->EntriesCount);
+		const UINT64 count = InterlockedIncrement((LONG volatile*) & page_table->AllocatedEntriesCount);
 
 		// How many EPT entries are preallocated. When the number exceeds it, return
 		if (count > 50) {
@@ -434,6 +434,7 @@ UINT64 EptInvGlobalEntry() {
 
 VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
 	EptState* ept_state = vmm_context[KeGetCurrentProcessorNumber()].EptState;
+	__debugbreak();
 
 	// Get faulting page table entry (PTE)
 	const EPT_PTE* pte_entry = GetPteEntry(ept_state->EptPageTable, phys_addr);
@@ -444,9 +445,9 @@ VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
 	}
 
 	// EPT entry miss
-	EPT_ENTRY* pml4e = ept_state->EptPageTable->EptPml4;
+	EPT_ENTRY* pml4e = (EPT_ENTRY*)ept_state->EptPageTable->EptPml4;
 	DbgPrint("pml4e : %p\n", pml4e);
-	//EptpConstructTables(pml4e, 4, phys_addr, ept_state->EptPageTable);
+	EptpConstructTables(pml4e, 4, phys_addr, ept_state->EptPageTable);
 
 	// invalidate Global EPT entries
 	EptInvGlobalEntry();
@@ -454,57 +455,62 @@ VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
 	return;
 }
 
-EPT_ENTRY* EptpConstructTables(EPT_ENTRY* ept_entry, UINT64 level, UINT64 pfn, EptPageTable* page_table) {
+const EPT_ENTRY* EptpConstructTables(EPT_ENTRY* ept_entry, UINT64 level, UINT64 pfn, EptPageTable* page_table) {
 	switch (level) {
 	case 4: {
 		// table == PML4 (512 GB)
 		const UINT64 pml4_index = MASK_EPT_PML4_INDEX(pfn);
-		const EPT_ENTRY* pml4_entry = &ept_entry[pml4_index];
+		EPT_ENTRY* pml4_entry = &ept_entry[pml4_index];
+		DbgPrint("[*] pml4_entry : %p\n", pml4_entry);
 		if (!pml4_entry->AsUInt) {
-			const EPT_ENTRY* ept_pdpt = (EPT_ENTRY*)EptAllocateEptEntry(page_table);
+			EPT_ENTRY* ept_pdpt = (EPT_ENTRY*)EptAllocateEptEntry(page_table);
 			if (!ept_pdpt)
 				return NULL;
 
-			EptInitTableEntry(pml4_entry, level, ept_pdpt->AsUInt);
+			EptInitTableEntry(pml4_entry, level, VirtualToPhysicalAddress(ept_pdpt));
 		}
 
-		return EptpConstructTables(pml4_entry->PageFrameNumber << PAGE_SHIFT, level - 1, pfn, page_table);
+		EPT_ENTRY* temp = (EPT_ENTRY*)VirtualToPhysicalAddress((void*)(pml4_entry->PageFrameNumber << PAGE_SHIFT));
+		return EptpConstructTables(temp, level - 1, pfn, page_table);
 	}
 
 	case 3: {
 		// table == PDPT (1 GB)
 		const UINT64 pml3_index = MASK_EPT_PML3_INDEX(pfn);
-		const EPT_ENTRY* pdpt_entry = &ept_entry[pml3_index];
+		EPT_ENTRY* pdpt_entry = &ept_entry[pml3_index];
+		DbgPrint("[*] pdpt_entry : %p\n", pdpt_entry);
 		if (!pdpt_entry->AsUInt) {
-			const EPT_ENTRY* ept_pde = (EPT_ENTRY*)EptAllocateEptEntry(page_table);
+			EPT_ENTRY* ept_pde = (EPT_ENTRY*)EptAllocateEptEntry(page_table);
 			if (!ept_pde)
 				return NULL;
 
 			EptInitTableEntry(pdpt_entry, level, ept_pde->AsUInt);
 		}
 
-		return EptpConstructTables(pdpt_entry->AsUInt << PAGE_SHIFT, level - 1, pfn, page_table);
+		EPT_ENTRY* temp = (EPT_ENTRY*)VirtualToPhysicalAddress((void*)(pdpt_entry->PageFrameNumber << PAGE_SHIFT));
+		return EptpConstructTables(temp, level - 1, pfn, page_table);
 	}
 
 	case 2: {
 		// table == PDT (2 MB)
 		const UINT64 pml2_index = MASK_EPT_PML2_INDEX(pfn);
-		const EPT_ENTRY* pde_entry = &ept_entry[pml2_index];
+		EPT_ENTRY* pde_entry = &ept_entry[pml2_index];
 		if (!pde_entry) {
-			const EPT_ENTRY* ept_pt = EptAllocateEptEntry(page_table);
+			EPT_ENTRY* ept_pt = EptAllocateEptEntry(page_table);
 			if (!ept_pt)
 				return NULL;
 
 			EptInitTableEntry(pde_entry, level, ept_pt->AsUInt);
 		}
 
-		return EptpConstructTables(pde_entry->PageFrameNumber << PAGE_SHIFT, level - 1, pfn, page_table);
+		EPT_ENTRY* temp = (EPT_ENTRY*)VirtualToPhysicalAddress((void*)(pde_entry->PageFrameNumber << PAGE_SHIFT));
+		return EptpConstructTables(temp, level - 1, pfn, page_table);
 	}
 
 	case 1: {
 		// table == PT (4 KB)
 		const UINT64 pte_index = MASK_EPT_PML1_INDEX(pfn);
-		const EPT_ENTRY* pte_entry = &ept_entry[pte_index];
+		EPT_ENTRY* pte_entry = &ept_entry[pte_index];
 		NT_ASSERT(!pte_entry->AsUInt);
 		EptInitTableEntry(pte_entry, level, pfn);
 		return pte_entry;
