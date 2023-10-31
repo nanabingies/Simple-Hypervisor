@@ -434,7 +434,6 @@ UINT64 EptInvGlobalEntry() {
 
 VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
 	EptState* ept_state = vmm_context[KeGetCurrentProcessorNumber()].EptState;
-	__debugbreak();
 
 	// Get faulting page table entry (PTE)
 	const EPT_PTE* pte_entry = GetPteEntry(ept_state->EptPageTable, phys_addr);
@@ -446,7 +445,6 @@ VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
 
 	// EPT entry miss
 	EPT_ENTRY* pml4e = (EPT_ENTRY*)ept_state->EptPageTable->EptPml4;
-	DbgPrint("pml4e : %p\n", pml4e);
 	EptpConstructTables(pml4e, 4, phys_addr, ept_state->EptPageTable);
 
 	// invalidate Global EPT entries
@@ -456,6 +454,7 @@ VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
 }
 
 const EPT_ENTRY* EptpConstructTables(EPT_ENTRY* ept_entry, UINT64 level, UINT64 pfn, EptPageTable* page_table) {
+	__debugbreak();
 	switch (level) {
 	case 4: {
 		// table == PML4 (512 GB)
@@ -479,7 +478,7 @@ const EPT_ENTRY* EptpConstructTables(EPT_ENTRY* ept_entry, UINT64 level, UINT64 
 		const UINT64 pml3_index = MASK_EPT_PML3_INDEX(pfn);
 		EPT_ENTRY* pdpt_entry = &ept_entry[pml3_index];
 		DbgPrint("[*] pdpt_entry : %p\n", pdpt_entry);
-		if (!pdpt_entry->AsUInt) {
+		if (!pdpt_entry) {
 			EPT_ENTRY* ept_pde = (EPT_ENTRY*)EptAllocateEptEntry(page_table);
 			if (!ept_pde)
 				return NULL;
@@ -495,6 +494,7 @@ const EPT_ENTRY* EptpConstructTables(EPT_ENTRY* ept_entry, UINT64 level, UINT64 
 		// table == PDT (2 MB)
 		const UINT64 pml2_index = MASK_EPT_PML2_INDEX(pfn);
 		EPT_ENTRY* pde_entry = &ept_entry[pml2_index];
+		DbgPrint("[*] pde_entry : %p\n", pde_entry);
 		if (!pde_entry) {
 			EPT_ENTRY* ept_pt = EptAllocateEptEntry(page_table);
 			if (!ept_pt)
