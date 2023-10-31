@@ -285,7 +285,7 @@ BOOLEAN IsValidForLargePage(UINT64 pfn) {
 	return TRUE;
 }
 
-UINT64 GetMemoryType(UINT64 pfn, BOOLEAN large_page) {
+UINT64 EptGetMemoryType(UINT64 pfn, BOOLEAN large_page) {
 	UINT64 page_start = large_page == TRUE ? pfn * PAGE2MB : pfn * PAGE_SIZE;
 	UINT64 page_end = large_page == TRUE ? (pfn * PAGE2MB) + (PAGE2MB - 1) : (pfn * PAGE_SIZE) + (PAGE_SIZE - 1);
 	UINT64 memory_type = g_DefaultMemoryType;
@@ -390,6 +390,43 @@ VOID SplitPde(EptPageTable* page_table, PVOID buffer, UINT64 pfn) {
 	return;
 }
 
+VOID EptInitTableEntry(EPT_ENTRY* ept_entry, UINT64 level, UINT64 pfn) {
+	ept_entry->ReadAccess = 1;
+	ept_entry->WriteAccess = 1;
+	ept_entry->ExecuteAccess = 1;
+	ept_entry->PageFrameNumber = pfn >> PAGE_SHIFT;
+
+	if (level == 1) {
+		ept_entry->MemoryType = EptGetMemoryType(pfn, FALSE);
+	}
+
+	return;
+}
+
+EPT_ENTRY* EptAllocateEptEntry(EptPageTable* page_table) {
+	if (page_table == NULL) {
+		static const UINT64 kAllocSize = 512 * sizeof(EPT_ENTRY*);
+		const EPT_ENTRY* entry = (EPT_ENTRY*)
+			ExAllocatePoolZero(NonPagedPool, kAllocSize, VMM_POOL);
+		if (!entry)
+			return entry;
+
+		RtlZeroMemory(entry, kAllocSize);
+		return entry;
+	}
+
+	else {
+		const UINT64 count = InterlockedIncrement(&page_table->EntriesCount);
+
+		// How many EPT entries are preallocated. When the number exceeds it, return
+		if (count > 50) {
+			return NULL;
+		}
+
+		return page_table->DynamicPages[count - 1];
+	}
+}
+
 UINT64 EptInvGlobalEntry() {
 	ept_err err = { 0 };
 	return AsmInveptGlobal(InveptAllContext, &err);
@@ -407,8 +444,9 @@ VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
 	}
 
 	// EPT entry miss
-	EPT_ENTRY* pml4e = (EPT_ENTRY*)vmm_context[KeGetCurrentProcessorNumber()].EptPml4;
-	EptpConstructTables(pml4e, 4, phys_addr, ept_state->EptPageTable);
+	EPT_ENTRY* pml4e = ept_state->EptPageTable->EptPml4;
+	DbgPrint("pml4e : %p\n", pml4e);
+	//EptpConstructTables(pml4e, 4, phys_addr, ept_state->EptPageTable);
 
 	// invalidate Global EPT entries
 	EptInvGlobalEntry();
@@ -423,11 +461,11 @@ EPT_ENTRY* EptpConstructTables(EPT_ENTRY* ept_entry, UINT64 level, UINT64 pfn, E
 		const UINT64 pml4_index = MASK_EPT_PML4_INDEX(pfn);
 		const EPT_ENTRY* pml4_entry = &ept_entry[pml4_index];
 		if (!pml4_entry->AsUInt) {
-			const EPT_PDPTE* ept_pdpt = (EPT_PDPTE*)EptpAllocateEptEntry(page_table);
+			const EPT_ENTRY* ept_pdpt = (EPT_ENTRY*)EptAllocateEptEntry(page_table);
 			if (!ept_pdpt)
 				return NULL;
 
-			EptpInitTableEntry(ept_pml4_entry, table_level, UtilPaFromVa(ept_pdpt));
+			EptInitTableEntry(pml4_entry, level, ept_pdpt->AsUInt);
 		}
 
 		return EptpConstructTables(pml4_entry->PageFrameNumber << PAGE_SHIFT, level - 1, pfn, page_table);
@@ -438,11 +476,11 @@ EPT_ENTRY* EptpConstructTables(EPT_ENTRY* ept_entry, UINT64 level, UINT64 pfn, E
 		const UINT64 pml3_index = MASK_EPT_PML3_INDEX(pfn);
 		const EPT_ENTRY* pdpt_entry = &ept_entry[pml3_index];
 		if (!pdpt_entry->AsUInt) {
-			const auto ept_pdt = EptpAllocateEptEntry(ept_data);
-			if (!ept_pdt)
+			const EPT_ENTRY* ept_pde = (EPT_ENTRY*)EptAllocateEptEntry(page_table);
+			if (!ept_pde)
 				return NULL;
 
-			EptpInitTableEntry(ept_pdpt_entry, table_level, UtilPaFromVa(ept_pdt));
+			EptInitTableEntry(pdpt_entry, level, ept_pde->AsUInt);
 		}
 
 		return EptpConstructTables(pdpt_entry->AsUInt << PAGE_SHIFT, level - 1, pfn, page_table);
@@ -453,11 +491,11 @@ EPT_ENTRY* EptpConstructTables(EPT_ENTRY* ept_entry, UINT64 level, UINT64 pfn, E
 		const UINT64 pml2_index = MASK_EPT_PML2_INDEX(pfn);
 		const EPT_ENTRY* pde_entry = &ept_entry[pml2_index];
 		if (!pde_entry) {
-			const auto ept_pt = EptpAllocateEptEntry(ept_data);
+			const EPT_ENTRY* ept_pt = EptAllocateEptEntry(page_table);
 			if (!ept_pt)
 				return NULL;
 
-			EptpInitTableEntry(ept_pdt_entry, table_level, UtilPaFromVa(ept_pt));
+			EptInitTableEntry(pde_entry, level, ept_pt->AsUInt);
 		}
 
 		return EptpConstructTables(pde_entry->PageFrameNumber << PAGE_SHIFT, level - 1, pfn, page_table);
@@ -468,8 +506,8 @@ EPT_ENTRY* EptpConstructTables(EPT_ENTRY* ept_entry, UINT64 level, UINT64 pfn, E
 		const UINT64 pte_index = MASK_EPT_PML1_INDEX(pfn);
 		const EPT_ENTRY* pte_entry = &ept_entry[pte_index];
 		NT_ASSERT(!pte_entry->AsUInt);
-		EptpInitTableEntry(ept_pt_entry, table_level, physical_address);
-		return ept_pt_entry;
+		EptInitTableEntry(pte_entry, level, pfn);
+		return pte_entry;
 	}
 
 	default:

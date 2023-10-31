@@ -57,7 +57,8 @@ typedef struct _EptPageTable {
 	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PML4E EptPml4[EPTPML4ENTRIES];
 	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PDPTE EptPdpte[EPTPDPTEENTRIES];
 	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PDE_2MB EptPde[EPTPML4ENTRIES][EPTPDPTEENTRIES];
-	LIST_ENTRY					DynamicPages;
+	EPT_ENTRY**					DynamicPages;
+	UINT64						EntriesCount;
 } EptPageTable;
 
 typedef struct _EptState {
@@ -97,7 +98,11 @@ EPT_PDE_2MB* GetPdeEntry(EptPageTable*, UINT64);
 
 EPT_ENTRY* EptpConstructTables(EPT_ENTRY*, UINT64, UINT64, EptPageTable*);
 
-UINT64 GetMemoryType(UINT64, BOOLEAN);
+VOID EptInitTableEntry(EPT_ENTRY*, UINT64, UINT64);
+
+EPT_ENTRY* EptAllocateEptEntry(EptPageTable*);
+
+UINT64 EptGetMemoryType(UINT64, BOOLEAN);
 
 UINT64 EptInvGlobalEntry();
 
