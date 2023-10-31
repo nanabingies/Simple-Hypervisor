@@ -233,6 +233,30 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 		}
 	}
 
+	// Allocate preallocated entries
+	const UINT64 preallocated_entries_size = sizeof(EPT_ENTRY) * 50;
+	const EPT_ENTRY** preallocated_entries = (EPT_ENTRY**)
+		ExAllocatePoolWithTag(NonPagedPool, preallocated_entries_size, VMM_POOL);
+	if (!preallocated_entries) {
+		ExFreePoolWithTag(page_table, VMM_POOL);
+		return FALSE;
+	}
+	RtlSecureZeroMemory(preallocated_entries, preallocated_entries_size);
+
+	// And fill preallocated entries with newly created entries
+	for (unsigned i = 0ul; i < 50; ++i) {
+		const EPT_ENTRY* ept_entry = EptAllocateEptEntry(NULL);
+		if (!ept_entry) {
+			//EptpFreeUnusedPreAllocatedEntries(preallocated_entries, 0);
+			ExFreePoolWithTag(preallocated_entries, VMM_POOL);
+			ExFreePoolWithTag(page_table, VMM_POOL);
+			return FALSE;
+		}
+		preallocated_entries[i] = ept_entry;
+	}
+
+	page_table->AllocatedEntriesCount = 0;
+	page_table->DynamicPages = preallocated_entries;
 	ept_state->GuestAddressWidthValue = MaxEptWalkLength - 1;
 	return TRUE;
 }
@@ -434,6 +458,7 @@ UINT64 EptInvGlobalEntry() {
 
 VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
 	EptState* ept_state = vmm_context[KeGetCurrentProcessorNumber()].EptState;
+	__debugbreak();
 
 	// Get faulting page table entry (PTE)
 	const EPT_PTE* pte_entry = GetPteEntry(ept_state->EptPageTable, phys_addr);
@@ -454,7 +479,6 @@ VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
 }
 
 const EPT_ENTRY* EptpConstructTables(EPT_ENTRY* ept_entry, UINT64 level, UINT64 pfn, EptPageTable* page_table) {
-	__debugbreak();
 	switch (level) {
 	case 4: {
 		// table == PML4 (512 GB)
