@@ -96,7 +96,7 @@ EPT_PTE* GetPteEntry(EptPageTable*, UINT64);
 
 EPT_PDE_2MB* GetPdeEntry(EptPageTable*, UINT64);
 
-const EPT_ENTRY* EptpConstructTables(EPT_ENTRY*, UINT64, UINT64, EptPageTable*);
+const EPT_ENTRY* EptConstructTables(EPT_ENTRY*, UINT64, UINT64, EptPageTable*);
 
 VOID EptInitTableEntry(EPT_ENTRY*, UINT64, UINT64);
 
