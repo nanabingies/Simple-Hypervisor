@@ -387,7 +387,7 @@ VOID VmExitHandler(PVOID Param) {
 			return;
 		}
 
-		//HandleEptViolation(phys_addr, linear_addr);
+		HandleEptViolation(phys_addr, linear_addr);
 	}
 									  break;
 

@@ -234,7 +234,7 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 	}
 
 	// Allocate preallocated entries
-	const UINT64 preallocated_entries_size = sizeof(EPT_ENTRY) * 50;
+	/*const UINT64 preallocated_entries_size = sizeof(EPT_ENTRY) * 5;
 	const EPT_ENTRY** dynamic_pages = (EPT_ENTRY**)
 		ExAllocatePoolWithTag(NonPagedPool, preallocated_entries_size, VMM_POOL);
 	if (!dynamic_pages) {
@@ -244,7 +244,7 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 	RtlSecureZeroMemory(dynamic_pages, preallocated_entries_size);
 
 	// And fill preallocated entries with newly created entries
-	/*for (unsigned i = 0ul; i < 50; ++i) {
+	for (unsigned i = 0ul; i < 5; ++i) {
 		const EPT_ENTRY* ept_entry = EptAllocateEptEntry(NULL);
 		if (!ept_entry) {
 			ExFreePoolWithTag(dynamic_pages, VMM_POOL);
@@ -254,8 +254,8 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 		dynamic_pages[i] = ept_entry;
 	}*/
 
-	page_table->AllocatedEntriesCount = 0;
-	page_table->DynamicPages = dynamic_pages;
+	page_table->DynamicPagesCount = 0;
+	//page_table->DynamicPages = dynamic_pages;
 	ept_state->GuestAddressWidthValue = MaxEptWalkLength - 1;
 	return TRUE;
 }
@@ -439,10 +439,10 @@ EPT_ENTRY* EptAllocateEptEntry(EptPageTable* page_table) {
 	}
 
 	else {
-		const UINT64 count = InterlockedIncrement((LONG volatile*) & page_table->AllocatedEntriesCount);
+		const UINT64 count = InterlockedIncrement((LONG volatile*) & page_table->DynamicPagesCount);
 
 		// How many EPT entries are preallocated. When the number exceeds it, return
-		if (count > 50) {
+		if (count > 5) {
 			return NULL;
 		}
 
@@ -457,7 +457,6 @@ UINT64 EptInvGlobalEntry() {
 
 VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
 	EptState* ept_state = vmm_context[KeGetCurrentProcessorNumber()].EptState;
-	__debugbreak();
 
 	// Get faulting page table entry (PTE)
 	const EPT_PTE* pte_entry = GetPteEntry(ept_state->EptPageTable, phys_addr);
@@ -468,8 +467,8 @@ VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
 	}
 
 	// EPT entry miss
-	EPT_ENTRY* pml4e = (EPT_ENTRY*)ept_state->EptPageTable->EptPml4;
-	EptConstructTables(pml4e, 4, phys_addr, ept_state->EptPageTable);
+	//EPT_ENTRY* pml4e = (EPT_ENTRY*)ept_state->EptPageTable->EptPml4;
+	//EptConstructTables(pml4e, 4, phys_addr, ept_state->EptPageTable);
 
 	// invalidate Global EPT entries
 	EptInvGlobalEntry();

@@ -58,7 +58,7 @@ typedef struct _EptPageTable {
 	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PDPTE EptPdpte[EPTPDPTEENTRIES];
 	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PDE_2MB EptPde[EPTPML4ENTRIES][EPTPDPTEENTRIES];
 	EPT_ENTRY**					DynamicPages;
-	UINT64						AllocatedEntriesCount;
+	UINT64						DynamicPagesCount;
 } EptPageTable;
 
 typedef struct _EptState {
