@@ -234,7 +234,7 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 	}
 
 	// Allocate preallocated entries
-	const UINT64 preallocated_entries_size = sizeof(EPT_ENTRY) * 5;
+	const UINT64 preallocated_entries_size = sizeof(EPT_ENTRY) * DYNAMICPAGESCOUNT;
 	const EPT_ENTRY** dynamic_pages = (EPT_ENTRY**)
 		ExAllocatePoolWithTag(NonPagedPool, preallocated_entries_size, VMM_POOL);
 	if (!dynamic_pages) {
@@ -244,7 +244,7 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 	RtlSecureZeroMemory(dynamic_pages, preallocated_entries_size);
 
 	// And fill preallocated entries with newly created entries
-	for (unsigned i = 0ul; i < 5; ++i) {
+	for (unsigned i = 0ul; i < DYNAMICPAGESCOUNT; ++i) {
 		const EPT_ENTRY* ept_entry = EptAllocateEptEntry(NULL);
 		if (!ept_entry) {
 			ExFreePoolWithTag(dynamic_pages, VMM_POOL);
@@ -442,7 +442,7 @@ EPT_ENTRY* EptAllocateEptEntry(EptPageTable* page_table) {
 		const UINT64 count = InterlockedIncrement((LONG volatile*) & page_table->DynamicPagesCount);
 
 		// How many EPT entries are preallocated. When the number exceeds it, return
-		if (count > 5) {
+		if (count > DYNAMICPAGESCOUNT) {
 			return NULL;
 		}
 
