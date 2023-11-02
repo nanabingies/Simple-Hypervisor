@@ -243,16 +243,13 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 	}
 	RtlSecureZeroMemory(dynamic_pages, preallocated_entries_size);
 
-	// And fill preallocated entries with newly created entries
-	for (unsigned i = 0ul; i < DYNAMICPAGESCOUNT; ++i) {
-		const EPT_ENTRY* ept_entry = EptAllocateEptEntry(NULL);
-		if (!ept_entry) {
-			ExFreePoolWithTag(dynamic_pages, VMM_POOL);
-			ExFreePoolWithTag(page_table, VMM_POOL);
-			return FALSE;
-		}
-		dynamic_pages[i] = ept_entry;
+	const EPT_ENTRY* ept_entry = EptAllocateEptEntry(NULL);
+	if (!ept_entry) {
+		ExFreePoolWithTag(dynamic_pages, VMM_POOL);
+		ExFreePoolWithTag(page_table, VMM_POOL);
+		return FALSE;
 	}
+	dynamic_pages[0] = ept_entry;
 
 	page_table->DynamicPagesCount = 0;
 	page_table->DynamicPages = dynamic_pages;
