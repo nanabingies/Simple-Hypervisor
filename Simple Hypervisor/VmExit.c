@@ -393,6 +393,7 @@ VOID VmExitHandler(PVOID Param) {
 
 	case VMX_EXIT_REASON_EPT_MISCONFIGURATION: {
 		DbgPrint("[*] EPT Misconfiguration\n");
+		__debugbreak();
 
 		// Failure setting EPT
 		// Bugcheck and restart system

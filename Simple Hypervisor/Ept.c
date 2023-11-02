@@ -234,7 +234,7 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 	}
 
 	// Allocate preallocated entries
-	/*const UINT64 preallocated_entries_size = sizeof(EPT_ENTRY) * 5;
+	const UINT64 preallocated_entries_size = sizeof(EPT_ENTRY) * 5;
 	const EPT_ENTRY** dynamic_pages = (EPT_ENTRY**)
 		ExAllocatePoolWithTag(NonPagedPool, preallocated_entries_size, VMM_POOL);
 	if (!dynamic_pages) {
@@ -252,10 +252,10 @@ BOOLEAN CreateEptState(EptState* ept_state) {
 			return FALSE;
 		}
 		dynamic_pages[i] = ept_entry;
-	}*/
+	}
 
 	page_table->DynamicPagesCount = 0;
-	//page_table->DynamicPages = dynamic_pages;
+	page_table->DynamicPages = dynamic_pages;
 	ept_state->GuestAddressWidthValue = MaxEptWalkLength - 1;
 	return TRUE;
 }
