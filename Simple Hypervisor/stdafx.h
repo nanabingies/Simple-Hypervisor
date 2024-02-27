@@ -23,3 +23,4 @@ using int64_t = signed long long;
 
 using uchar = unsigned char;
 using ushort = unsigned short;
+using ulong = unsigned long;
