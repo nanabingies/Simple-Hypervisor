@@ -17,9 +17,9 @@
 #define MASK_EPT_PML4_INDEX(_VAR_) ((_VAR_ & 0xFF8000000000ULL) >> 39)
 
 typedef union Ia32MtrrFixedRangeMsr {
-	UINT64 all;
+	uint64_t all;
 	struct {
-		UCHAR types[8];
+		uchar types[8];
 	} fields;
 } Ia32MtrrFixedRangeMsr;
 
@@ -40,54 +40,54 @@ enum MtrrMemoryType {
 	SingleContextInvalidationExceptGlobal = 3,
 };*/
 
-typedef struct _MtrrEntry {
-	BOOLEAN	MtrrEnabled;
-	BOOLEAN MtrrFixed;
-	UINT64	MemoryType;
-	UINT64	PhysicalAddressStart;
-	UINT64	PhysicalAddressEnd;
-}MtrrEntry;
+using MtrrEntry = struct _MtrrEntry {
+	bool MtrrEnabled;
+	bool MtrrFixed;
+	uint64_t MemoryType;
+	uint64_t PhysicalAddressStart;
+	uint64_t PhysicalAddressEnd;
+};
 
-typedef struct _EptSplitPage {
+using EptSplitPage = struct _EptSplitPage {
 	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PTE EptPte[512];
 	EPT_PDE_2MB*				EptPde;
 	LIST_ENTRY					SplitPages;
-}EptSplitPage;
+};
 
-typedef struct _EptPageTable {
+using EptPageTable = struct _EptPageTable {
 	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PML4E EptPml4[EPTPML4ENTRIES];
 	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PDPTE EptPdpte[EPTPDPTEENTRIES];
 	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PDE_2MB EptPde[EPTPML4ENTRIES][EPTPDPTEENTRIES];
-	EPT_ENTRY**					DynamicPages;
+	EPT_ENTRY** DynamicPages;
 	UINT64						DynamicPagesCount;
-} EptPageTable;
+};
 
-typedef struct _EptState {
-	UINT64			GuestAddressWidthValue;
+using EptState = struct _EptState{
+	uint64_t		GuestAddressWidthValue;
 	EPT_POINTER*	EptPtr;
 	EptPageTable*	EptPageTable;
-} EptState;
+};
 
-typedef struct _VmxNonRootMemory {
-	PVOID	PreAllocatedBuffer;
-} VmxNonRootMemory;
+using VmxNonRootMemory =  struct _VmxNonRootMemory {
+	void*	PreAllocatedBuffer;
+};
 
-static UINT64 gMtrrNum = 0;
-static const ULONG MaxEptWalkLength = 0x4;
+static uint64_t gMtrrNum = 0;
+static const ulong MaxEptWalkLength = 0x4;
 
-UINT64 g_DefaultMemoryType;
+uint64_t g_DefaultMemoryType;
 
-BOOLEAN CheckEPTSupport();
+auto CheckEPTSupport() -> bool;
 
-BOOLEAN InitializeEpt(UCHAR);
+auto InitializeEpt(uchar) -> bool;
 
-BOOLEAN EptBuildMTRRMap();
+auto EptBuildMTRRMap() -> bool;
 
-BOOLEAN CreateEptState(EptState*);
+auto CreateEptState(EptState*) -> bool;
 
-VOID HandleEptViolation(UINT64, UINT64);
+auto HandleEptViolation(uint64_t, uint64_t) -> void;
 
-VOID SetupPml2Entries(EptState*, EPT_PDE_2MB*, UINT64);
+auto SetupPml2Entries(EptState*, EPT_PDE_2MB*, UINT64) -> void;
 
 BOOLEAN IsInRange(UINT64, UINT64, UINT64);
 
