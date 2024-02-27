@@ -20,7 +20,7 @@ auto VmxAllocateVmExitStack(uchar) -> bool;
 
 auto VmxAllocateIoBitmapStack(uchar) -> bool;
 
-auto VmxAllocateMsrBitmap(uchar) -> bool
+auto VmxAllocateMsrBitmap(uchar) -> bool;
 
 auto VirtualizeAllProcessors() -> bool;
 
