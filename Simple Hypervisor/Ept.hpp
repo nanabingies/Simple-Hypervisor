@@ -1,5 +1,5 @@
 #pragma once
-#include "ia32.h"
+#include "ia32.hpp"
 
 #define numPagesToAllocate	10
 #define numMtrrEntries		255

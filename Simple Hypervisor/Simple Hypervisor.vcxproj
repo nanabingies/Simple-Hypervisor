@@ -109,17 +109,18 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Ept.c" />
-    <ClCompile Include="HyperVisor.c" />
+    <ClCompile Include="Ept.cpp" />
+    <ClCompile Include="HyperVisor.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Vmcs.c" />
-    <ClCompile Include="VmExit.c" />
-    <ClCompile Include="VmUtils.c" />
-    <ClCompile Include="Vmx.c" />
+    <ClCompile Include="Vmcs.cpp" />
+    <ClCompile Include="VmExit.cpp" />
+    <ClCompile Include="VmUtils.cpp" />
+    <ClCompile Include="Vmx.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Ept.hpp" />
     <ClInclude Include="ia32.h" />
+    <ClInclude Include="ia32.hpp" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Vmcs.hpp" />
     <ClInclude Include="VmUtils.hpp" />
