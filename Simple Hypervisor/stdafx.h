@@ -5,8 +5,8 @@
 #include <intrin.h>
 #include <windef.h>
 
-#include "Ept.h"
-#include "Vmx.h"
-#include "ia32.h"
-#include "Vmcs.h"
-#include "VmUtils.h"
+#include "Ept.hpp"
+#include "Vmx.hpp"
+#include "ia32.hpp"
+#include "Vmcs.hpp"
+#include "VmUtils.hpp"
