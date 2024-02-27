@@ -31,7 +31,7 @@ enum SEGREGS
     TR
 };
 
-UINT64 g_GuestRip;
+uint64_t g_GuestRip;
 UINT64 g_HostMemory;
 UINT64 g_HostRip;
 

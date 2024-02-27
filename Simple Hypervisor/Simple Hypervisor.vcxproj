@@ -118,12 +118,13 @@
     <ClCompile Include="Vmx.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Ept.h" />
+    <ClInclude Include="Ept.hpp" />
     <ClInclude Include="ia32.h" />
+    <ClInclude Include="ia32.hpp" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="Vmcs.h" />
-    <ClInclude Include="VmUtils.h" />
-    <ClInclude Include="Vmx.h" />
+    <ClInclude Include="Vmcs.hpp" />
+    <ClInclude Include="VmUtils.hpp" />
+    <ClInclude Include="Vmx.hpp" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="asm64.asm" />

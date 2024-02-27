@@ -62,20 +62,23 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VmUtils.h">
+    <ClInclude Include="VmUtils.hpp">
       <Filter>VmUtils</Filter>
     </ClInclude>
     <ClInclude Include="ia32.h">
       <Filter>VmUtils</Filter>
     </ClInclude>
-    <ClInclude Include="Vmcs.h">
+    <ClInclude Include="Vmcs.hpp">
       <Filter>Vmcs</Filter>
     </ClInclude>
-    <ClInclude Include="Ept.h">
+    <ClInclude Include="Ept.hpp">
       <Filter>Ept</Filter>
     </ClInclude>
-    <ClInclude Include="Vmx.h">
+    <ClInclude Include="Vmx.hpp">
       <Filter>Vmx</Filter>
+    </ClInclude>
+    <ClInclude Include="ia32.hpp">
+      <Filter>VmUtils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
