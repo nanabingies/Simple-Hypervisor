@@ -1,33 +1,33 @@
 #pragma once
 
-UINT64 inline AsmSaveHostRegisters();
+auto inline AsmSaveHostRegisters() -> uint64_t;
 
-ULONG_PTR HostTerminateHypervisor(ULONG_PTR);
+auto HostTerminateHypervisor(ulong_ptr);
 
-BOOLEAN VmxIsVmxAvailable();
+auto VmxIsVmxAvailable() -> bool;
 
-BOOLEAN VmxIsVmxSupport();
+auto VmxIsVmxSupport() -> bool;
 
-VOID VmxEnableCR4();
+auto VmxEnableCR4() -> void;
 
-BOOLEAN VmxCheckBiosLock();
+auto VmxCheckBiosLock() -> bool;
 
-BOOLEAN VmxAllocateVmcsRegion(UCHAR);
+auto VmxAllocateVmcsRegion(uchar) -> bool;
 
-BOOLEAN VmxAllocateVmxonRegion(UCHAR);
+auto VmxAllocateVmxonRegion(uchar) -> bool;
 
-BOOLEAN VmxAllocateVmExitStack(UCHAR);
+auto VmxAllocateVmExitStack(uchar) -> bool;
 
-BOOLEAN VmxAllocateIoBitmapStack(UCHAR);
+auto VmxAllocateIoBitmapStack(uchar) -> bool;
 
-BOOLEAN VmxAllocateMsrBitmap(UCHAR);
+auto VmxAllocateMsrBitmap(uchar) -> bool
 
-BOOLEAN VirtualizeAllProcessors();
+auto VirtualizeAllProcessors() -> bool;
 
-VOID DevirtualizeAllProcessors();
+auto DevirtualizeAllProcessors() -> void;
 
-ULONG_PTR LaunchVm(ULONG_PTR);
+auto LaunchVm(ulong_ptr) -> ulong_ptr;
 
-VOID TerminateVm();
+auto TerminateVm() -> void;
 
-VOID VmExitHandler(PVOID);
+auto VmExitHandler(void*) -> void;
