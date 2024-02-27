@@ -89,22 +89,22 @@ auto HandleEptViolation(uint64_t, uint64_t) -> void;
 
 auto SetupPml2Entries(EptState*, EPT_PDE_2MB*, UINT64) -> void;
 
-BOOLEAN IsInRange(UINT64, UINT64, UINT64);
+auto IsInRange(uint64_t, uint64_t, uint64_t) -> bool;
 
-BOOLEAN IsValidForLargePage(UINT64);
+auto IsValidForLargePage(uint64_t) -> bool;
 
-EPT_PTE* GetPteEntry(EptPageTable*, UINT64);
+auto GetPteEntry(EptPageTable*, uint64_t) -> EPT_PTE*;
 
-EPT_PDE_2MB* GetPdeEntry(EptPageTable*, UINT64);
+auto GetPdeEntry(EptPageTable*, uint64_t) -> EPT_PDE_2MB*;
 
-const EPT_ENTRY* EptConstructTables(EPT_ENTRY*, UINT64, UINT64, EptPageTable*);
+const auto EptConstructTables(EPT_ENTRY*, uint64_t, uint64_t, EptPageTable*) -> EPT_ENTRY*;
 
-VOID EptInitTableEntry(EPT_ENTRY*, UINT64, UINT64);
+auto EptInitTableEntry(EPT_ENTRY*, uint64_t, uint64_t) -> void;
 
-EPT_ENTRY* EptAllocateEptEntry(EptPageTable*);
+auto EptAllocateEptEntry(EptPageTable*) -> EPT_ENTRY*;
 
-UINT64 EptGetMemoryType(UINT64, BOOLEAN);
+auto EptGetMemoryType(uint64_t, bool) -> uint64_t;
 
-UINT64 EptInvGlobalEntry();
+auto EptInvGlobalEntry() -> uint64_t;
 
-VOID SplitPde(EptPageTable*, PVOID, UINT64);
+auto SplitPde(EptPageTable*, void*, uint64_t) -> void;
