@@ -111,7 +111,7 @@
   <ItemGroup>
     <ClCompile Include="Ept.c" />
     <ClCompile Include="HyperVisor.c" />
-    <ClCompile Include="Main.c" />
+    <ClCompile Include="Main.cpp" />
     <ClCompile Include="Vmcs.c" />
     <ClCompile Include="VmExit.c" />
     <ClCompile Include="VmUtils.c" />

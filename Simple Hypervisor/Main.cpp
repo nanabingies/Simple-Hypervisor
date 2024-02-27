@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #pragma warning(disable : 4996)
 
-VOID DriverUnload(_In_ PDRIVER_OBJECT DriverObject) {
+extern "C" VOID DriverUnload(_In_ PDRIVER_OBJECT DriverObject) {
 	DbgPrint("[*] Terminating VMs on processors...\n");
 
 	// I'll work on this later
@@ -18,7 +18,7 @@ VOID DriverUnload(_In_ PDRIVER_OBJECT DriverObject) {
 }
 
 
-NTSTATUS DefaultDispatch(_In_ PDEVICE_OBJECT DeviceObject, _In_ PIRP Irp) {
+extern "C" NTSTATUS DefaultDispatch(_In_ PDEVICE_OBJECT DeviceObject, _In_ PIRP Irp) {
 	UNREFERENCED_PARAMETER(DeviceObject);
 
 	DbgPrint("[*] Default Dispatch\n");
@@ -30,7 +30,7 @@ NTSTATUS DefaultDispatch(_In_ PDEVICE_OBJECT DeviceObject, _In_ PIRP Irp) {
 }
 
 
-NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING RegistryPath) {
+extern "C" NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING RegistryPath) {
 	UNREFERENCED_PARAMETER(RegistryPath);
 	VmOff = FALSE;
 
