@@ -259,7 +259,7 @@ auto CreateEptState(EptState* ept_state) -> bool {
 	return TRUE;
 }
 
-VOID SetupPml2Entries(EptState* ept_state, EPT_PDE_2MB* pde_entry, UINT64 pfn) {
+auto SetupPml2Entries(EptState* ept_state, ept_pde_2mb* pde_entry, uint64_t pfn) -> void {
 	UNREFERENCED_PARAMETER(ept_state);
 
 	pde_entry->PageFrameNumber = pfn;
@@ -425,11 +425,11 @@ VOID EptInitTableEntry(EPT_ENTRY* ept_entry, UINT64 level, UINT64 pfn) {
 	return;
 }
 
-EPT_ENTRY* EptAllocateEptEntry(EptPageTable* page_table) {
+auto EptAllocateEptEntry(EptPageTable* page_table) -> ept_entry* {
 	if (page_table == NULL) {
-		static const UINT64 kAllocSize = 512 * sizeof(EPT_ENTRY*);
-		EPT_ENTRY* entry = (EPT_ENTRY*)
-			ExAllocatePoolZero(NonPagedPool, kAllocSize, VMM_POOL);
+		static const uint64_t kAllocSize = 512 * sizeof(ept_entry*);
+		ept_entry* entry = reinterpret_cast<ept_entry*>
+			(ExAllocatePoolZero(NonPagedPool, kAllocSize, VMM_POOL));
 		if (!entry)
 			return NULL;
 

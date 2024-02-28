@@ -87,7 +87,7 @@ auto CreateEptState(EptState*) -> bool;
 
 auto HandleEptViolation(uint64_t, uint64_t) -> void;
 
-auto SetupPml2Entries(EptState*, ept_pde_2mb*, UINT64) -> void;
+auto SetupPml2Entries(EptState*, ept_pde_2mb*, uint64_t) -> void;
 
 auto IsInRange(uint64_t, uint64_t, uint64_t) -> bool;
 
