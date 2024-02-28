@@ -6,15 +6,15 @@
 // @see Vol3D[C(VMX BASIC EXIT REASONS)](reference)
 //
 
-VOID VmExitHandler(PVOID Param) {
+auto VmExitHandler(void* Param) -> void {
 	GuestRegisters* guestRegisters = (GuestRegisters*)Param;
 
-	VMX_VMEXIT_REASON VmExitReason;
-	__vmx_vmread(VMCS_EXIT_REASON, (size_t*) & VmExitReason);
+	vmx_vmexit_reason VmExitReason;
+	__vmx_vmread(VMCS_EXIT_REASON, reinterpret_cast<size_t*>(&VmExitReason));
 	//DbgPrint("[*] VMCS_EXIT_REASON : %lx\n", VmExitInfo.BasicExitReason);
 	//DbgPrint("[*] This came from processor : %lx\n", KeGetCurrentNodeNumber());
 
-	switch (VmExitReason.BasicExitReason)
+	switch (VmExitReason.basic_exit_reason)
 	{
 	case VMX_EXIT_REASON_EXCEPTION_OR_NMI: {
 		DbgPrint("[*] exception or nmi\n");
@@ -63,8 +63,8 @@ VOID VmExitHandler(PVOID Param) {
 
 	case VMX_EXIT_REASON_TASK_SWITCH: {
 		DbgPrint("[*] task switch\n");
-		VMX_EXIT_QUALIFICATION_TASK_SWITCH exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
+		vmx_exit_qualification_task_switch exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 									break;
 
@@ -146,22 +146,22 @@ VOID VmExitHandler(PVOID Param) {
 
 	case VMX_EXIT_REASON_EXECUTE_VMPTRLD: {
 		DbgPrint("[*] execute vmptrld\n");
-		VMX_VMEXIT_INSTRUCTION_INFO_VMX_AND_XSAVES exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
+		vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 										break;
 
 	case VMX_EXIT_REASON_EXECUTE_VMPTRST: {
 		DbgPrint("[*] execute vmptrst\n");
-		VMX_VMEXIT_INSTRUCTION_INFO_VMX_AND_XSAVES exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
+		vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 										break;
 
 	case VMX_EXIT_REASON_EXECUTE_VMREAD: {
 		DbgPrint("[*] execute vmread\n");
-		VMX_VMEXIT_INSTRUCTION_INFO_VMREAD_VMWRITE exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
+		vmx_vmexit_instruction_info_vmread_vmwrite exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 									   break;
 
@@ -172,8 +172,8 @@ VOID VmExitHandler(PVOID Param) {
 
 	case VMX_EXIT_REASON_EXECUTE_VMWRITE: {
 		DbgPrint("[*] execute vmwrite\n");
-		VMX_VMEXIT_INSTRUCTION_INFO_VMREAD_VMWRITE exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
+		vmx_vmexit_instruction_info_vmread_vmwrite exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 										break;
 
@@ -184,8 +184,8 @@ VOID VmExitHandler(PVOID Param) {
 
 	case VMX_EXIT_REASON_EXECUTE_VMXON: {
 		DbgPrint("[*] execute vmxon\n");
-		VMX_VMEXIT_INSTRUCTION_INFO_VMX_AND_XSAVES exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
+		vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 									  break;
 
@@ -195,11 +195,11 @@ VOID VmExitHandler(PVOID Param) {
 		//
 		// Check whether it was a mov to or mov from CR
 		//
-		VMX_EXIT_QUALIFICATION_MOV_CR exitQualification;
+		vmx_exit_qualification_mov_cr exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
-		switch (exitQualification.AccessType) {
+		switch (exitQualification.access_type) {
 		case 0: {	// MOV to CR
-			switch (exitQualification.ControlRegister) {
+			switch (exitQualification.control_register) {
 			case 0: {	// CR0
 				__vmx_vmwrite(VMCS_GUEST_CR0, __readcr0());
 				__vmx_vmwrite(VMCS_CTRL_CR0_READ_SHADOW, __readcr0());
@@ -224,7 +224,7 @@ VOID VmExitHandler(PVOID Param) {
 			  break;
 
 		case 1: {	// MOV from CR
-			switch (exitQualification.ControlRegister) {
+			switch (exitQualification.control_register) {
 			case 0: {		// CR0
 				__vmx_vmread(VMCS_GUEST_CR0, &guestRegisters->RCX);
 			}
@@ -262,15 +262,15 @@ VOID VmExitHandler(PVOID Param) {
 
 	case VMX_EXIT_REASON_MOV_DR: {
 		DbgPrint("[*] mov dr\n");
-		VMX_EXIT_QUALIFICATION_MOV_DR exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) &exitQualification);
+		vmx_exit_qualification_mov_dr exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 							   break;
 
 	case VMX_EXIT_REASON_EXECUTE_IO_INSTRUCTION: {
 		DbgPrint("[*] execute io\n");
-		VMX_EXIT_QUALIFICATION_IO_INSTRUCTION exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) &exitQualification);
+		vmx_exit_qualification_io_instruction exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 											   break;
 
@@ -280,7 +280,7 @@ VOID VmExitHandler(PVOID Param) {
 			((guestRegisters->RCX >= 0xC0000000) && (guestRegisters->RCX <= 0xC0001FFF))) {
 
 			LARGE_INTEGER msr;
-			msr.QuadPart = __readmsr((ULONG)guestRegisters->RCX);
+			msr.QuadPart = __readmsr(static_cast<ulong>(guestRegisters->RCX));
 			guestRegisters->RDX = msr.HighPart;
 			guestRegisters->RAX = msr.LowPart;
 		}
@@ -293,9 +293,9 @@ VOID VmExitHandler(PVOID Param) {
 			((guestRegisters->RCX >= 0xC0000000) && (guestRegisters->RCX <= 0xC0001FFF))) {
 			
 			LARGE_INTEGER msr;
-			msr.LowPart = (ULONG)guestRegisters->RAX;
-			msr.HighPart = (ULONG)guestRegisters->RDX;
-			__writemsr((ULONG)guestRegisters->RCX, msr.QuadPart);
+			msr.LowPart = static_cast<ulong>(guestRegisters->RAX);
+			msr.HighPart = static_cast<ulong>(guestRegisters->RDX);
+			__writemsr(static_cast<ulong>(guestRegisters->RCX), msr.QuadPart);
 		}
 	
 	}
@@ -343,8 +343,8 @@ VOID VmExitHandler(PVOID Param) {
 
 	case VMX_EXIT_REASON_APIC_ACCESS: {
 		DbgPrint("[*] apic access\n");
-		VMX_EXIT_QUALIFICATION_APIC_ACCESS exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
+		vmx_exit_qualification_apic_access exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 									break;
 
@@ -355,23 +355,23 @@ VOID VmExitHandler(PVOID Param) {
 
 	case VMX_EXIT_REASON_GDTR_IDTR_ACCESS: {
 		DbgPrint("[*] gdtr idtr access\n");
-		VMX_VMEXIT_INSTRUCTION_INFO_GDTR_IDTR_ACCESS exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
+		vmx_vmexit_instruction_info_gdtr_idtr_access exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 										 break;
 
 	case VMX_EXIT_REASON_LDTR_TR_ACCESS: {
 		DbgPrint("[*] ldtr tr access\n");
-		VMX_VMEXIT_INSTRUCTION_INFO_LDTR_TR_ACCESS exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
+		vmx_vmexit_instruction_info_ldtr_tr_access exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 									   break;
 
 	case VMX_EXIT_REASON_EPT_VIOLATION: {
 		DbgPrint("[*] ept violation\n");
 
-		VMX_EXIT_QUALIFICATION_EPT_VIOLATION exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*)&exitQualification);
+		vmx_exit_qualification_ept_violation exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 		
 		UINT64 phys_addr;
 		__vmx_vmread(VMCS_GUEST_PHYSICAL_ADDRESS, &phys_addr);
@@ -381,7 +381,7 @@ VOID VmExitHandler(PVOID Param) {
 		UINT64 linear_addr;
 		__vmx_vmread(VMCS_EXIT_GUEST_LINEAR_ADDRESS, &linear_addr);
 
-		if (exitQualification.EptExecutable || exitQualification.EptReadable || exitQualification.EptWriteable) {
+		if (exitQualification.ept_executable || exitQualification.ept_readable || exitQualification.ept_writeable) {
 			__debugbreak();
 			DbgPrint("Error: VA = %llx, PA = %llx", linear_addr, phys_addr);
 			return;
@@ -403,8 +403,8 @@ VOID VmExitHandler(PVOID Param) {
 
 	case VMX_EXIT_REASON_EXECUTE_INVEPT: {
 		DbgPrint("[*] invept\n");
-		VMX_VMEXIT_INSTRUCTION_INFO_INVALIDATE exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
+		vmx_vmexit_instruction_info_invalidate exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 		__debugbreak();
 	}
 									   break;
@@ -421,8 +421,8 @@ VOID VmExitHandler(PVOID Param) {
 
 	case VMX_EXIT_REASON_EXECUTE_INVVPID: {
 		DbgPrint("[*] invvpid\n");
-		VMX_VMEXIT_INSTRUCTION_INFO_INVALIDATE exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
+		vmx_vmexit_instruction_info_invalidate exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 										break;
 
@@ -443,15 +443,15 @@ VOID VmExitHandler(PVOID Param) {
 
 	case VMX_EXIT_REASON_EXECUTE_RDRAND: {
 		DbgPrint("[*] rdrand\n");
-		VMX_VMEXIT_INSTRUCTION_INFO_RDRAND_RDSEED exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
+		vmx_vmexit_instruction_info_rdrand_rdseed exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 									   break;
 
 	case VMX_EXIT_REASON_EXECUTE_INVPCID: {
 		DbgPrint("[*] invpcid\n");
-		VMX_VMEXIT_INSTRUCTION_INFO_INVALIDATE exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
+		vmx_vmexit_instruction_info_invalidate exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 										break;
 
@@ -477,15 +477,15 @@ VOID VmExitHandler(PVOID Param) {
 
 	case VMX_EXIT_REASON_EXECUTE_XSAVES: {
 		DbgPrint("[*] execute xsaves\n");
-		VMX_VMEXIT_INSTRUCTION_INFO_VMX_AND_XSAVES exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
+		vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 									   break;
 
 	case VMX_EXIT_REASON_EXECUTE_XRSTORS: {
 		DbgPrint("[*] execute xstors\n");
-		VMX_VMEXIT_INSTRUCTION_INFO_VMX_AND_XSAVES exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, (size_t*) & exitQualification);
+		vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 										break;
 
