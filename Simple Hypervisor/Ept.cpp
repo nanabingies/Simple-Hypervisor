@@ -196,39 +196,39 @@ auto CreateEptState(EptState* ept_state) -> bool {
 	if (!page_table)	return FALSE;
 	ept_state->EptPageTable = page_table;
 
-	EPT_PML4E* pml4e = (EPT_PML4E*)&page_table->EptPml4[0];
-	EPT_PDPTE* pdpte = (EPT_PDPTE*)&page_table->EptPdpte[0];
+	ept_pml4e* pml4e = reinterpret_cast<ept_pml4e*>(&page_table->EptPml4[0]);
+	ept_pdpte* pdpte = reinterpret_cast<ept_pdpte*>(&page_table->EptPdpte[0]);
 	
-	ept_state->EptPtr->PageFrameNumber = (VirtualToPhysicalAddress(&pml4e) >> PAGE_SHIFT);
-	ept_state->EptPtr->EnableAccessAndDirtyFlags = 0;
-	ept_state->EptPtr->MemoryType = WriteBack;
-	ept_state->EptPtr->PageWalkLength = MaxEptWalkLength - 1;
+	ept_state->EptPtr->page_frame_number = (VirtualToPhysicalAddress(&pml4e) >> PAGE_SHIFT);
+	ept_state->EptPtr->enable_access_and_dirty_flags = 0;
+	ept_state->EptPtr->memory_type = WriteBack;
+	ept_state->EptPtr->page_walk_length = MaxEptWalkLength - 1;
 
-	vmm_context[KeGetCurrentProcessorNumber()].EptPml4 = pml4e->AsUInt;
+	vmm_context[KeGetCurrentProcessorNumber()].EptPml4 = pml4e->flags;
 
-	pml4e->PageFrameNumber = (VirtualToPhysicalAddress(&pdpte) >> PAGE_SHIFT);
-	pml4e->ExecuteAccess = 1;
-	pml4e->ReadAccess = 1;
-	pml4e->UserModeExecute = 1;
-	pml4e->WriteAccess = 1;
+	pml4e->page_frame_number = (VirtualToPhysicalAddress(&pdpte) >> PAGE_SHIFT);
+	pml4e->execute_access = 1;
+	pml4e->read_access = 1;
+	pml4e->user_mode_execute = 1;
+	pml4e->write_access = 1;
 
-	EPT_PDPTE pdpte_template = { 0 };
-	pdpte_template.ReadAccess = 1;
-	pdpte_template.WriteAccess = 1;
-	pdpte_template.ExecuteAccess = 1;
+	ept_pdpte pdpte_template = { 0 };
+	pdpte_template.read_access = 1;
+	pdpte_template.write_access = 1;
+	pdpte_template.execute_access = 1;
 
-	__stosq((SIZE_T*) & page_table->EptPdpte[0], pdpte_template.AsUInt, EPTPDPTEENTRIES);
+	__stosq(reinterpret_cast<SIZE_T*>(&page_table->EptPdpte[0]), pdpte_template.flags, EPTPDPTEENTRIES);
 	for (unsigned idx = 0; idx < EPTPDPTEENTRIES; idx++) {
-		page_table->EptPdpte[idx].PageFrameNumber = (VirtualToPhysicalAddress(&page_table->EptPde[idx][0]) >> PAGE_SHIFT);
+		page_table->EptPdpte[idx].page_frame_number = (VirtualToPhysicalAddress(&page_table->EptPde[idx][0]) >> PAGE_SHIFT);
 	}
 
-	EPT_PDE_2MB pde_template = { 0 };
-	pde_template.ReadAccess = 1;
-	pde_template.WriteAccess = 1;
-	pde_template.ExecuteAccess = 1;
-	pde_template.LargePage = 1;
+	ept_pde_2mb pde_template = { 0 };
+	pde_template.read_access = 1;
+	pde_template.write_access = 1;
+	pde_template.execute_access = 1;
+	pde_template.large_page = 1;
 	
-	__stosq((SIZE_T*) & page_table->EptPde[0], pde_template.AsUInt, EPTPDEENTRIES);
+	__stosq(reinterpret_cast<SIZE_T*>(&page_table->EptPde[0]), pde_template.flags, EPTPDEENTRIES);
 	for (unsigned i = 0; i < EPTPML4ENTRIES; i++) {
 		for (unsigned j = 0; j < EPTPDPTEENTRIES; j++) {
 			SetupPml2Entries(ept_state, &page_table->EptPde[i][j], (i * 512) + j);
@@ -236,22 +236,22 @@ auto CreateEptState(EptState* ept_state) -> bool {
 	}
 
 	// Allocate preallocated entries
-	const UINT64 preallocated_entries_size = sizeof(EPT_ENTRY) * DYNAMICPAGESCOUNT;
-	const EPT_ENTRY** dynamic_pages = (EPT_ENTRY**)
-		ExAllocatePoolWithTag(NonPagedPool, preallocated_entries_size, VMM_POOL);
+	const uint64_t preallocated_entries_size = sizeof(ept_entry) * DYNAMICPAGESCOUNT;
+	const ept_entry** dynamic_pages = reinterpret_cast<ept_entry**>
+		(ExAllocatePoolWithTag(NonPagedPool, preallocated_entries_size, VMM_POOL));
 	if (!dynamic_pages) {
 		ExFreePoolWithTag(page_table, VMM_POOL);
-		return FALSE;
+		return false;
 	}
 	RtlSecureZeroMemory(dynamic_pages, preallocated_entries_size);
 
-	const EPT_ENTRY* ept_entry = EptAllocateEptEntry(NULL);
-	if (!ept_entry) {
+	const ept_entry* _ept_entry = EptAllocateEptEntry(NULL);
+	if (!_ept_entry) {
 		ExFreePoolWithTag(dynamic_pages, VMM_POOL);
 		ExFreePoolWithTag(page_table, VMM_POOL);
 		return FALSE;
 	}
-	dynamic_pages[0] = ept_entry;
+	dynamic_pages[0] = _ept_entry;
 
 	page_table->DynamicPagesCount = 0;
 	page_table->DynamicPages = dynamic_pages;
