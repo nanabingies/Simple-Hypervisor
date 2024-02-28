@@ -13,61 +13,61 @@ auto IsInRange(uint64_t val, uint64_t start, uint64_t end) -> bool {
 auto CheckEPTSupport() -> bool {
 	PAGED_CODE();
 
-	IA32_VMX_EPT_VPID_CAP_REGISTER ept_cap;
-	ept_cap.AsUInt = __readmsr(IA32_VMX_EPT_VPID_CAP);
+	ia32_vmx_ept_vpid_cap_register ept_cap;
+	ept_cap.flags = __readmsr(IA32_VMX_EPT_VPID_CAP);
 
-	if (!ept_cap.PageWalkLength4 || !ept_cap.MemoryTypeWriteBack || !ept_cap.Invept ||
-		!ept_cap.InveptSingleContext || !ept_cap.InveptAllContexts || !ept_cap.Invvpid ||
-		!ept_cap.InvvpidIndividualAddress || !ept_cap.InvvpidAllContexts ||
-		!ept_cap.InvvpidSingleContext || !ept_cap.InvvpidSingleContextRetainGlobals) {
-		return FALSE;
+	if (!ept_cap.page_walk_length_4 || !ept_cap.memory_type_write_back || !ept_cap.invept ||
+		!ept_cap.invept_single_context || !ept_cap.invept_all_contexts || !ept_cap.invvpid ||
+		!ept_cap.invvpid_individual_address || !ept_cap.invvpid_all_contexts ||
+		!ept_cap.invvpid_single_context || !ept_cap.invvpid_single_context_retain_globals) {
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
-BOOLEAN EptBuildMTRRMap() {
+auto EptBuildMTRRMap() -> bool {
 	PAGED_CODE();
 
 	MtrrEntry* mtrr_entry = g_MtrrEntries;
 	RtlSecureZeroMemory(mtrr_entry, numMtrrEntries * sizeof(struct _MtrrEntry));
 	
-	IA32_MTRR_CAPABILITIES_REGISTER mtrr_cap;
-	IA32_MTRR_DEF_TYPE_REGISTER mtrr_def;
-	IA32_MTRR_PHYSBASE_REGISTER mtrr_phys_base;
-	IA32_MTRR_PHYSMASK_REGISTER mtrr_phys_mask;
+	ia32_mtrr_capabilities_register mtrr_cap;
+	ia32_mtrr_def_type_register mtrr_def;
+	ia32_mtrr_physbase_register mtrr_phys_base;
+	ia32_mtrr_physmask_register mtrr_phys_mask;
 	
-	mtrr_cap.AsUInt = __readmsr(IA32_MTRR_CAPABILITIES);
-	mtrr_def.AsUInt = __readmsr(IA32_MTRR_DEF_TYPE);
+	mtrr_cap.flags = __readmsr(IA32_MTRR_CAPABILITIES);
+	mtrr_def.flags = __readmsr(IA32_MTRR_DEF_TYPE);
 
-	UINT64 varCnt = mtrr_cap.VariableRangeCount;
-	UINT64 FixRangeSupport = mtrr_cap.FixedRangeSupported;
-	UINT64 FixRangeEnable = mtrr_def.FixedRangeMtrrEnable;
-	g_DefaultMemoryType = mtrr_def.DefaultMemoryType;
+	uint64_t varCnt = mtrr_cap.variable_range_count;
+	uint64_t FixRangeSupport = mtrr_cap.fixed_range_supported;
+	uint64_t FixRangeEnable = mtrr_def.fixed_range_mtrr_enable;
+	g_DefaultMemoryType = mtrr_def.default_memory_type;
 
 	if (FixRangeSupport && FixRangeEnable) {
 		// Handle Fix Ranged MTRR
 		
-		static const UINT64 k64kBase = IA32_MTRR_FIX64K_BASE;
-		static const UINT64 k64kManagedSize = IA32_MTRR_FIX64K_SIZE;	// 64K
-		static const UINT64 k16kBase = IA32_MTRR_FIX16K_BASE;
-		static const UINT64 k16kManagedSize = IA32_MTRR_FIX16K_SIZE;
-		static const UINT64 k4kBase = IA32_MTRR_FIX4K_BASE;
-		static const UINT64 k4kManagedSize = IA32_MTRR_FIX4K_SIZE;
+		static const uint64_t k64kBase = IA32_MTRR_FIX64K_BASE;
+		static const uint64_t k64kManagedSize = IA32_MTRR_FIX64K_SIZE;	// 64K
+		static const uint64_t k16kBase = IA32_MTRR_FIX16K_BASE;
+		static const uint64_t k16kManagedSize = IA32_MTRR_FIX16K_SIZE;
+		static const uint64_t k4kBase = IA32_MTRR_FIX4K_BASE;
+		static const uint64_t k4kManagedSize = IA32_MTRR_FIX4K_SIZE;
 
-		UINT64 offset = 0x0;
+		uint64_t offset = 0x0;
 		
 		// Let's first set Fix64K MTRR
 		Ia32MtrrFixedRangeMsr msr64k;
 		msr64k.all = __readmsr(IA32_MTRR_FIX64K_00000);
 		for (unsigned idx = 0; idx < 8; idx++) {
-			UINT64 base = k64kBase + offset;
+			uint64_t base = k64kBase + offset;
 			offset += k64kManagedSize;
 
 			// Save the MTRR
-			mtrr_entry->MtrrEnabled = TRUE;
+			mtrr_entry->MtrrEnabled = true;
 			mtrr_entry->MemoryType = msr64k.fields.types[idx];
-			mtrr_entry->MtrrFixed = TRUE;
+			mtrr_entry->MtrrFixed = true;
 			mtrr_entry->PhysicalAddressStart = base;
 			mtrr_entry->PhysicalAddressEnd = base + k64kManagedSize - 1;
 
@@ -85,13 +85,13 @@ BOOLEAN EptBuildMTRRMap() {
 		for (unsigned start = IA32_MTRR_FIX16K_80000; start <= IA32_MTRR_FIX16K_A0000; start++) {
 			msr16k.all = __readmsr(start);
 			for (unsigned idx = 0; idx < 8; idx++) {
-				UINT64 base = k16kBase + offset;
+				uint64_t base = k16kBase + offset;
 				offset += k16kManagedSize;
 
 				// Save the MTRR
 				mtrr_entry->MemoryType = msr16k.fields.types[idx];
-				mtrr_entry->MtrrEnabled = TRUE;
-				mtrr_entry->MtrrFixed = TRUE;
+				mtrr_entry->MtrrEnabled = true;
+				mtrr_entry->MtrrFixed = true;
 				mtrr_entry->PhysicalAddressStart = base;
 				mtrr_entry->PhysicalAddressEnd = base + k16kManagedSize - 1;
 
@@ -110,13 +110,13 @@ BOOLEAN EptBuildMTRRMap() {
 		for (unsigned start = IA32_MTRR_FIX4K_C0000; start <= IA32_MTRR_FIX4K_F8000; start++) {
 			msr4k.all = __readmsr(start);
 			for (unsigned idx = 0; idx < 8; idx++) {
-				UINT64 base = k4kBase + offset;
+				uint64_t base = k4kBase + offset;
 				offset += k4kManagedSize;
 
 				// Save the MTRR
 				mtrr_entry->MemoryType = msr4k.fields.types[idx];
-				mtrr_entry->MtrrEnabled = TRUE;
-				mtrr_entry->MtrrFixed = TRUE;
+				mtrr_entry->MtrrEnabled = true;
+				mtrr_entry->MtrrFixed = true;
 				mtrr_entry->PhysicalAddressStart = base;
 				mtrr_entry->PhysicalAddressEnd = base + k4kManagedSize - 1;
 
@@ -126,24 +126,24 @@ BOOLEAN EptBuildMTRRMap() {
 	}
 
 	for (unsigned iter = 0; iter < varCnt; iter++) {
-		mtrr_phys_base.AsUInt = __readmsr(IA32_MTRR_PHYSBASE0 + (iter * 2));
-		mtrr_phys_mask.AsUInt = __readmsr(IA32_MTRR_PHYSMASK0 + (iter * 2));
+		mtrr_phys_base.flags = __readmsr(IA32_MTRR_PHYSBASE0 + (iter * 2));
+		mtrr_phys_mask.flags = __readmsr(IA32_MTRR_PHYSMASK0 + (iter * 2));
 
 		// The range is invalid
-		if (!mtrr_phys_mask.Valid)
+		if (!mtrr_phys_mask.valid)
 			continue;
 
 		// Get the length this MTRR manages
-		ULONG length;
-		BitScanForward64(&length, mtrr_phys_mask.PageFrameNumber * PAGE_SIZE);
+		ulong length;
+		BitScanForward64(&length, mtrr_phys_mask.page_frame_number * PAGE_SIZE);
 
-		UINT64 physical_base_start, physical_base_end;
-		physical_base_start = mtrr_phys_base.PageFrameNumber * PAGE_SIZE;
+		uint64_t physical_base_start, physical_base_end;
+		physical_base_start = mtrr_phys_base.page_frame_number * PAGE_SIZE;
 		physical_base_end = physical_base_start + ((1ull << length) - 1);
 
-		mtrr_entry->MtrrEnabled = TRUE;
-		mtrr_entry->MtrrFixed = FALSE;
-		mtrr_entry->MemoryType = mtrr_phys_base.Type;
+		mtrr_entry->MtrrEnabled = true;
+		mtrr_entry->MtrrFixed = false;
+		mtrr_entry->MemoryType = mtrr_phys_base.type;
 		mtrr_entry->PhysicalAddressStart = physical_base_start;
 		mtrr_entry->PhysicalAddressEnd = physical_base_end;
 		gMtrrNum++;
@@ -153,44 +153,46 @@ BOOLEAN EptBuildMTRRMap() {
 	return TRUE;
 }
 
-BOOLEAN InitializeEpt(UCHAR processorNumber) {
+auto InitializeEpt(uchar processorNumber) -> bool {
 	PAGED_CODE();
 
-	EptState* ept_state = (EptState*)ExAllocatePoolWithTag(NonPagedPool, sizeof(struct _EptState), VMM_POOL);
+	EptState* ept_state = reinterpret_cast<EptState*>
+		(ExAllocatePoolWithTag(NonPagedPool, sizeof(_EptState), VMM_POOL));
 	if (!ept_state) {
 		DbgPrint("[-] Failed to allocate memory for Ept State.\n");
-		return FALSE;
+		return false;
 	}
-	RtlSecureZeroMemory(ept_state, sizeof(struct _EptState));
+	RtlSecureZeroMemory(ept_state, sizeof(_EptState));
 
-	EPT_POINTER* ept_ptr = (EPT_POINTER*)
+	ept_pointer* ept_ptr = reinterpret_cast<ept_pointer*>
 		(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL));
 	if (!ept_ptr) {
 		DbgPrint("[-] Failed to allocate memory for pointer to Ept.\n");
-		return FALSE;
+		return false;
 	}
 	ept_state->EptPtr = ept_ptr;
 	RtlSecureZeroMemory(ept_ptr, PAGE_SIZE);
 
 	
-	if (CreateEptState(ept_state) == FALSE) {
+	if (!CreateEptState(ept_state)) {
 		DbgPrint("[-] Failed to set Ept Page Table Entries.\n");
 		ExFreePoolWithTag(ept_ptr, VMM_POOL);
 		ExFreePoolWithTag(ept_state, VMM_POOL);
-		return FALSE;
+		return false;
 	}
 	
-	vmm_context[processorNumber].EptPtr = ept_state->EptPtr->AsUInt;
+	vmm_context[processorNumber].EptPtr = ept_state->EptPtr->flags;
 	vmm_context[processorNumber].EptState = ept_state;
 
 	
 	DbgPrint("[*] EPT initialized.\n");
-	return TRUE;
+	return true;
 }
 
-BOOLEAN CreateEptState(EptState* ept_state) {
+auto CreateEptState(EptState* ept_state) -> bool {
 	
-	EptPageTable* page_table = (EptPageTable*)ExAllocatePoolWithTag(NonPagedPool, sizeof(struct _EptPageTable), VMM_POOL);
+	EptPageTable* page_table = reinterpret_cast<EptPageTable*>
+		(ExAllocatePoolWithTag(NonPagedPool, sizeof(_EptPageTable), VMM_POOL));
 	if (!page_table)	return FALSE;
 	ept_state->EptPageTable = page_table;
 
