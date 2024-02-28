@@ -16,12 +16,12 @@
 #define MASK_EPT_PML3_INDEX(_VAR_) ((_VAR_ & 0x7FC0000000ULL) >> 30)
 #define MASK_EPT_PML4_INDEX(_VAR_) ((_VAR_ & 0xFF8000000000ULL) >> 39)
 
-typedef union Ia32MtrrFixedRangeMsr {
+using Ia32MtrrFixedRangeMsr = union _Ia32MtrrFixedRangeMsr {
 	uint64_t all;
 	struct {
 		uchar types[8];
 	} fields;
-} Ia32MtrrFixedRangeMsr;
+};
 
 enum MtrrMemoryType {
 	Uncacheable = 0l,
