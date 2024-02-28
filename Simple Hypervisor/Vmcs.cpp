@@ -71,7 +71,7 @@ ShvUtilConvertGdtEntry(
 	VmxGdtEntry->Bits.Unusable = !gdtEntry->Bits.Present;
 }
 
-ULONG AdjustControls(ULONG Ctl, ULONG Msr) {
+auto AdjustControls(ULONG Ctl, ULONG Msr) -> ulong {
 	LARGE_INTEGER MsrValue = { 0 };
 
 	MsrValue.QuadPart = __readmsr(Msr);

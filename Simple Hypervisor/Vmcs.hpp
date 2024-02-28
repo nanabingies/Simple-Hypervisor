@@ -58,6 +58,7 @@ USHORT  GetEs(VOID);
 USHORT  GetSs(VOID);
 USHORT  GetFs(VOID);
 USHORT  GetGs(VOID);*/
+
 auto  GetLdtr() -> ushort;
 auto  GetTr() -> ushort;
 auto  GetIdtLimit() -> ushort;
