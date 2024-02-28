@@ -1,17 +1,17 @@
 #include "stdafx.h"
 
-BOOLEAN VmxIsVmxAvailable() {
+auto VmxIsVmxAvailable() -> bool {
 	PAGED_CODE();
 
 	//
 	// Check VMX Support for that Logical Processor
 	//
-	if (VmxIsVmxSupport() == FALSE)	return FALSE;
+	if (!VmxIsVmxSupport())	return false;
 
 	//
 	// Check Bios Lock Bit
 	//
-	if (VmxCheckBiosLock() == FALSE)	return FALSE;
+	if (!VmxCheckBiosLock())	return false;
 
 	//
 	// Enable VMXE for that processor
@@ -21,7 +21,7 @@ BOOLEAN VmxIsVmxAvailable() {
 	//
 	// Check for EPT support for that processor
 	//
-	if (CheckEPTSupport() == FALSE)	return FALSE;
+	if (!CheckEPTSupport())	return false;
 
 
 	DbgPrint("[*] Initial checks completed.\n");
@@ -29,91 +29,91 @@ BOOLEAN VmxIsVmxAvailable() {
 	//
 	// Build MTRR Map
 	//
-	if (EptBuildMTRRMap() == FALSE)	return FALSE;
+	if (!EptBuildMTRRMap())	return false;
 	DbgPrint("[*] MTRR built successfully\n");
 
 	return TRUE;
 }
 
-BOOLEAN VmxIsVmxSupport() {
+auto VmxIsVmxSupport() -> bool {
 	PAGED_CODE();
 
 	DbgPrint("[*] Checking Processor VMX support.....\n");
 
-	CPUID_EAX_01 args;
+	cpuid_eax_01 args;
 	__cpuid((int*)&args, 1);
 
-	if (args.CpuidFeatureInformationEcx.VirtualMachineExtensions == 0) {
+	if (args.cpuid_feature_information_ecx.virtual_machine_extensions == 0) {
 		DbgPrint("[-] This processor does not support VMX Extensions.\n");
-		return FALSE;
+		return false;
 	}
 
 	DbgPrint("[*] This LP supports VMX extensions.\n");
-	return TRUE;
+	return true;
 }
 
-VOID VmxEnableCR4() {
+auto VmxEnableCR4() -> void {
 	PAGED_CODE();
 
-	CR4 _cr4;
+	cr4 _cr4;
 
-	_cr4.AsUInt = __readcr4();
-	_cr4.VmxEnable = 1;
+	_cr4.flags = __readcr4();
+	_cr4.vmx_enable = 1;
 
-	__writecr4(_cr4.AsUInt);
+	__writecr4(_cr4.flags);
 
 	return;
 }
 
-BOOLEAN VmxCheckBiosLock() {
+auto VmxCheckBiosLock() -> bool {
 	PAGED_CODE();
 
-	IA32_FEATURE_CONTROL_REGISTER feature_control_msr;
-	feature_control_msr.AsUInt = __readmsr(IA32_FEATURE_CONTROL);
+	ia32_feature_control_register feature_control_msr;
+	feature_control_msr.flags = __readmsr(IA32_FEATURE_CONTROL);
 
-	if (feature_control_msr.LockBit == 0) {
-		feature_control_msr.LockBit = 1;
-		feature_control_msr.EnableVmxOutsideSmx = 1;
+	if (feature_control_msr.lock_bit == 0) {
+		feature_control_msr.lock_bit = 1;
+		feature_control_msr.enable_vmx_outside_smx = 1;
 
-		__writemsr(IA32_FEATURE_CONTROL, feature_control_msr.AsUInt);
+		__writemsr(IA32_FEATURE_CONTROL, feature_control_msr.flags);
 	}
 
-	if (feature_control_msr.EnableVmxOutsideSmx == 0) {
+	if (feature_control_msr.enable_vmx_outside_smx == 0) {
 		DbgPrint("[-] EnableVmxOutsideSmx bit not set.\n");
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 
-BOOLEAN VmxAllocateVmxonRegion(UCHAR processorNumber) {
+auto VmxAllocateVmxonRegion(uchar processorNumber) -> bool {
 	PAGED_CODE();
 
 	if (!vmm_context) {
 		DbgPrint("[-] Unspecified VM context for processor %x\n", processorNumber);
-		return FALSE;
+		return false;
 	}
 
 	PHYSICAL_ADDRESS physAddr;
 	physAddr.QuadPart = (LONGLONG)~0;
 
-	IA32_VMX_BASIC_REGISTER vmx_basic;
-	vmx_basic.AsUInt = __readmsr(IA32_VMX_BASIC);
+	ia32_vmx_basic_register vmx_basic;
+	vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
 
-	PVOID vmxon = MmAllocateContiguousMemory(vmx_basic.VmcsSizeInBytes, physAddr);
+	void* vmxon = MmAllocateContiguousMemory(vmx_basic.vmcs_size_in_bytes, physAddr);
 	if (!vmxon) {
 		DbgPrint("[-] Allocating vmxon failed.\n");
-		return FALSE;
+		return false;
 	}
 
-	RtlSecureZeroMemory(vmxon, vmx_basic.VmcsSizeInBytes);
+	RtlSecureZeroMemory(vmxon, vmx_basic.vmcs_size_in_bytes);
 	DbgPrint("[*] Allocated vmxon at %llx with size %llx\n",
-		(UINT64)vmxon, vmx_basic.VmcsSizeInBytes);
+		reinterpret_cast<uint64_t>(vmxon), vmx_basic.vmcs_size_in_bytes);
 
-	*(UINT64*)vmxon = vmx_basic.VmcsRevisionId;
+	*reinterpret_cast<uint64_t*>(vmxon) = vmx_basic.vmcs_revision_id;
 
-	vmm_context[processorNumber].vmxonRegionVirt = (UINT64)vmxon;
+	vmm_context[processorNumber].vmxonRegionVirt = reinterpret_cast<uint64_t>(vmxon);
 	vmm_context[processorNumber].vmxonRegionPhys = VirtualToPhysicalAddress(vmxon);
 
 	//
@@ -122,41 +122,41 @@ BOOLEAN VmxAllocateVmxonRegion(UCHAR processorNumber) {
 	auto retVal = __vmx_on(&vmm_context[processorNumber].vmxonRegionPhys);
 	if (retVal > 0) {
 		DbgPrint("[-] Failed vmxon with error code %x\n", retVal);
-		return FALSE;
+		return false;
 	}
 
 	DbgPrint("[*] vmxon initialized on logical processor %x\n", processorNumber);
-	return TRUE;
+	return true;
 }
 
 
-BOOLEAN VmxAllocateVmcsRegion(UCHAR processorNumber) {
+auto VmxAllocateVmcsRegion(uchar processorNumber) -> bool {
 	PAGED_CODE();
 
 	if (!vmm_context) {
 		DbgPrint("[-] Unspecified VM context for processor %x\n", processorNumber);
-		return FALSE;
+		return false;
 	}
 
 	PHYSICAL_ADDRESS physAddr;
 	physAddr.QuadPart = (LONGLONG)~0;
 
-	IA32_VMX_BASIC_REGISTER vmx_basic;
-	vmx_basic.AsUInt = __readmsr(IA32_VMX_BASIC);
+	ia32_vmx_basic_register vmx_basic;
+	vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
 
-	PVOID vmcs = MmAllocateContiguousMemory(vmx_basic.VmcsSizeInBytes, physAddr);
+	void* vmcs = MmAllocateContiguousMemory(vmx_basic.vmcs_size_in_bytes, physAddr);
 	if (!vmcs) {
 		DbgPrint("[-] Allocating vmcs failed.\n");
-		return FALSE;
+		return false;
 	}
 
-	RtlSecureZeroMemory(vmcs, vmx_basic.VmcsSizeInBytes);
+	RtlSecureZeroMemory(vmcs, vmx_basic.vmcs_size_in_bytes);
 	DbgPrint("[*] Allocated vmcs at %llx with size %llx\n",
-		(UINT64)vmcs, vmx_basic.VmcsSizeInBytes);
+		reinterpret_cast<uint64_t>(vmcs), vmx_basic.vmcs_size_in_bytes);
 
-	*(UINT64*)vmcs = vmx_basic.VmcsRevisionId;
+	*reinterpret_cast<uint64_t*>(vmcs) = vmx_basic.vmcs_size_in_bytes;
 
-	vmm_context[processorNumber].vmcsRegionVirt = (UINT64)vmcs;
+	vmm_context[processorNumber].vmcsRegionVirt = reinterpret_cast<uint64_t>(vmcs);
 	vmm_context[processorNumber].vmcsRegionPhys = VirtualToPhysicalAddress(vmcs);
 
 	//
@@ -165,57 +165,59 @@ BOOLEAN VmxAllocateVmcsRegion(UCHAR processorNumber) {
 	auto retVal = __vmx_vmptrld(&vmm_context[processorNumber].vmcsRegionPhys);
 	if (retVal > 0) {
 		DbgPrint("[-] Failed vmcs with error code %x\n", retVal);
-		return FALSE;
+		return false;
 	}
 
 	DbgPrint("[*] vmcs loaded on logical processor %x\n", processorNumber);
-	return TRUE;
+	return true;
 }
 
 
-BOOLEAN VmxAllocateVmExitStack(UCHAR processorNumber) {
+auto VmxAllocateVmExitStack(uchar processorNumber) -> bool {
 	PAGED_CODE();
 
 	PHYSICAL_ADDRESS physAddr;
-	physAddr.QuadPart = (ULONGLONG)~0;
-	PVOID vmexitStack = MmAllocateContiguousMemory(HOST_STACK_SIZE, physAddr);
+	physAddr.QuadPart = static_cast<ULONGLONG>(~0);
+
+	void* vmexitStack = MmAllocateContiguousMemory(HOST_STACK_SIZE, physAddr);
 	if (!vmexitStack) {
 		DbgPrint("[-] Failure allocating memory for VM EXIT Handler.\n");
-		return FALSE;
+		return false;
 	}
 	RtlSecureZeroMemory(vmexitStack, HOST_STACK_SIZE);
 
-	vmm_context[processorNumber].HostStack = (UINT64)vmexitStack;
+	vmm_context[processorNumber].HostStack = reinterpret_cast<uint64_t>(vmexitStack);
 	DbgPrint("[*] vmm_context[processorNumber].HostStack : %llx\n", vmm_context[processorNumber].HostStack);
 
-	return TRUE;
+	return true;
 }
 
 
-BOOLEAN VmxAllocateIoBitmapStack(UCHAR processorNumber) {
+auto VmxAllocateIoBitmapStack(uchar processorNumber) -> bool {
 	PAGED_CODE();
 
 	PHYSICAL_ADDRESS physAddr;
-	physAddr.QuadPart = (ULONGLONG)~0;
-	PVOID bitmap = MmAllocateContiguousMemory(PAGE_SIZE, physAddr);
+	physAddr.QuadPart = static_cast<ULONGLONG>(~0);
+
+	void* bitmap = MmAllocateContiguousMemory(PAGE_SIZE, physAddr);
 	if (!bitmap) {
 		DbgPrint("[-] Failure allocating memory for IO Bitmap A.\n");
-		return FALSE;
+		return false;
 	}
 	RtlSecureZeroMemory(bitmap, PAGE_SIZE);
 
-	vmm_context[processorNumber].ioBitmapAVirt = (UINT64)bitmap;
+	vmm_context[processorNumber].ioBitmapAVirt = reinterpret_cast<uint64_t>(bitmap);
 	vmm_context[processorNumber].ioBitmapAPhys = VirtualToPhysicalAddress(bitmap);
 
-	physAddr.QuadPart = (ULONGLONG)~0;
+	physAddr.QuadPart = static_cast<ULONGLONG>(~0);
 	bitmap = MmAllocateContiguousMemory(PAGE_SIZE, physAddr);
 	if (!bitmap) {
 		DbgPrint("[-] Failure allocating memory for IO Bitmap B.\n");
-		return FALSE;
+		return false;
 	}
 	RtlSecureZeroMemory(bitmap, PAGE_SIZE);
 
-	vmm_context[processorNumber].ioBitmapBVirt = (UINT64)bitmap;
+	vmm_context[processorNumber].ioBitmapBVirt = reinterpret_cast<uint64_t>(bitmap);
 	vmm_context[processorNumber].ioBitmapBPhys = VirtualToPhysicalAddress(bitmap);
 
 	DbgPrint("[*] vmm_context[processorNumber].bitmapAVirt : %llx\n", vmm_context[processorNumber].ioBitmapAVirt);
@@ -226,24 +228,25 @@ BOOLEAN VmxAllocateIoBitmapStack(UCHAR processorNumber) {
 	//memset(vmm_context[processorNumber].ioBitmapAVirt, 0xff, PAGE_SIZE);
 	//memset(vmm_context[processorNumber].ioBitmapBVirt, 0xff, PAGE_SIZE);
 
-	return TRUE;
+	return true;
 }
 
 
-BOOLEAN VmxAllocateMsrBitmap(UCHAR processorNumber) {
+auto VmxAllocateMsrBitmap(UCHAR processorNumber) -> bool {
 	PAGED_CODE();
 
 	PHYSICAL_ADDRESS physAddr;
-	physAddr.QuadPart = (ULONGLONG)~0;
-	PVOID bitmap = MmAllocateContiguousMemory(PAGE_SIZE, physAddr);
+	physAddr.QuadPart = static_cast<ULONGLONG>(~0);
+
+	void* bitmap = MmAllocateContiguousMemory(PAGE_SIZE, physAddr);
 	if (!bitmap) {
 		DbgPrint("[-] Failure allocating memory for IO Bitmap A.\n");
-		return FALSE;
+		return false;
 	}
 	RtlSecureZeroMemory(bitmap, PAGE_SIZE);
 
-	vmm_context[processorNumber].msrBitmapVirt = (UINT64)bitmap;
+	vmm_context[processorNumber].msrBitmapVirt = reinterpret_cast<uint64_t>(bitmap);
 	vmm_context[processorNumber].msrBitmapPhys = VirtualToPhysicalAddress(bitmap);
 
-	return TRUE;
+	return true;
 }

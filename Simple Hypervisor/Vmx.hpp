@@ -1,7 +1,7 @@
 #pragma once
 #include "stdafx.h"
 
-auto inline AsmSaveHostRegisters() -> uint64_t;
+//extern "C" auto inline AsmSaveHostRegisters() -> uint64_t;
 
 auto HostTerminateHypervisor(ulong_ptr);
 
