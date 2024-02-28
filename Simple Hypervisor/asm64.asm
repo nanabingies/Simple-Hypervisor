@@ -7,12 +7,13 @@ PUBLIC	AsmInveptGlobal
 PUBLIC	AsmInveptContext
 
 
-PUBLIC	GetTr
-PUBLIC	GetLdtr
-PUBLIC	GetIdtLimit
-PUBLIC	GetGdtLimit
+PUBLIC	AsmGetTr
+PUBLIC	AsmGetLdtr
+PUBLIC	AsmGetIdtLimit
+PUBLIC	AsmGetGdtLimit
 PUBLIC	GetIdtBase
 PUBLIC	GetGdtBase
+PUBLIC  AsmGetRflags
 
 EXTERN	g_StackPointerForReturning:QWORD
 EXTERN	g_BasePointerForReturning:QWORD
@@ -227,25 +228,25 @@ GetIdtBase PROC
 	RET
 GetIdtBase ENDP
 
-GetGdtLimit PROC
+AsmGetGdtLimit PROC
 	LOCAL	GDTR[10]:BYTE
 	SGDT	GDTR
 	MOV		AX, WORD PTR GDTR[0]
 	RET
-GetGdtLimit ENDP
+AsmGetGdtLimit ENDP
 
-GetIdtLimit PROC
+AsmGetIdtLimit PROC
 	LOCAL	IDTR[10]:BYTE
 	SIDT	IDTR
 	MOV		AX, WORD PTR IDTR[0]
 	RET
-GetIdtLimit ENDP
+AsmGetIdtLimit ENDP
 
-GetRflags PROC
+AsmGetRflags PROC
 	PUSHFQ
 	POP		RAX
 	RET
-GetRflags ENDP
+AsmGetRflags ENDP
 
 GetGdtBase PROC
 	LOCAL	GDTR[10]:BYTE
@@ -254,15 +255,15 @@ GetGdtBase PROC
 	RET
 GetGdtBase ENDP
 
-GetLdtr PROC
+AsmGetLdtr PROC
 	SLDT	RAX
 	RET
-GetLdtr ENDP
+AsmGetLdtr ENDP
 
-GetTr PROC
+AsmGetTr PROC
 	STR		RAX
 	RET
-GetTr ENDP
+AsmGetTr ENDP
 
 
 ; ----------------------------------------------------------------------------------- ;

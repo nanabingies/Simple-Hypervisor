@@ -33,11 +33,11 @@ enum SEGREGS
 };
 
 uint64_t g_GuestRip;
-UINT64 g_HostMemory;
-UINT64 g_HostRip;
+uint64_t g_HostMemory;
+uint64_t g_HostRip;
 
-UINT64 g_StackPointerForReturning;
-UINT64 g_BasePointerForReturning;
+uint64_t g_StackPointerForReturning;
+uint64_t g_BasePointerForReturning;
 
 auto inline AsmSetupVmcs(uint32_t) -> EVmErrors;
 
@@ -59,11 +59,13 @@ USHORT  GetSs(VOID);
 USHORT  GetFs(VOID);
 USHORT  GetGs(VOID);*/
 
-auto  GetLdtr() -> ushort;
-auto  GetTr() -> ushort;
-auto  GetIdtLimit() -> ushort;
-auto  GetGdtLimit() -> ushort;
-auto GetRflags() -> uint64_t;
+extern "C" {
+    auto AsmGetLdtr() -> ushort;
+    auto AsmGetTr() -> ushort;
+    auto AsmGetIdtLimit() -> ushort;
+    auto AsmGetGdtLimit() -> ushort;
+    auto AsmGetRflags() -> uint64_t;
+}
 
 typedef struct _VMX_GDTENTRY64
 {
