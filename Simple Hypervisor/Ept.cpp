@@ -330,9 +330,9 @@ auto EptGetMemoryType(uint64_t pfn, bool large_page) -> uint64_t {
 }
 
 auto GetPdeEntry(EptPageTable* page_table, uint64_t pfn) -> ept_pde_2mb* {
-	UINT64 pml4_index = MASK_EPT_PML4_INDEX(pfn);
-	UINT64 pml3_index = MASK_EPT_PML3_INDEX(pfn);
-	UINT64 pml2_index = MASK_EPT_PML2_INDEX(pfn);
+	uint64_t pml4_index = MASK_EPT_PML4_INDEX(pfn);
+	uint64_t pml3_index = MASK_EPT_PML3_INDEX(pfn);
+	uint64_t pml2_index = MASK_EPT_PML2_INDEX(pfn);
 
 	if (pml4_index > 0) {
 		DbgPrint("Address above 512GB is invalid\n");
@@ -342,29 +342,30 @@ auto GetPdeEntry(EptPageTable* page_table, uint64_t pfn) -> ept_pde_2mb* {
 	return &page_table->EptPde[pml3_index][pml2_index];
 }
 
-EPT_PTE* GetPteEntry(EptPageTable* page_table, UINT64 pfn) {
-	EPT_PDE_2MB* pde_entry = GetPdeEntry(page_table, pfn);
+auto GetPteEntry(EptPageTable* page_table, uint64_t pfn) -> ept_pte* {
+	ept_pde_2mb* pde_entry = GetPdeEntry(page_table, pfn);
 	if (pde_entry == NULL) {
 		DbgPrint("[-] Invalid pde address passed.\n");
 		return NULL;
 	}
 
 	// Check to ensure the page is split
-	if (pde_entry->LargePage) {
+	if (pde_entry->large_page) {
 		return NULL;
 	}
 
-	EPT_PTE* pte_entry = (EPT_PTE*)PhysicalToVirtualAddress(pde_entry->PageFrameNumber << PAGE_SHIFT);
+	ept_pte* pte_entry = reinterpret_cast<ept_pte*>
+		(PhysicalToVirtualAddress(pde_entry->page_frame_number << PAGE_SHIFT));
 	if (pte_entry == NULL)	return NULL;
 
-	UINT64 pte_index = MASK_EPT_PML1_INDEX(pfn);
+	uint64_t pte_index = MASK_EPT_PML1_INDEX(pfn);
 
 	pte_entry = &pte_entry[pte_index];
 	return pte_entry;
 }
 
-VOID SplitPde(EptPageTable* page_table, PVOID buffer, UINT64 pfn) {
-	EPT_PDE_2MB* pde_entry = GetPdeEntry(page_table, pfn);
+auto SplitPde(EptPageTable* page_table, void* buffer, uint64_t pfn) -> void {
+	ept_pde_2mb* pde_entry = GetPdeEntry(page_table, pfn);
 	if (pde_entry == NULL) {
 		DbgPrint("[-] Invalid pde address passed.\n");
 		return;
@@ -372,7 +373,7 @@ VOID SplitPde(EptPageTable* page_table, PVOID buffer, UINT64 pfn) {
 
 	// If this large page is not marked a large page, that means it's a pointer already.
 	// That page is therefore already split.
-	if (!pde_entry->LargePage) {
+	if (!pde_entry->large_page) {
 		return;
 	}
 
@@ -382,32 +383,32 @@ VOID SplitPde(EptPageTable* page_table, PVOID buffer, UINT64 pfn) {
 	// Set all pages as rwx to prevent unwanted ept violation
 	split_page->EptPde = pde_entry;
 
-	EPT_PTE entry_template = { 0 };
-	entry_template.ReadAccess = 1;
-	entry_template.WriteAccess = 1;
-	entry_template.ExecuteAccess = 1;
-	entry_template.MemoryType = pde_entry->MemoryType;
-	entry_template.IgnorePat = pde_entry->IgnorePat;
-	entry_template.SuppressVe = pde_entry->SuppressVe;
+	ept_pte entry_template = { 0 };
+	entry_template.read_access = 1;
+	entry_template.write_access = 1;
+	entry_template.execute_access = 1;
+	entry_template.memory_type = pde_entry->memory_type;
+	entry_template.ignore_pat = pde_entry->ignore_pat;
+	entry_template.suppress_ve = pde_entry->suppress_ve;
 
-	__stosq((SIZE_T*) & split_page->EptPte[0], entry_template.AsUInt, 512);
+	__stosq(reinterpret_cast<SIZE_T*>(&split_page->EptPte[0]), entry_template.flags, 512);
 	for (unsigned idx = 0; idx < 512; idx++) {
-		UINT64 page_number = ((pde_entry->PageFrameNumber * PAGE2MB) >> PAGE_SHIFT) + idx;
-		split_page->EptPte[idx].PageFrameNumber = page_number;
+		UINT64 page_number = ((pde_entry->page_frame_number * PAGE2MB) >> PAGE_SHIFT) + idx;
+		split_page->EptPte[idx].page_frame_number = page_number;
 		//split_page->EptPte[idx].MemoryType = GetMemoryType(page_number, FALSE);
 	}
 
-	EPT_PDE_2MB pde_2 = { 0 };
-	pde_2.ReadAccess = 1;
-	pde_2.WriteAccess = 1;
-	pde_2.ExecuteAccess = 1;
+	ept_pde_2mb pde_2 = { 0 };
+	pde_2.read_access = 1;
+	pde_2.write_access = 1;
+	pde_2.execute_access = 1;
 
-	pde_2.PageFrameNumber = (VirtualToPhysicalAddress((void*) & split_page->EptPte[0]) >> PAGE_SHIFT);
+	pde_2.page_frame_number = (VirtualToPhysicalAddress(reinterpret_cast<void*>(&split_page->EptPte[0])) >> PAGE_SHIFT);
 
 	RtlCopyMemory(pde_entry, &pde_2, sizeof(pde_2));
 
 	// Add our allocation to the linked list of dynamic splits for later deallocation 
-	InsertHeadList((PLIST_ENTRY) & page_table->DynamicPages, &split_page->SplitPages);
+	InsertHeadList(reinterpret_cast<PLIST_ENTRY>(&page_table->DynamicPages), &split_page->SplitPages);
 
 	return;
 }
