@@ -1,13 +1,13 @@
 #include "stdafx.h"
 
-ULONG64 PhysicalToVirtualAddress(UINT64 physical_address) {
+auto PhysicalToVirtualAddress(uint64_t physical_address) -> uint64_t {
 	PHYSICAL_ADDRESS physAddr;
 	physAddr.QuadPart = physical_address;
 
-	return (UINT64)(MmGetVirtualForPhysical(physAddr));
+	return reinterpret_cast<UINT64>(MmGetVirtualForPhysical(physAddr));
 }
 
-UINT64 VirtualToPhysicalAddress(void* virtual_address) {
+auto VirtualToPhysicalAddress(void* virtual_address) -> uint64_t {
 	PHYSICAL_ADDRESS physAddr;
 
 	physAddr = MmGetPhysicalAddress(virtual_address);

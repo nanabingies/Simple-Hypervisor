@@ -86,11 +86,11 @@ uint64_t g_GuestMemory;
 uint64_t g_GuestRip;
 uint64_t g_GuestRsp;
 
-inline EVmErrors AsmInveptGlobal(uint64_t, const ept_err*);
-inline EVmErrors AsmInveptContext();
+extern "C" inline EVmErrors AsmInveptGlobal(uint64_t, const ept_err*);
+extern "C" inline EVmErrors AsmInveptContext();
 
-uint64_t PhysicalToVirtualAddress(uint64_t physical_address);
-uint64_t VirtualToPhysicalAddress(void* virtual_address);
+auto PhysicalToVirtualAddress(uint64_t physical_address) -> uint64_t;
+auto VirtualToPhysicalAddress(void* virtual_address) -> uint64_t;
 
 extern "C" {
 	NTKERNELAPI

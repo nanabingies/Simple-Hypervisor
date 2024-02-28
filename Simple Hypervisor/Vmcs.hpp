@@ -60,11 +60,11 @@ USHORT  GetFs(VOID);
 USHORT  GetGs(VOID);*/
 
 extern "C" {
-    auto AsmGetLdtr() -> ushort;
-    auto AsmGetTr() -> ushort;
-    auto AsmGetIdtLimit() -> ushort;
-    auto AsmGetGdtLimit() -> ushort;
-    auto AsmGetRflags() -> uint64_t;
+    inline auto AsmGetLdtr() -> ushort;
+    inline auto AsmGetTr() -> ushort;
+    inline auto AsmGetIdtLimit() -> ushort;
+    inline auto AsmGetGdtLimit() -> ushort;
+    inline auto AsmGetRflags() -> uint64_t;
 }
 
 typedef struct _VMX_GDTENTRY64
