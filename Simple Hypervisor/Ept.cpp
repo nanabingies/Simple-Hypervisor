@@ -450,17 +450,17 @@ auto EptAllocateEptEntry(EptPageTable* page_table) -> ept_entry* {
 	}
 }
 
-UINT64 EptInvGlobalEntry() {
+auto EptInvGlobalEntry() -> void {
 	ept_err err = { 0 };
-	return AsmInveptGlobal(InveptAllContext, &err);
+	AsmInveptGlobal(InveptAllContext, &err); 
 }
 
-VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
+auto HandleEptViolation(uint64_t phys_addr, uint64_t linear_addr) -> void {
 	EptState* ept_state = vmm_context[KeGetCurrentProcessorNumber()].EptState;
 
 	// Get faulting page table entry (PTE)
-	const EPT_PTE* pte_entry = GetPteEntry(ept_state->EptPageTable, phys_addr);
-	if (pte_entry && pte_entry->AsUInt) {
+	const ept_pte* pte_entry = GetPteEntry(ept_state->EptPageTable, phys_addr);
+	if (pte_entry && pte_entry->flags) {
 		__debugbreak();
 		DbgPrint("PteEntry: VA = %llx, PA = %llx", linear_addr, phys_addr);
 		return;
@@ -476,22 +476,23 @@ VOID HandleEptViolation(UINT64 phys_addr, UINT64 linear_addr) {
 	return;
 }
 
-const EPT_ENTRY* EptConstructTables(EPT_ENTRY* ept_entry, UINT64 level, UINT64 pfn, EptPageTable* page_table) {
+const auto EptConstructTables(ept_entry* _ept_entry, uint64_t level, uint64_t pfn, EptPageTable* page_table) -> ept_entry* {
 	switch (level) {
 	case 4: {
 		// table == PML4 (512 GB)
 		const UINT64 pml4_index = MASK_EPT_PML4_INDEX(pfn);
-		EPT_ENTRY* pml4_entry = &ept_entry[pml4_index];
+		ept_entry* pml4_entry = &_ept_entry[pml4_index];
 		DbgPrint("[*] pml4_entry : %p\n", pml4_entry);
-		if (!pml4_entry->AsUInt) {
-			EPT_ENTRY* ept_pdpt = (EPT_ENTRY*)EptAllocateEptEntry(page_table);
+		if (!pml4_entry->flags) {
+			ept_entry* ept_pdpt = reinterpret_cast<ept_entry*>(EptAllocateEptEntry(page_table));
 			if (!ept_pdpt)
 				return NULL;
 
 			EptInitTableEntry(pml4_entry, level, VirtualToPhysicalAddress(ept_pdpt));
 		}
 
-		EPT_ENTRY* temp = (EPT_ENTRY*)PhysicalToVirtualAddress(pml4_entry->PageFrameNumber << PAGE_SHIFT);
+		ept_entry* temp = reinterpret_cast<ept_entry*>
+			(PhysicalToVirtualAddress(pml4_entry->page_frame_number << PAGE_SHIFT));
 		return EptConstructTables(temp, level - 1, pfn, page_table);
 	}
 

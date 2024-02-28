@@ -105,6 +105,6 @@ auto EptAllocateEptEntry(EptPageTable*) -> ept_entry*;
 
 auto EptGetMemoryType(uint64_t, bool) -> uint64_t;
 
-auto EptInvGlobalEntry() -> uint64_t;
+auto EptInvGlobalEntry() -> void;
 
 auto SplitPde(EptPageTable*, void*, uint64_t) -> void;
