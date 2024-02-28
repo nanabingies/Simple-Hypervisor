@@ -1,4 +1,5 @@
 #pragma once
+#include "stdafx.h"
 #pragma warning(disable : 4201)
 
 #define DRV_NAME	L"\\Device\\Hypervisor"
@@ -6,100 +7,104 @@
 #define VMM_POOL	'tesT'
 
 #define HOST_STACK_SIZE  (20 * PAGE_SIZE)
-BOOLEAN VmOff;
+bool VmOff;
 
 struct _vmm_context {
-	UINT64	vmxonRegionVirt;				// Virtual address of VMXON Region
-	UINT64	vmxonRegionPhys;				// Physical address of VMXON Region
+	uint64_t	vmxonRegionVirt;				// Virtual address of VMXON Region
+	uint64_t	vmxonRegionPhys;				// Physical address of VMXON Region
 
-	UINT64	vmcsRegionVirt;					// virtual address of VMCS Region
-	UINT64	vmcsRegionPhys;					// Physical address of VMCS Region
+	uint64_t	vmcsRegionVirt;					// virtual address of VMCS Region
+	uint64_t	vmcsRegionPhys;					// Physical address of VMCS Region
 
-	UINT64  ioBitmapAVirt;                    // Virtual address of I/O bitmap A
-	UINT64  ioBitmapAPhys;                    // Physical address
+	uint64_t  ioBitmapAVirt;                    // Virtual address of I/O bitmap A
+	uint64_t  ioBitmapAPhys;                    // Physical address
 
-	UINT64	ioBitmapBVirt;					// Virtual address of I/O bitmap B
-	UINT64	ioBitmapBPhys;					// Plysical address
+	uint64_t	ioBitmapBVirt;					// Virtual address of I/O bitmap B
+	uint64_t	ioBitmapBPhys;					// Plysical address
 
-	UINT64	msrBitmapVirt;					// Virtual address of MSR bitmap
-	UINT64	msrBitmapPhys;					// Physical address
+	uint64_t	msrBitmapVirt;					// Virtual address of MSR bitmap
+	uint64_t	msrBitmapPhys;					// Physical address
 
-	UINT64	HostStack;						// Stack of the VM Exit Handler
+	uint64_t	HostStack;						// Stack of the VM Exit Handler
 
-	UINT64	GuestMemory;					// Guest RSP
+	uint64_t	GuestMemory;					// Guest RSP
 	
-	UINT64	GuestRsp;
-	UINT64	GuestRip;
+	uint64_t	GuestRsp;
+	uint64_t	GuestRip;
 
-	UINT64	HostRsp;
-	UINT64	HostRip;
+	uint64_t	HostRsp;
+	uint64_t	HostRip;
 
 	struct {
-		UINT64	g_StackPointerForReturning;
-		UINT64	g_BasePointerForReturning;
+		uint64_t	g_StackPointerForReturning;
+		uint64_t	g_BasePointerForReturning;
 	};
 
-	UINT64	EptPtr;
-	UINT64	EptPml4;
+	uint64_t	EptPtr;
+	uint64_t	EptPml4;
 	EptState* EptState;
 };
 
-typedef struct _eptErr {
-	PVOID	Param1;
-	PVOID	Param2;
-} ept_err;
+using ept_err = struct _eptErr {
+	void*	Param1;
+	void*	Param2;
+} ;
 
 struct driverGlobals {
 	PDEVICE_OBJECT	g_DeviceObject;
 	LIST_ENTRY		g_ListofDevices;
 };
 
-typedef struct _GuestRegisters {
-	UINT64	RAX;
-	UINT64	RBX;
-	UINT64	RCX;
-	UINT64	RDX;
-	UINT64	RSP;
-	UINT64	RBP;
-	UINT64	RSI;
-	UINT64	RDI;
-	UINT64	R8;
-	UINT64	R9;
-	UINT64	R10;
-	UINT64	R11;
-	UINT64	R12;
-	UINT64	R13;
-	UINT64	R14;
-	UINT64	R15;
+using GuestRegisters = struct _GuestRegisters {
+	uint64_t	RAX;
+	uint64_t	RBX;
+	uint64_t	RCX;
+	uint64_t	RDX;
+	uint64_t	RSP;
+	uint64_t	RBP;
+	uint64_t	RSI;
+	uint64_t	RDI;
+	uint64_t	R8;
+	uint64_t	R9;
+	uint64_t	R10;
+	uint64_t	R11;
+	uint64_t	R12;
+	uint64_t	R13;
+	uint64_t	R14;
+	uint64_t	R15;
 	__m128	xmm[6];
-} GuestRegisters;
+} ;
 
-typedef struct _GuestContext {
+using GuestContext = struct _GuestContext {
 	GuestRegisters*	registers;
-	UINT64			ip;
-} GuestContext;
+	uint64_t			ip;
+} ;
 
-struct _vmm_context* vmm_context;
-struct driverGlobals g_DriverGlobals;
-UINT64 g_GuestMemory;
-UINT64 g_GuestRip;
-UINT64 g_GuestRsp;
+_vmm_context* vmm_context;
+driverGlobals g_DriverGlobals;
+uint64_t g_GuestMemory;
+uint64_t g_GuestRip;
+uint64_t g_GuestRsp;
 
-inline EVmErrors AsmInveptGlobal(UINT64, const ept_err*);
+inline EVmErrors AsmInveptGlobal(uint64_t, const ept_err*);
 inline EVmErrors AsmInveptContext();
 
-ULONG64 PhysicalToVirtualAddress(UINT64 physical_address);
-UINT64 VirtualToPhysicalAddress(void* virtual_address);
+uint64_t PhysicalToVirtualAddress(uint64_t physical_address);
+uint64_t VirtualToPhysicalAddress(void* virtual_address);
 
-NTKERNELAPI
-_IRQL_requires_max_(APC_LEVEL)
-_IRQL_requires_min_(PASSIVE_LEVEL) _IRQL_requires_same_ VOID
-KeGenericCallDpc(_In_ PKDEFERRED_ROUTINE Routine, _In_opt_ PVOID Context);
+extern "C" {
+	NTKERNELAPI
+		_IRQL_requires_max_(APC_LEVEL)
+		_IRQL_requires_min_(PASSIVE_LEVEL) _IRQL_requires_same_ VOID
+		KeGenericCallDpc(_In_ PKDEFERRED_ROUTINE Routine, _In_opt_ PVOID Context);
 
-NTKERNELAPI
-_IRQL_requires_(DISPATCH_LEVEL) _IRQL_requires_same_ VOID
-KeSignalCallDpcDone(_In_ PVOID SystemArgument1);
+	extern "C"
+		NTKERNELAPI
+		_IRQL_requires_(DISPATCH_LEVEL) _IRQL_requires_same_ VOID
+		KeSignalCallDpcDone(_In_ PVOID SystemArgument1);
 
-NTKERNELAPI
-_IRQL_requires_(DISPATCH_LEVEL) _IRQL_requires_same_ LOGICAL
-KeSignalCallDpcSynchronize(_In_ PVOID SystemArgument2);
+	extern "C"
+		NTKERNELAPI
+		_IRQL_requires_(DISPATCH_LEVEL) _IRQL_requires_same_ LOGICAL
+		KeSignalCallDpcSynchronize(_In_ PVOID SystemArgument2);
+}
