@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #pragma warning(disable : 4996)
 
-BOOLEAN VirtualizeAllProcessors() {
+auto VirtualizeAllProcessors() -> bool {
 	PAGED_CODE();
 
 	//
@@ -14,17 +14,17 @@ BOOLEAN VirtualizeAllProcessors() {
 	PROCESSOR_NUMBER processor_number;
 	GROUP_AFFINITY affinity, old_affinity;
 
-	ULONG numProcessors = KeQueryActiveProcessorCount(NULL);
+	ulong numProcessors = KeQueryActiveProcessorCount(NULL);
 	DbgPrint("[*] Current active processor count : %x\n", numProcessors);
 
 	//
 	// ExAllocatePool2 - Memory is zero initialized unless POOL_FLAG_UNINITIALIZED is specified.
 	//
-	vmm_context = (struct _vmm_context*)
-		(ExAllocatePoolWithTag(NonPagedPool, sizeof(struct _vmm_context) * numProcessors, VMM_POOL));
+	vmm_context = reinterpret_cast<_vmm_context*>
+		(ExAllocatePoolWithTag(NonPagedPool, sizeof(_vmm_context) * numProcessors, VMM_POOL));
 	if (!vmm_context) {
 		DbgPrint("[-] Failed to allocate pool for vmm_context\n");
-		return FALSE;
+		return false;
 	}
 
 	for (unsigned iter = 0; iter < numProcessors; iter++) {
@@ -42,42 +42,42 @@ BOOLEAN VirtualizeAllProcessors() {
 		//
 		// Allocate Memory for VMXON & VMCS regions and initialize
 		//
-		if (!VmxAllocateVmxonRegion(processor_number.Number))		return FALSE;
-		if (!VmxAllocateVmcsRegion(processor_number.Number))		return FALSE;
+		if (!VmxAllocateVmxonRegion(processor_number.Number))		return false;
+		if (!VmxAllocateVmcsRegion(processor_number.Number))		return false;
 
 		//
 		// Allocate space for VM EXIT Handler
 		//
-		if (!VmxAllocateVmExitStack(processor_number.Number))		return FALSE;
+		if (!VmxAllocateVmExitStack(processor_number.Number))		return false;
 
 		//
 		// Allocate memory for IO Bitmap
 		//
-		if (!VmxAllocateIoBitmapStack(processor_number.Number))			return FALSE;
+		if (!VmxAllocateIoBitmapStack(processor_number.Number))			return false;
 
 		//
 		// Future: Add MSR Bitmap support
 		// Fix: Added MSR Bitmap support
 		//
-		if (!VmxAllocateMsrBitmap(processor_number.Number))			return FALSE;
+		if (!VmxAllocateMsrBitmap(processor_number.Number))			return false;
 
 		//
 		// Setup EPT support for that processor
 		//
-		if (!InitializeEpt(processor_number.Number))				return FALSE;
+		if (!InitializeEpt(processor_number.Number))				return false;
 
 		KeLowerIrql(irql);
 
 		KeRevertToUserGroupAffinityThread(&old_affinity);
 	}
 
-	return TRUE;
+	return true;
 
 }
 
-VOID DevirtualizeAllProcessors() {
+auto DevirtualizeAllProcessors() -> void {
 
-	ULONG numProcessors = KeQueryActiveProcessorCount(NULL);
+	ulong numProcessors = KeQueryActiveProcessorCount(NULL);
 	PROCESSOR_NUMBER processor_number;
 	GROUP_AFFINITY affinity, old_affinity;
 
@@ -132,9 +132,9 @@ VOID DevirtualizeAllProcessors() {
 }
 
 
-ULONG_PTR LaunchVm(ULONG_PTR Argument) {
+auto LaunchVm(ulong_ptr Argument) -> ulong_ptr {
 
-	ULONG processorNumber = KeGetCurrentProcessorNumber();
+	ulong processorNumber = KeGetCurrentProcessorNumber();
 
 	//
 	// Set VMCS state to inactive
@@ -188,7 +188,7 @@ ULONG_PTR LaunchVm(ULONG_PTR Argument) {
 	return Argument;
 }
 
-VOID TerminateVm() {
+auto TerminateVm() -> void {
 
 	//
 	// Set VMCS state to inactive
@@ -198,7 +198,7 @@ VOID TerminateVm() {
 	return;
 }
 
-VOID ResumeVm() {
+auto ResumeVm() -> void {
 
 	size_t Rip, InstLen;
 	__vmx_vmread(VMCS_GUEST_RIP, &Rip);
