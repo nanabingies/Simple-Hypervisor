@@ -262,11 +262,11 @@ auto CreateEptState(EptState* ept_state) -> bool {
 auto SetupPml2Entries(EptState* ept_state, ept_pde_2mb* pde_entry, uint64_t pfn) -> void {
 	UNREFERENCED_PARAMETER(ept_state);
 
-	pde_entry->PageFrameNumber = pfn;
+	pde_entry->page_frame_number = pfn;
 
 	UINT64 addrOfPage = pfn * PAGE2MB;
 	if (pfn == 0) {
-		pde_entry->MemoryType = Uncacheable;
+		pde_entry->memory_type = Uncacheable;
 		return;
 	}
 
@@ -283,36 +283,36 @@ auto SetupPml2Entries(EptState* ept_state, ept_pde_2mb* pde_entry, uint64_t pfn)
 		}
 	}
 
-	pde_entry->MemoryType = memory_type;
+	pde_entry->memory_type = memory_type;
 
 	return;
 }
 
-BOOLEAN IsValidForLargePage(UINT64 pfn) {
+auto IsValidForLargePage(uint64_t pfn) -> bool {
 	UNREFERENCED_PARAMETER(pfn);
 
-	UINT64 page_start = pfn * PAGE2MB;
-	UINT64 page_end = (pfn * PAGE2MB) + (PAGE2MB - 1);
+	uint64_t page_start = pfn * PAGE2MB;
+	uint64_t page_end = (pfn * PAGE2MB) + (PAGE2MB - 1);
 
-	MtrrEntry* temp = (MtrrEntry*)g_MtrrEntries;
+	MtrrEntry* temp = reinterpret_cast<MtrrEntry*>(g_MtrrEntries);
 
 	for (unsigned idx = 0; idx < gMtrrNum; idx++) {
 		if (page_start <= temp[idx].PhysicalAddressEnd && page_end > temp[idx].PhysicalAddressEnd)
-			return FALSE;
+			return false;
 
 		else if (page_start < temp[idx].PhysicalAddressStart && page_end >= temp[idx].PhysicalAddressStart)
-			return FALSE;
+			return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
-UINT64 EptGetMemoryType(UINT64 pfn, BOOLEAN large_page) {
-	UINT64 page_start = large_page == TRUE ? pfn * PAGE2MB : pfn * PAGE_SIZE;
-	UINT64 page_end = large_page == TRUE ? (pfn * PAGE2MB) + (PAGE2MB - 1) : (pfn * PAGE_SIZE) + (PAGE_SIZE - 1);
-	UINT64 memory_type = g_DefaultMemoryType;
+auto EptGetMemoryType(uint64_t pfn, bool large_page) -> uint64_t {
+	uint64_t page_start = large_page == TRUE ? pfn * PAGE2MB : pfn * PAGE_SIZE;
+	uint64_t page_end = large_page == TRUE ? (pfn * PAGE2MB) + (PAGE2MB - 1) : (pfn * PAGE_SIZE) + (PAGE_SIZE - 1);
+	uint64_t memory_type = g_DefaultMemoryType;
 
-	MtrrEntry* temp = (MtrrEntry*)g_MtrrEntries;
+	MtrrEntry* temp = reinterpret_cast<MtrrEntry*>(g_MtrrEntries);
 
 	for (unsigned idx = 0; idx < gMtrrNum; idx++) {
 		if (page_start >= temp[idx].PhysicalAddressStart && page_end <= temp[idx].PhysicalAddressEnd) {
@@ -329,7 +329,7 @@ UINT64 EptGetMemoryType(UINT64 pfn, BOOLEAN large_page) {
 	return memory_type;
 }
 
-EPT_PDE_2MB* GetPdeEntry(EptPageTable* page_table, UINT64 pfn) {
+auto GetPdeEntry(EptPageTable* page_table, uint64_t pfn) -> ept_pde_2mb* {
 	UINT64 pml4_index = MASK_EPT_PML4_INDEX(pfn);
 	UINT64 pml3_index = MASK_EPT_PML3_INDEX(pfn);
 	UINT64 pml2_index = MASK_EPT_PML2_INDEX(pfn);
