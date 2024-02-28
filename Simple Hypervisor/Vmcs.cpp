@@ -71,7 +71,7 @@ ShvUtilConvertGdtEntry(
 	VmxGdtEntry->Bits.Unusable = !gdtEntry->Bits.Present;
 }
 
-auto AdjustControls(ULONG Ctl, ULONG Msr) -> ulong {
+auto AdjustControls(uint32_t Ctl, uint32_t Msr) -> ulong {
 	LARGE_INTEGER MsrValue = { 0 };
 
 	MsrValue.QuadPart = __readmsr(Msr);
@@ -81,7 +81,7 @@ auto AdjustControls(ULONG Ctl, ULONG Msr) -> ulong {
 	return Ctl;
 }
 
-EVmErrors SetupVmcs(ULONG processorNumber, PVOID GuestRsp) {
+auto SetupVmcs(uint32_t processorNumber, void* GuestRsp) -> EVmErrors {
 	PAGED_CODE();
 
 	//
@@ -111,7 +111,7 @@ EVmErrors SetupVmcs(ULONG processorNumber, PVOID GuestRsp) {
 
 	vmm_context[processorNumber].HostRip = (size_t)AsmHostContinueExecution;
 	vmm_context[processorNumber].HostRsp = 
-		((size_t)vmm_context[processorNumber].HostStack + HOST_STACK_SIZE - sizeof(void*) - sizeof(struct _GuestRegisters));
+		((size_t)vmm_context[processorNumber].HostStack + HOST_STACK_SIZE - sizeof(void*) - sizeof(_GuestRegisters));
 
 	__vmx_vmwrite(VMCS_GUEST_RSP, vmm_context[processorNumber].GuestRsp);
 	__vmx_vmwrite(VMCS_GUEST_RIP, vmm_context[processorNumber].GuestRip);
@@ -305,11 +305,11 @@ EVmErrors SetupVmcs(ULONG processorNumber, PVOID GuestRsp) {
 	__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vmm_context[processorNumber].EptPtr);
 	__vmx_vmwrite(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, KeGetCurrentProcessorNumberEx(NULL) + 1);
 	
-	IA32_VMX_MISC_REGISTER misc;
-	misc.AsUInt = __readmsr(IA32_VMX_MISC);
-	__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, misc.Cr3TargetCount);
+	ia32_vmx_misc_register misc;
+	misc.flags = __readmsr(IA32_VMX_MISC);
+	__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, misc.cr3_target_count);
 
-	for (unsigned iter = 0; iter < misc.Cr3TargetCount; iter++) {
+	for (unsigned iter = 0; iter < misc.cr3_target_count; iter++) {
 		__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_0 + (iter * 2), 0);
 	
 	}
