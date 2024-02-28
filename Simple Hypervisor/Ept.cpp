@@ -413,14 +413,14 @@ auto SplitPde(EptPageTable* page_table, void* buffer, uint64_t pfn) -> void {
 	return;
 }
 
-VOID EptInitTableEntry(EPT_ENTRY* ept_entry, UINT64 level, UINT64 pfn) {
-	ept_entry->ReadAccess = 1;
-	ept_entry->WriteAccess = 1;
-	ept_entry->ExecuteAccess = 1;
-	ept_entry->PageFrameNumber = pfn >> PAGE_SHIFT;
+VOID EptInitTableEntry(ept_entry* _ept_entry, uint64_t level, uint64_t pfn) {
+	_ept_entry->read_access = 1;
+	_ept_entry->write_access = 1;
+	_ept_entry->execute_access = 1;
+	_ept_entry->page_frame_number = pfn >> PAGE_SHIFT;
 
 	if (level == 1) {
-		ept_entry->MemoryType = EptGetMemoryType(pfn, FALSE);
+		_ept_entry->memory_type = EptGetMemoryType(pfn, FALSE);
 	}
 
 	return;

@@ -58,7 +58,7 @@ using EptPageTable = struct _EptPageTable {
 	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pml4e EptPml4[EPTPML4ENTRIES];
 	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pdpte EptPdpte[EPTPDPTEENTRIES];
 	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pde_2mb EptPde[EPTPML4ENTRIES][EPTPDPTEENTRIES];
-	ept_entry** DynamicPages;
+	ept_entry**					DynamicPages;
 	uint64_t					DynamicPagesCount;
 };
 
