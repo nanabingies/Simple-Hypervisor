@@ -49,22 +49,22 @@ using MtrrEntry = struct _MtrrEntry {
 };
 
 using EptSplitPage = struct _EptSplitPage {
-	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PTE EptPte[512];
-	EPT_PDE_2MB*				EptPde;
+	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pte EptPte[512];
+	ept_pde_2mb*				EptPde;
 	LIST_ENTRY					SplitPages;
 };
 
 using EptPageTable = struct _EptPageTable {
-	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PML4E EptPml4[EPTPML4ENTRIES];
-	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PDPTE EptPdpte[EPTPDPTEENTRIES];
-	DECLSPEC_ALIGN(PAGE_SIZE)	EPT_PDE_2MB EptPde[EPTPML4ENTRIES][EPTPDPTEENTRIES];
-	EPT_ENTRY** DynamicPages;
-	UINT64						DynamicPagesCount;
+	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pml4e EptPml4[EPTPML4ENTRIES];
+	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pdpte EptPdpte[EPTPDPTEENTRIES];
+	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pde_2mb EptPde[EPTPML4ENTRIES][EPTPDPTEENTRIES];
+	ept_entry** DynamicPages;
+	uint64_t					DynamicPagesCount;
 };
 
 using EptState = struct _EptState{
 	uint64_t		GuestAddressWidthValue;
-	EPT_POINTER*	EptPtr;
+	ept_pointer*	EptPtr;
 	EptPageTable*	EptPageTable;
 };
 

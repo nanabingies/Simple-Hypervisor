@@ -3,14 +3,14 @@
 
 static MtrrEntry g_MtrrEntries[numMtrrEntries];
 
-BOOLEAN IsInRange(UINT64 val, UINT64 start, UINT64 end) {
+auto IsInRange(uint64_t val, uint64_t start, uint64_t end) -> bool {
 	if (val > start && val <= end)
-		return TRUE;
+		return true;
 
-	return FALSE;
+	return false;
 }
 
-BOOLEAN CheckEPTSupport() {
+auto CheckEPTSupport() -> bool {
 	PAGED_CODE();
 
 	IA32_VMX_EPT_VPID_CAP_REGISTER ept_cap;
