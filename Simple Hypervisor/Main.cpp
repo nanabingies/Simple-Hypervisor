@@ -1,5 +1,5 @@
 #include "vmx.hpp"
-#include "VmUtils.hpp"
+#include "stdafx.h"
 
 extern "C" {
 
@@ -38,6 +38,9 @@ extern "C" {
 		// Opt-in to using non-executable pool memory on Windows 8 and later.
 		// https://msdn.microsoft.com/en-us/library/windows/hardware/hh920402(v=vs.85).aspx
 		ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
+
+		g_num_processors = KeQueryActiveProcessorCount(NULL);
+		LOG("[*] Current active processors : %x\n", g_num_processors);
 
 		NTSTATUS status;
 		UNICODE_STRING drv_name;

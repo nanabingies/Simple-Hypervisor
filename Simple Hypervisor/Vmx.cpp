@@ -37,6 +37,11 @@ namespace vmx {
 	}
 
 	auto VmxIsVmxSupport() -> bool {
+		PAGED_CODE();
 
+		for (auto idx = 0; idx < g_num_processors; ++idx) {
+			LOG("[*] Checking processor %x VMX support.....\n", idx);
+			cpuid_eax_01 args{};
+		}
 	}
 }
