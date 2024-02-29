@@ -109,22 +109,22 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Ept.cpp" />
-    <ClCompile Include="HyperVisor.cpp" />
-    <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Vmcs.cpp" />
-    <ClCompile Include="VmExit.cpp" />
-    <ClCompile Include="VmUtils.cpp" />
-    <ClCompile Include="Vmx.cpp" />
+    <ClCompile Include="ept.cpp" />
+    <ClCompile Include="hypervisor.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="vmcs.cpp" />
+    <ClCompile Include="vmexit.cpp" />
+    <ClCompile Include="vmutils.cpp" />
+    <ClCompile Include="vmx.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Ept.hpp" />
+    <ClInclude Include="ept.hpp" />
     <ClInclude Include="ia32.hpp" />
-    <ClInclude Include="Logger.hpp" />
+    <ClInclude Include="logger.hpp" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="Vmcs.hpp" />
-    <ClInclude Include="VmUtils.hpp" />
-    <ClInclude Include="Vmx.hpp" />
+    <ClInclude Include="vmcs.hpp" />
+    <ClInclude Include="vmutils.hpp" />
+    <ClInclude Include="vmx.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
