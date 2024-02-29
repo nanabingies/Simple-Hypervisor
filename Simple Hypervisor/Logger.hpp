@@ -5,7 +5,7 @@
 	logger::log(format, __VA_ARGS__)
 
 #define LOG_EEROR(format, ...) \
-	logger::error(format, __VA_ARGS__)
+	LOG("[!] failed at %s:%d, (0x%lX)\n", __FILE__, __LINE__, GetLastError())
 
 namespace logger {
 	template <typename ... T>
