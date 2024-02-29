@@ -4,7 +4,7 @@
 #define LOG(format, ...) \
 	logger::log(format, __VA_ARGS__)
 
-#define LOG_EEROR(format, ...) \
+#define LOG_ERROR(format, ...) \
 	LOG("[!] failed at %s:%d, (0x%lX)\n", __FILE__, __LINE__, GetLastError())
 
 namespace logger {

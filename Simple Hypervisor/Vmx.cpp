@@ -45,7 +45,8 @@ namespace vmx {
 			__cpuid(reinterpret_cast<int32_t*>(&args), 1);
 
 			if (args.cpuid_feature_information_ecx.virtual_machine_extensions == 0) {
-				LOG_ERROR("[-] This processor does not support VMX Extensions.\n");
+				LOG("[-] This processor does not support VMX Extensions.\n");
+				LOG_ERROR();
 				return false;
 			}
 		}
