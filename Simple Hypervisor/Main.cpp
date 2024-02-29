@@ -1,9 +1,10 @@
 #include "stdafx.h"
+#include "VmUtils.hpp"
 
 extern "C" {
 
 	auto DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING registry_path) -> NTSTATUS {
-		DbgPrint("[*] Loading file %wz\n", registry_path);
+		DbgPrint("[*] Loading file %wZ\n", registry_path);
 
 		// Opt-in to using non-executable pool memory on Windows 8 and later.
 		// https://msdn.microsoft.com/en-us/library/windows/hardware/hh920402(v=vs.85).aspx
