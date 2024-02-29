@@ -25,7 +25,7 @@ namespace vmx {
 		//if (CheckEPTSupport() == FALSE)	return FALSE;
 
 
-		DbgPrint("[*] Initial checks completed.\n");
+		LOG("[*] Initial checks completed.\n");
 
 		//
 		// Build MTRR Map
@@ -34,5 +34,9 @@ namespace vmx {
 		LOG("[*] MTRR built successfully\n");
 
 		return TRUE;
+	}
+
+	auto VmxIsVmxSupport() -> bool {
+
 	}
 }

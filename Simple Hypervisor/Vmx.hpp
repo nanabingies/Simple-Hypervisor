@@ -2,6 +2,9 @@
 
 namespace vmx {
 	auto VmxIsVmxAvailable() -> bool;
+	auto VmxIsVmxSupport() -> bool;
+	auto VmxCheckBiosLock() -> bool;
+	auto VmxEnableCR4() -> void;
 }
 
 namespace hv {

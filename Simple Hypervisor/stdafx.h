@@ -5,6 +5,7 @@
 #include <intrin.h>
 #include <windef.h>
 #include <ntdef.h>
+#include "logger.hpp"
 
 using uint8_t = unsigned char;
 using uint16_t = unsigned short;
