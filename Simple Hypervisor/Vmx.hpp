@@ -1,4 +1,6 @@
 #include "stdafx.h"
+#include "logger.hpp"
+#include "vmutils.hpp"
 
 namespace vmx {
 	auto VmxIsVmxAvailable() -> bool;

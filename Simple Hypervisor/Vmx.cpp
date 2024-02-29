@@ -12,12 +12,12 @@ namespace vmx {
 		//
 		// Check Bios Lock Bit
 		//
-		if (!VmxCheckBiosLock())	return FALSE;
+		//if (!VmxCheckBiosLock())	return FALSE;
 
 		//
 		// Enable VMXE for all processors
 		//
-		VmxEnableCR4();
+		//VmxEnableCR4();
 
 		//
 		// Check for EPT support for all processors
@@ -39,8 +39,20 @@ namespace vmx {
 	auto VmxIsVmxSupport() -> bool {
 		PAGED_CODE();
 
-		for (auto idx = 0; idx < g_num_processors; ++idx) {
-			LOG("[*] Checking processor %x VMX support.....\n", idx);
+		PROCESSOR_NUMBER processor_number;
+		GROUP_AFFINITY affinity, old_affinity;
+
+		for (unsigned iter = 0; iter <g_num_processors; iter++) {
+			KeGetProcessorNumberFromIndex(iter, &processor_number);
+
+			RtlSecureZeroMemory(&affinity, sizeof(GROUP_AFFINITY));
+			affinity.Group = processor_number.Group;
+			affinity.Mask = (KAFFINITY)1 << processor_number.Number;
+			KeSetSystemGroupAffinityThread(&affinity, &old_affinity);
+
+			KIRQL irql = KeRaiseIrqlToDpcLevel();
+
+			LOG("[*] Checking processor (%x) VMX support.....\n", iter);
 			cpuid_eax_01 args{};
 			__cpuid(reinterpret_cast<int32_t*>(&args), 1);
 
@@ -49,6 +61,11 @@ namespace vmx {
 				LOG_ERROR();
 				return false;
 			}
+
+			KeLowerIrql(irql);
+			KeRevertToUserGroupAffinityThread(&old_affinity);
 		}
+
+		return true;
 	}
 }

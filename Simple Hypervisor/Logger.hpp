@@ -18,6 +18,6 @@ namespace logger {
 	__forceinline void error()
 	{
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, 
-			"[!] failed at %s:%d, (0x%lX)\n", __FILE__, __LINE__, GetLastError());
+			"[!] failed at %s:%d, ()\n", __FILE__, __LINE__);	// KeLowerIrql(irql);
 	}
 }

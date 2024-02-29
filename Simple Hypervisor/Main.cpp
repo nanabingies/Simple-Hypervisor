@@ -1,5 +1,4 @@
 #include "vmx.hpp"
-#include "stdafx.h"
 
 extern "C" {
 
@@ -7,10 +6,10 @@ extern "C" {
 		LOG("[*] Terminating VMs on processors...");
 
 		// Uninstall vmx on all processors
-		if (!VmOff) {
+		/*if (!VmOff) {
 			hv::DevirtualizeAllProcessors();
 			VmOff = true;
-		}
+		}*/
 
 		if (driver_object->DeviceObject != nullptr) {
 			IoDeleteDevice(driver_object->DeviceObject);
@@ -30,6 +29,8 @@ extern "C" {
 		return STATUS_SUCCESS;
 	}
 
+	bool VmOff;
+	ulong g_num_processors{};
 	auto DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING registry_path) -> NTSTATUS {
 		LOG("[*] Loading file %wZ", registry_path);
 
@@ -54,14 +55,14 @@ extern "C" {
 
 		LOG("[*] Successfully created device object.");
 
-		for (ulong idx = 0; idx < IRP_MJ_MAXIMUM_FUNCTION; ++idx) {
+		for (unsigned idx = 0; idx < IRP_MJ_MAXIMUM_FUNCTION; ++idx) {
 			driver_object->MajorFunction[idx] = DefaultDispatch;
 		}
 		driver_object->DriverUnload = DriverUnload;
 
 		if (!vmx::VmxIsVmxAvailable())	return STATUS_FAILED_DRIVER_ENTRY;
 
-		if (!hv::VirtualizeAllProcessors())	return STATUS_FAILED_DRIVER_ENTRY;
+		//if (!hv::VirtualizeAllProcessors())	return STATUS_FAILED_DRIVER_ENTRY;
 
 		LOG("[*] The hypervisor has been installed.");
 
