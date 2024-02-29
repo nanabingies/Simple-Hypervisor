@@ -1,10 +1,16 @@
-#include "stdafx.h"
+#include "vmx.hpp"
 #include "VmUtils.hpp"
 
 extern "C" {
 
 	auto DriverUnload(_In_ PDRIVER_OBJECT driver_object) -> void {
 		LOG("[*] Terminating VMs on processors...");
+
+		// Uninstall vmx on all processors
+		if (!VmOff) {
+			hv::DevirtualizeAllProcessors();
+			VmOff = true;
+		}
 
 		if (driver_object->DeviceObject != nullptr) {
 			IoDeleteDevice(driver_object->DeviceObject);
@@ -27,6 +33,8 @@ extern "C" {
 	auto DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING registry_path) -> NTSTATUS {
 		LOG("[*] Loading file %wZ", registry_path);
 
+		VmOff = false;
+
 		// Opt-in to using non-executable pool memory on Windows 8 and later.
 		// https://msdn.microsoft.com/en-us/library/windows/hardware/hh920402(v=vs.85).aspx
 		ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
@@ -47,6 +55,10 @@ extern "C" {
 			driver_object->MajorFunction[idx] = DefaultDispatch;
 		}
 		driver_object->DriverUnload = DriverUnload;
+
+		if (!vmx::VmxIsVmxAvailable())	return STATUS_FAILED_DRIVER_ENTRY;
+
+		if (!hv::VirtualizeAllProcessors())	return STATUS_FAILED_DRIVER_ENTRY;
 
 		LOG("[*] The hypervisor has been installed.");
 
