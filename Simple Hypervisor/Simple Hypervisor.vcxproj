@@ -120,6 +120,7 @@
   <ItemGroup>
     <ClInclude Include="Ept.hpp" />
     <ClInclude Include="ia32.hpp" />
+    <ClInclude Include="Logger.hpp" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Vmcs.hpp" />
     <ClInclude Include="VmUtils.hpp" />
