@@ -1,4 +1,5 @@
 #pragma once
+#include "logger.hpp"
 
 #define DRV_NAME	L"\\Device\\Hypervisor"
 #define DOS_NAME	L"\\DosDevices\\Hypervisor"

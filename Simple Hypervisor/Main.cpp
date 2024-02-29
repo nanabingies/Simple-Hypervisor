@@ -4,18 +4,19 @@
 extern "C" {
 
 	auto DriverUnload(_In_ PDRIVER_OBJECT driver_object) -> void {
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[*] Terminating VMs on processors...\n");
+		LOG("[*] Terminating VMs on processors...");
 
 		if (driver_object->DeviceObject != nullptr) {
 			IoDeleteDevice(driver_object->DeviceObject);
 		}
 
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[*] Unloading Device Driver...\n");
+		LOG("[*] Unloading Device Driver...");
 		return;
 	}
 
 	auto DefaultDispatch(_In_ PDEVICE_OBJECT, _In_ PIRP irp) -> NTSTATUS {
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[*] Default Dispatch\n");
+		LOG("[*] Default Dispatch");
+
 		irp->IoStatus.Status = STATUS_SUCCESS;
 		irp->IoStatus.Information = 0;
 
@@ -24,7 +25,7 @@ extern "C" {
 	}
 
 	auto DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING registry_path) -> NTSTATUS {
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[*] Loading file %wZ\n", registry_path);
+		LOG("[*] Loading file %wZ", registry_path);
 
 		// Opt-in to using non-executable pool memory on Windows 8 and later.
 		// https://msdn.microsoft.com/en-us/library/windows/hardware/hh920402(v=vs.85).aspx
@@ -40,14 +41,14 @@ extern "C" {
 			FALSE, reinterpret_cast<PDEVICE_OBJECT*>(&device_object));
 		if (!NT_SUCCESS(status))	return STATUS_FAILED_DRIVER_ENTRY;
 
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[*] Successfully created device object\n");
+		LOG("[*] Successfully created device object.");
 
 		for (ulong idx = 0; idx < IRP_MJ_MAXIMUM_FUNCTION; ++idx) {
 			driver_object->MajorFunction[idx] = DefaultDispatch;
 		}
 		driver_object->DriverUnload = DriverUnload;
 
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[*] The hypervisor has been installed.\n");
+		LOG("[*] The hypervisor has been installed.");
 
 		return STATUS_SUCCESS;
 	}
