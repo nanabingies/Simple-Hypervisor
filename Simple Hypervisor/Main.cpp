@@ -31,8 +31,8 @@ extern "C" {
 		return STATUS_SUCCESS;
 	}
 
-	bool VmOff;
-	ulong g_num_processors{};
+	//bool VmOff;
+	//ulong g_num_processors{};
 
 	auto DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING registry_path) -> NTSTATUS {
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "[*] Loading file %wZ", registry_path);
