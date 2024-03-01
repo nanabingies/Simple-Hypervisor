@@ -31,7 +31,7 @@ extern "C" {
 		return STATUS_SUCCESS;
 	}
 
-	//bool VmOff;
+	bool VmOff;
 	//ulong g_num_processors{};
 
 	auto DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING registry_path) -> NTSTATUS {
@@ -43,8 +43,8 @@ extern "C" {
 		// https://msdn.microsoft.com/en-us/library/windows/hardware/hh920402(v=vs.85).aspx
 		ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
 
-		g_num_processors = KeQueryActiveProcessorCount(NULL);
-		LOG("[*] Current active processors : %x\n", g_num_processors);
+		ulong num_processors = KeQueryActiveProcessorCount(NULL);
+		LOG("[*] Current active processors : %x\n", num_processors);
 
 		NTSTATUS status;
 		UNICODE_STRING drv_name;
