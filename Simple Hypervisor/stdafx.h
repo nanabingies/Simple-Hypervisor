@@ -6,6 +6,11 @@
 #include <windef.h>
 #include <ntdef.h>
 #include "ia32.hpp"
+#include "ept.hpp"
+#include "logger.hpp"
+#include "vmcs.hpp"
+#include "vmutils.hpp"
+#include "vmx.hpp"
 
 using uint8_t = unsigned char;
 using uint16_t = unsigned short;
