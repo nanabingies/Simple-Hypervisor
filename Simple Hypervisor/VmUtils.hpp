@@ -5,4 +5,3 @@
 #define VMM_POOL	'tesT'
 
 extern bool VmOff;
-//ulong g_num_processors;
