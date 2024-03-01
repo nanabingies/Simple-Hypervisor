@@ -55,7 +55,7 @@ extern "C" {
 			FALSE, reinterpret_cast<PDEVICE_OBJECT*>(&device_object));
 		if (!NT_SUCCESS(status))	return STATUS_FAILED_DRIVER_ENTRY;
 
-		LOG("[*] Successfully created device object.");
+		LOG("[*] Successfully created device object.\n");
 
 		for (unsigned idx = 0; idx < IRP_MJ_MAXIMUM_FUNCTION; ++idx) {
 			driver_object->MajorFunction[idx] = DefaultDispatch;
@@ -66,7 +66,7 @@ extern "C" {
 
 		//if (!hv::VirtualizeAllProcessors())	return STATUS_FAILED_DRIVER_ENTRY;
 
-		LOG("[*] The hypervisor has been installed.");
+		LOG("[*] The hypervisor has been installed.\n");
 
 		return STATUS_SUCCESS;
 	}

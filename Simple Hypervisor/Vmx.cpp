@@ -12,7 +12,7 @@ namespace vmx {
 		//
 		// Check Bios Lock Bit
 		//
-		//if (!VmxCheckBiosLock())	return FALSE;
+		if (!VmxCheckBiosLock())	return false;
 
 		//
 		// Enable VMXE for all processors
