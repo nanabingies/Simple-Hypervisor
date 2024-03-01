@@ -4,5 +4,5 @@
 #define DOS_NAME	L"\\DosDevices\\Hypervisor"
 #define VMM_POOL	'tesT'
 
-extern bool VmOff;
-extern ulong g_num_processors;
+bool VmOff;
+ulong g_num_processors;

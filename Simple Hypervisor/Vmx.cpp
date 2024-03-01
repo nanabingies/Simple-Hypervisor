@@ -42,7 +42,7 @@ namespace vmx {
 		PROCESSOR_NUMBER processor_number;
 		GROUP_AFFINITY affinity, old_affinity;
 
-		for (unsigned iter = 0; iter <g_num_processors; iter++) {
+		for (unsigned iter = 0; iter < g_num_processors; iter++) {
 			KeGetProcessorNumberFromIndex(iter, &processor_number);
 
 			RtlSecureZeroMemory(&affinity, sizeof(GROUP_AFFINITY));
