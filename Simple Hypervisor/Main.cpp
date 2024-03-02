@@ -34,7 +34,7 @@ extern "C" {
 	bool VmOff;
 
 	auto DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING registry_path) -> NTSTATUS {
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "[*] Loading file %wZ", registry_path);
+		LOG("[*] Loading file %wZ", registry_path);
 
 		VmOff = false;
 
@@ -44,6 +44,8 @@ extern "C" {
 
 		ulong num_processors = KeQueryActiveProcessorCount(NULL);
 		LOG("[*] Current active processors : %x\n", num_processors);
+
+		LOG("[*] Num processors : %x\n", KeNumberProcessors);
 
 		NTSTATUS status;
 		UNICODE_STRING drv_name;
