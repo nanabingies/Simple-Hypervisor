@@ -5,3 +5,4 @@
 #define VMM_POOL	'tesT'
 
 extern bool VmOff;
+extern int g_num_processors;

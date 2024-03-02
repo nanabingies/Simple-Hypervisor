@@ -1,6 +1,7 @@
 #include "vmx.hpp"
 #include "stdafx.h"
 #include "logger.hpp"
+using hv::DevirtualizeAllProcessors;
 
 extern "C" {
 
@@ -32,8 +33,12 @@ extern "C" {
 	}
 
 	bool VmOff;
+	int g_num_processors;
 
 	auto DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING registry_path) -> NTSTATUS {
+		using hv::VirtualizeAllProcessors;
+		using vmx::VmxIsVmxAvailable;
+
 		LOG("[*] Loading file %wZ", registry_path);
 
 		VmOff = false;
@@ -64,7 +69,7 @@ extern "C" {
 		}
 		driver_object->DriverUnload = DriverUnload;
 
-		if (!vmx::VmxIsVmxAvailable())	return STATUS_FAILED_DRIVER_ENTRY;
+		if (!VmxIsVmxAvailable())	return STATUS_FAILED_DRIVER_ENTRY;
 
 		//if (!hv::VirtualizeAllProcessors())	return STATUS_FAILED_DRIVER_ENTRY;
 
