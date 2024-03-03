@@ -11,6 +11,9 @@ namespace vmx {
 
 	auto vmxAllocateVmxonRegion(uchar) -> bool;
 	auto vmxAllocateVmcsRegion(uchar) -> bool;
+	auto vmxAllocateVmExitStack(uchar) -> bool;
+	auto vmxAllocateIoBitmapStack(uchar) -> bool;
+	auto vmxAllocateMsrBitmap(uchar) -> bool;
 }
 
 namespace hv {
