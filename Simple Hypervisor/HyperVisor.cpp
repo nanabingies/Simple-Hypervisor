@@ -51,7 +51,7 @@ namespace hv {
 
 			//
 			// Future: Add MSR Bitmap support
-			// Fix: Added MSR Bitmap support
+			// Update: Added MSR Bitmap support
 			//
 			if (!vmxAllocateMsrBitmap(processor_number.Number))			return false;
 
