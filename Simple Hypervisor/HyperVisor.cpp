@@ -4,6 +4,11 @@
 namespace hv {
 	auto virtualizeAllProcessors() -> bool {
 		using vmx::vmxAllocateVmxonRegion;
+		using vmx::vmxAllocateVmcsRegion;
+		using vmx::vmxAllocateVmExitStack;
+		using vmx::vmxAllocateIoBitmapStack;
+		using vmx::vmxAllocateMsrBitmap;
+
 		PAGED_CODE();
 
 		//
@@ -39,23 +44,23 @@ namespace hv {
 			// Allocate Memory for VMXON & VMCS regions and initialize
 			//
 			if (!vmxAllocateVmxonRegion(processor_number.Number))		return false;
-			//if (!vmxAllocateVmcsRegion(processor_number.Number))		return false;
+			if (!vmxAllocateVmcsRegion(processor_number.Number))		return false;
 
 			//
 			// Allocate space for VM EXIT Handler
 			//
-			//if (!vmxAllocateVmExitStack(processor_number.Number))		return false;
+			if (!vmxAllocateVmExitStack(processor_number.Number))		return false;
 
 			//
 			// Allocate memory for IO Bitmap
 			//
-			//if (!vmxAllocateIoBitmapStack(processor_number.Number))			return false;
+			if (!vmxAllocateIoBitmapStack(processor_number.Number))			return false;
 
 			//
 			// Future: Add MSR Bitmap support
 			// Update: Added MSR Bitmap support
 			//
-			//if (!vmxAllocateMsrBitmap(processor_number.Number))			return false;
+			if (!vmxAllocateMsrBitmap(processor_number.Number))			return false;
 
 			//
 			// Setup EPT support for that processor
