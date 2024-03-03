@@ -10,6 +10,7 @@ namespace vmx {
 	auto vmxEnableCR4() -> void;
 
 	auto vmxAllocateVmxonRegion(uchar) -> bool;
+	auto vmxAllocateVmcsRegion(uchar) -> bool;
 }
 
 namespace hv {

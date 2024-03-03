@@ -45,14 +45,14 @@ extern bool VmOff;
 extern unsigned g_num_processors;
 extern _vmm_context* vmm_context;
 
-uint64_t PhysicalToVirtualAddress(uint64_t physical_address) {
+uint64_t physicalToVirtualAddress(uint64_t physical_address) {
 	PHYSICAL_ADDRESS physAddr;
 	physAddr.QuadPart = physical_address;
 
 	return reinterpret_cast<uint64_t>(MmGetVirtualForPhysical(physAddr));
 }
 
-uint64_t VirtualToPhysicalAddress(void* virtual_address) {
+uint64_t virtualToPhysicalAddress(void* virtual_address) {
 	PHYSICAL_ADDRESS physAddr;
 
 	physAddr = MmGetPhysicalAddress(virtual_address);
