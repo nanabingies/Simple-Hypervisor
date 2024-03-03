@@ -5,7 +5,7 @@
 extern "C" {
 
 	auto DriverUnload(_In_ PDRIVER_OBJECT driver_object) -> void {
-		using hv::DevirtualizeAllProcessors;
+		using hv::devirtualizeAllProcessors;
 
 		LOG("[*] Terminating VMs on processors...");
 
@@ -37,8 +37,8 @@ extern "C" {
 	unsigned g_num_processors;
 
 	auto DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING registry_path) -> NTSTATUS {
-		using hv::VirtualizeAllProcessors;
-		using vmx::VmxIsVmxAvailable;
+		using hv::virtualizeAllProcessors;
+		using vmx::vmxIsVmxAvailable;
 
 		LOG("[*] Loading file %wZ", registry_path);
 
@@ -70,7 +70,7 @@ extern "C" {
 		}
 		driver_object->DriverUnload = DriverUnload;
 
-		if (!VmxIsVmxAvailable())	return STATUS_FAILED_DRIVER_ENTRY;
+		if (!vmxIsVmxAvailable())	return STATUS_FAILED_DRIVER_ENTRY;
 
 		//if (!hv::VirtualizeAllProcessors())	return STATUS_FAILED_DRIVER_ENTRY;
 
