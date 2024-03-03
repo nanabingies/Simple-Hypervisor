@@ -86,7 +86,7 @@ namespace hv {
 			affinity.Mask = (KAFFINITY)1 << processor_number.Number;
 			KeSetSystemGroupAffinityThread(&affinity, &old_affinity);
 
-			auto irql = KeRaiseIrqlToDpcLevel();
+			//auto irql = KeRaiseIrqlToDpcLevel();
 
 			__vmx_vmclear(&vmm_context[processor_number.Number].vmcs_region_phys_addr);
 			__vmx_off();
@@ -100,8 +100,8 @@ namespace hv {
 			if (vmm_context[processor_number.Number].host_stack)
 				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].host_stack));
 
-			if (vmm_context[processor_number.Number].io_bitmap_a_phys_addr)
-				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].io_bitmap_a_phys_addr));
+			if (vmm_context[processor_number.Number].io_bitmap_a_virt_addr)
+				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].io_bitmap_a_virt_addr));
 
 			if (vmm_context[processor_number.Number].io_bitmap_b_virt_addr)
 				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].io_bitmap_b_virt_addr));
@@ -121,7 +121,7 @@ namespace hv {
 
 			ExFreePoolWithTag(vmm_context, VMM_POOL_TAG);
 
-			KeLowerIrql(irql);
+			//KeLowerIrql(irql);
 			KeRevertToUserGroupAffinityThread(&old_affinity);
 		}
 
