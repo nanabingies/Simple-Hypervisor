@@ -86,7 +86,7 @@ namespace hv {
 			affinity.Mask = (KAFFINITY)1 << processor_number.Number;
 			KeSetSystemGroupAffinityThread(&affinity, &old_affinity);
 
-			//auto irql = KeRaiseIrqlToDpcLevel();
+			auto irql = KeRaiseIrqlToDpcLevel();
 
 			__vmx_vmclear(&vmm_context[processor_number.Number].vmcs_region_phys_addr);
 			__vmx_off();
@@ -119,11 +119,11 @@ namespace hv {
 				ExFreePoolWithTag(vmm_context[processor_number.Number].EptState, VMM_POOL);
 			}*/
 
-			ExFreePoolWithTag(vmm_context, VMM_POOL_TAG);
-
-			//KeLowerIrql(irql);
+			KeLowerIrql(irql);
 			KeRevertToUserGroupAffinityThread(&old_affinity);
 		}
+
+		ExFreePoolWithTag(vmm_context, VMM_POOL_TAG);
 
 		return;
 	}
