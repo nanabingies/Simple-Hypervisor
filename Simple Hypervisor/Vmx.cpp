@@ -229,4 +229,24 @@ namespace vmx {
 		LOG("[*] vmcs loaded on logical processor (%x)\n", processor_number);
 		return true;
 	}
+
+	auto vmxAllocateVmExitStack(uchar processor_number) -> bool {
+		PAGED_CODE();
+
+		PHYSICAL_ADDRESS phys_addr;
+		phys_addr.QuadPart = static_cast<uint64_t>(~0);
+
+		void* vmexitStack = MmAllocateContiguousMemory(HOST_STACK_SIZE, phys_addr);
+		if (!vmexitStack) {
+			LOG("[-] Failure allocating memory for VM EXIT Handler for processor (%x).\n", processor_number);
+			LOG_ERROR();
+			return false;
+		}
+		RtlSecureZeroMemory(vmexitStack, HOST_STACK_SIZE);
+
+		vmm_context[processor_number].host_stack = reinterpret_cast<UINT64>(vmexitStack);
+		DbgPrint("[*] vmm_context[%x].HostStack : %llx\n", processor_number, vmm_context[processor_number].host_stack);
+
+		return true;
+	}
 }
