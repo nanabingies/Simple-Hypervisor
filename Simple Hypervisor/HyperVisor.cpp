@@ -75,6 +75,56 @@ namespace hv {
 	}
 
 	auto devirtualizeAllProcessors() -> void {
+		PROCESSOR_NUMBER processor_number;
+		GROUP_AFFINITY affinity, old_affinity;
 
+		for (unsigned iter = 0; iter < g_num_processors; iter++) {
+			KeGetProcessorNumberFromIndex(iter, &processor_number);
+
+			RtlSecureZeroMemory(&affinity, sizeof(GROUP_AFFINITY));
+			affinity.Group = processor_number.Group;
+			affinity.Mask = (KAFFINITY)1 << processor_number.Number;
+			KeSetSystemGroupAffinityThread(&affinity, &old_affinity);
+
+			auto irql = KeRaiseIrqlToDpcLevel();
+
+			__vmx_vmclear(&vmm_context[processor_number.Number].vmcs_region_phys_addr);
+			__vmx_off();
+
+			if (vmm_context[processor_number.Number].vmcs_region_virt_addr)
+				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].vmcs_region_virt_addr));
+
+			if (vmm_context[processor_number.Number].vmxon_region_virt_addr)
+				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].vmxon_region_virt_addr));
+
+			if (vmm_context[processor_number.Number].host_stack)
+				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].host_stack));
+
+			if (vmm_context[processor_number.Number].io_bitmap_a_phys_addr)
+				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].io_bitmap_a_phys_addr));
+
+			if (vmm_context[processor_number.Number].io_bitmap_b_virt_addr)
+				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].io_bitmap_b_virt_addr));
+
+			if (vmm_context[processor_number.Number].msr_bitmap_virt_addr)
+				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].msr_bitmap_virt_addr));
+
+			/*if (vmm_context[processor_number.Number].EptState) {
+				if (vmm_context[processor_number.Number].EptState->EptPageTable)
+					ExFreePoolWithTag(vmm_context[processor_number.Number].EptState->EptPageTable, VMM_POOL);
+
+				if (vmm_context[processor_number.Number].EptState->EptPtr)
+					ExFreePoolWithTag(vmm_context[processor_number.Number].EptState->EptPtr, VMM_POOL);
+
+				ExFreePoolWithTag(vmm_context[processor_number.Number].EptState, VMM_POOL);
+			}*/
+
+			ExFreePoolWithTag(vmm_context, VMM_POOL_TAG);
+
+			KeLowerIrql(irql);
+			KeRevertToUserGroupAffinityThread(&old_affinity);
+		}
+
+		return;
 	}
 }
