@@ -44,3 +44,10 @@ struct _vmm_context {
 extern bool VmOff;
 extern unsigned g_num_processors;
 extern _vmm_context* vmm_context;
+
+uint64_t VirtualToPhysicalAddress(void* virtual_address) {
+	PHYSICAL_ADDRESS physAddr;
+
+	physAddr = MmGetPhysicalAddress(virtual_address);
+	return physAddr.QuadPart;
+}
