@@ -16,6 +16,8 @@ namespace hv {
 		//
 		// ExAllocatePool2 - Memory is zero initialized unless POOL_FLAG_UNINITIALIZED is specified.
 		//
+		vmm_context = reinterpret_cast<_vmm_context*>
+			(ExAllocatePoolWithTag(NonPagedPool, sizeof(_vmm_context) * g_num_processors, VMM_POOL_TAG);
 
 		for (unsigned iter = 0; iter < g_num_processors; iter++) {
 
