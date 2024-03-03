@@ -1,12 +1,15 @@
 #include "stdafx.h"
 //#include "logger.hpp"
 //#include "vmutils.hpp"
+using uchar = unsigned char;
 
 namespace vmx {
 	auto vmxIsVmxAvailable() -> bool;
 	auto vmxIsVmxSupport() -> bool;
 	auto vmxCheckBiosLock() -> bool;
 	auto vmxEnableCR4() -> void;
+
+	auto vmxAllocateVmxonRegion(uchar) -> bool;
 }
 
 namespace hv {

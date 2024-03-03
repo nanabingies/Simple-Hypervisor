@@ -1,5 +1,4 @@
 #include "vmx.hpp"
-using ept::checkEPTSupport;
 
 namespace vmx {
 	auto vmxIsVmxAvailable() -> bool {
@@ -23,6 +22,7 @@ namespace vmx {
 		//
 		// Check for EPT support for all processors
 		//
+		using ept::checkEPTSupport;
 		if (!checkEPTSupport())	return false;
 
 
@@ -140,5 +140,49 @@ namespace vmx {
 		}
 
 		return;
+	}
+
+	auto vmxAllocateVmxonRegion(uchar processor_number) -> bool {
+		PAGED_CODE();
+
+		if (!vmm_context) {
+			LOG("[-] Unspecified VMM context for processor %x\n", processor_number);
+			LOG_ERROR();
+			return false;
+		}
+
+		PHYSICAL_ADDRESS phys_addr;
+		phys_addr.QuadPart = static_cast<uint64_t>(~0);
+
+		ia32_vmx_basic_register vmx_basic;
+		vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
+
+		void* vmxon = MmAllocateContiguousMemory(vmx_basic.vmcs_size_in_bytes, phys_addr);
+		if (!vmxon) {
+			LOG("[-] Allocating vmxon failed.\n");
+			LOG_ERROR();
+			return FALSE;
+		}
+
+		RtlSecureZeroMemory(vmxon, vmx_basic.vmcs_size_in_bytes);
+		LOG("[*] Allocated vmxon at %llx with size %llx\n", reinterpret_cast<uint64_t>(vmxon), vmx_basic.vmcs_size_in_bytes);
+
+		*reinterpret_cast<uint64_t*>(vmxon) = vmx_basic.vmcs_revision_id;
+
+		vmm_context[processor_number].vmxon_region_virt_addr = reinterpret_cast<uint64_t>(vmxon);
+		vmm_context[processor_number].vmxon_region_phys_addr = VirtualToPhysicalAddress(vmxon);
+
+		//
+		// Execute VMXON
+		//
+		auto ret = __vmx_on(&vmm_context[processor_number].vmxon_region_phys_addr);
+		if (ret > 0) {
+			LOG("[-] Failed vmxon with error code %x\n", ret);
+			LOG_ERROR();
+			return false;
+		}
+
+		LOG("[*] vmxon initialized on logical processor %x\n", processor_number);
+		return true;
 	}
 }
