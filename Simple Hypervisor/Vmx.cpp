@@ -1,4 +1,5 @@
 #include "vmx.hpp"
+using ept::checkEPTSupport;
 
 namespace vmx {
 	auto vmxIsVmxAvailable() -> bool {
@@ -22,7 +23,6 @@ namespace vmx {
 		//
 		// Check for EPT support for all processors
 		//
-		using ept::checkEPTSupport;
 		if (!checkEPTSupport())	return false;
 
 
