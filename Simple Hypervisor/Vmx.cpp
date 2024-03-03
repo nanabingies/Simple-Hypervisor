@@ -1,29 +1,29 @@
 #include "vmx.hpp"
 
 namespace vmx {
-	auto VmxIsVmxAvailable() -> bool {
+	auto vmxIsVmxAvailable() -> bool {
 		PAGED_CODE();
 
 		//
 		// Check VMX Support for all Logical Processors
 		//
-		if (!VmxIsVmxSupport())	return false;
+		if (!vmxIsVmxSupport())	return false;
 
 		//
 		// Check Bios Lock Bit
 		//
-		if (!VmxCheckBiosLock())	return false;
+		if (!vmxCheckBiosLock())	return false;
 
 		//
 		// Enable VMXE for all processors
 		//
-		VmxEnableCR4();
+		vmxEnableCR4();
 
 		//
 		// Check for EPT support for all processors
 		//
-		using ept::CheckEPTSupport();
-		if (CheckEPTSupport() == FALSE)	return FALSE;
+		using ept::checkEPTSupport;
+		if (checkEPTSupport() == FALSE)	return FALSE;
 
 
 		LOG("[*] Initial checks completed.\n");
@@ -37,7 +37,7 @@ namespace vmx {
 		return TRUE;
 	}
 
-	auto VmxIsVmxSupport() -> bool {
+	auto vmxIsVmxSupport() -> bool {
 		PAGED_CODE();
 
 		PROCESSOR_NUMBER processor_number;
@@ -70,7 +70,7 @@ namespace vmx {
 		return true;
 	}
 
-	auto VmxCheckBiosLock() -> bool {
+	auto vmxCheckBiosLock() -> bool {
 		PAGED_CODE();
 
 		PROCESSOR_NUMBER processor_number;
@@ -110,7 +110,7 @@ namespace vmx {
 		return true;
 	}
 
-	auto VmxEnableCR4() -> void {
+	auto vmxEnableCR4() -> void {
 		PAGED_CODE();
 
 		PROCESSOR_NUMBER processor_number;
