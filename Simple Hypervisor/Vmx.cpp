@@ -39,11 +39,10 @@ namespace vmx {
 	auto VmxIsVmxSupport() -> bool {
 		PAGED_CODE();
 
-		ulong num_processors = KeQueryActiveProcessorCount(NULL);
 		PROCESSOR_NUMBER processor_number;
 		GROUP_AFFINITY affinity, old_affinity;
 
-		for (unsigned iter = 0; iter < num_processors; iter++) {
+		for (unsigned iter = 0; iter < g_num_processors; iter++) {
 			KeGetProcessorNumberFromIndex(iter, &processor_number);
 
 			RtlSecureZeroMemory(&affinity, sizeof(GROUP_AFFINITY));
@@ -53,7 +52,7 @@ namespace vmx {
 
 			auto irql = KeRaiseIrqlToDpcLevel();
 
-			LOG("[*] Checking processor (%x) VMX support.....\n", iter);
+			LOG("[*] Checking processor (%x) VMX support.....\n", processor_number.Number);
 			cpuid_eax_01 args{};
 			__cpuid(reinterpret_cast<int32_t*>(&args), 1);
 
@@ -73,11 +72,10 @@ namespace vmx {
 	auto VmxCheckBiosLock() -> bool {
 		PAGED_CODE();
 
-		ulong num_processors = KeQueryActiveProcessorCount(NULL);
 		PROCESSOR_NUMBER processor_number;
 		GROUP_AFFINITY affinity, old_affinity;
 
-		for (unsigned iter = 0; iter < num_processors; iter++) {
+		for (unsigned iter = 0; iter < g_num_processors; iter++) {
 			KeGetProcessorNumberFromIndex(iter, &processor_number);
 
 			RtlSecureZeroMemory(&affinity, sizeof(GROUP_AFFINITY));
@@ -114,11 +112,10 @@ namespace vmx {
 	auto VmxEnableCR4() -> void {
 		PAGED_CODE();
 
-		ulong num_processors = KeQueryActiveProcessorCount(NULL);
 		PROCESSOR_NUMBER processor_number;
 		GROUP_AFFINITY affinity, old_affinity;
 
-		for (unsigned iter = 0; iter < num_processors; iter++) {
+		for (unsigned iter = 0; iter < g_num_processors; iter++) {
 			KeGetProcessorNumberFromIndex(iter, &processor_number);
 
 			RtlSecureZeroMemory(&affinity, sizeof(GROUP_AFFINITY));

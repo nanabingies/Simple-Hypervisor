@@ -1,16 +1,17 @@
 #include "vmx.hpp"
 #include "stdafx.h"
 #include "logger.hpp"
-using hv::DevirtualizeAllProcessors;
 
 extern "C" {
 
 	auto DriverUnload(_In_ PDRIVER_OBJECT driver_object) -> void {
+		using hv::DevirtualizeAllProcessors;
+
 		LOG("[*] Terminating VMs on processors...");
 
 		// Uninstall vmx on all processors
 		/*if (!VmOff) {
-			hv::DevirtualizeAllProcessors();
+			DevirtualizeAllProcessors();
 			VmOff = true;
 		}*/
 
@@ -33,7 +34,7 @@ extern "C" {
 	}
 
 	bool VmOff;
-	int g_num_processors;
+	unsigned g_num_processors;
 
 	auto DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING registry_path) -> NTSTATUS {
 		using hv::VirtualizeAllProcessors;
@@ -47,10 +48,10 @@ extern "C" {
 		// https://msdn.microsoft.com/en-us/library/windows/hardware/hh920402(v=vs.85).aspx
 		ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
 
-		ulong num_processors = KeQueryActiveProcessorCount(NULL);
-		LOG("[*] Current active processors : %x\n", num_processors);
+		g_num_processors = KeQueryActiveProcessorCount(NULL);
+		LOG("[*] Current active processors : %x\n", g_num_processors);
 
-		LOG("[*] Num processors : %x\n", KeNumberProcessors);
+		//LOG("[*] Num processors : %x\n", KeNumberProcessors);
 
 		NTSTATUS status;
 		UNICODE_STRING drv_name;
