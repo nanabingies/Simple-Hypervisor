@@ -72,7 +72,7 @@ extern "C" {
 
 		if (!vmxIsVmxAvailable())	return STATUS_FAILED_DRIVER_ENTRY;
 
-		//if (!hv::VirtualizeAllProcessors())	return STATUS_FAILED_DRIVER_ENTRY;
+		if (!virtualizeAllProcessors())	return STATUS_FAILED_DRIVER_ENTRY;
 
 		LOG("[*] The hypervisor has been installed.\n");
 
