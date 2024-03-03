@@ -1,8 +1,8 @@
 #pragma once
 
-#define DRV_NAME	L"\\Device\\Hypervisor"
-#define DOS_NAME	L"\\DosDevices\\Hypervisor"
-#define VMM_POOL	'tesT'
+#define DRV_NAME		L"\\Device\\Hypervisor"
+#define DOS_NAME		L"\\DosDevices\\Hypervisor"
+#define VMM_POOL_TAG	'tesT'
 
 struct _vmm_context {
 	uint64_t	vmxon_region_virt_addr;				// Virtual address of VMXON Region
