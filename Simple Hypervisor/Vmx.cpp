@@ -1,5 +1,7 @@
 #include "vmx.hpp"
 
+_vmm_context* vmm_context;
+
 namespace vmx {
 	auto vmxIsVmxAvailable() -> bool {
 		PAGED_CODE();
