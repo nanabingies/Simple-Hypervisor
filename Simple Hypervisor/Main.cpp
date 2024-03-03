@@ -10,10 +10,10 @@ extern "C" {
 		LOG("[*] Terminating VMs on processors...");
 
 		// Uninstall vmx on all processors
-		/*if (!VmOff) {
-			DevirtualizeAllProcessors();
+		if (!VmOff) {
+			devirtualizeAllProcessors();
 			VmOff = true;
-		}*/
+		}
 
 		if (driver_object->DeviceObject != nullptr) {
 			IoDeleteDevice(driver_object->DeviceObject);
