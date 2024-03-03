@@ -5,6 +5,8 @@
 #define DOS_NAME		L"\\DosDevices\\Hypervisor"
 #define VMM_POOL_TAG	'tesT'
 
+#define HOST_STACK_SIZE  (20 * PAGE_SIZE)
+
 struct _vmm_context {
 	uint64_t	vmxon_region_virt_addr;				// Virtual address of VMXON Region
 	uint64_t	vmxon_region_phys_addr;				// Physical address of VMXON Region
