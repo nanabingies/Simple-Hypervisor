@@ -45,7 +45,7 @@ struct _vmm_context {
 
 extern bool VmOff;
 extern unsigned g_num_processors;
-inline _vmm_context* vmm_context;
+extern _vmm_context* vmm_context;
 
 inline uint64_t physicalToVirtualAddress(uint64_t physical_address) {
 	PHYSICAL_ADDRESS physAddr;

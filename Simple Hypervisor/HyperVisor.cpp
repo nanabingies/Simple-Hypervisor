@@ -73,4 +73,8 @@ namespace hv {
 
 		return true;
 	}
+
+	auto devirtualizeAllProcessors() -> void {
+
+	}
 }
