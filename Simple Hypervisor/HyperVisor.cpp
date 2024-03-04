@@ -129,6 +129,59 @@ namespace hv {
 	}
 
 	auto launchVM(unsigned __int64) -> unsigned __int64 {
+		ulong processor_number = KeGetCurrentProcessorNumber();
+
+		//
+		// Set VMCS state to inactive
+		//
+		unsigned char ret = __vmx_vmclear(&vmm_context[processor_number].vmcs_region_phys_addr);
+		if (ret > 0) {
+			LOG("[-] VMCLEAR operation failed.\n");
+			LOG_ERROR();
+			return 0;
+		}
+		LOG("[*] VMCS for processor (%x) set to inactive.\n", processor_number);
+
+		//
+		//  Make VMCS the current and active on that processor
+		//
+		ret = __vmx_vmptrld(&vmm_context[processor_number].vmcs_region_phys_addr);
+		if (ret > 0) {
+			LOG("[-] VMPTRLD operation failed.\n");
+			LOG_ERROR();
+			return 0;
+		}
+		LOG("[*] VMCS is current and active on processor %x\n", processor_number);
+
+		//
+		// Setup VMCS structure fields for that logical processor
+		//
+		// SetupVmcs(processorNumber)
+		if (AsmSetupVmcs(processor_number) != VM_ERROR_OK) {
+			DbgPrint("[-] Failure setting Virtual Machine VMCS.\n");
+
+			size_t ErrorCode = 0;
+			__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &ErrorCode);
+			DbgPrint("[-] Exiting with error code : %llx\n", ErrorCode);
+			LOG_ERROR();
+			return 0;
+		}
+		DbgPrint("[*] VMCS setup on processor %x done\n", processor_number);
+
+
+
+		//
+		// Launch VM into Outer Space :)
+		//
+		__vmx_vmlaunch();
+
+		// We should never get here
+		DbgBreakPoint();
+		LOG("[-] Failure launching Virtual Machine.\n");
+
+		size_t ErrorCode = 0;
+		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &ErrorCode);
+		LOG("[-] Exiting with error code : %llx\n", ErrorCode);
 
 		return 0;
 	}
