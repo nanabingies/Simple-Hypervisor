@@ -20,4 +20,6 @@ namespace hv {
 	auto virtualizeAllProcessors() -> bool;
 
 	auto devirtualizeAllProcessors() -> void;
+
+	auto launchVM(unsigned __int64) -> unsigned __int64;
 }

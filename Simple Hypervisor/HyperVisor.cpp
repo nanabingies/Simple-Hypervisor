@@ -127,4 +127,10 @@ namespace hv {
 
 		return;
 	}
+
+	auto launchVM(unsigned __int64) -> unsigned __int64 {
+
+		return 0;
+	}
+
 }
