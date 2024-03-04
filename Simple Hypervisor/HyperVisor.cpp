@@ -129,7 +129,7 @@ namespace hv {
 	}
 
 	auto launchVM(unsigned __int64) -> unsigned __int64 {
-		ulong processor_number = KeGetCurrentProcessorNumber();
+		auto processor_number = KeGetCurrentProcessorNumber();
 
 		//
 		// Set VMCS state to inactive
@@ -173,15 +173,15 @@ namespace hv {
 		//
 		// Launch VM into Outer Space :)
 		//
-		__vmx_vmlaunch();
+		//__vmx_vmlaunch();
 
 		// We should never get here
-		DbgBreakPoint();
-		LOG("[-] Failure launching Virtual Machine.\n");
+		//DbgBreakPoint();
+		//LOG("[-] Failure launching Virtual Machine.\n");
 
-		size_t ErrorCode = 0;
-		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &ErrorCode);
-		LOG("[-] Exiting with error code : %llx\n", ErrorCode);
+		//size_t ErrorCode = 0;
+		//__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &ErrorCode);
+		//LOG("[-] Exiting with error code : %llx\n", ErrorCode);
 
 		return 0;
 	}

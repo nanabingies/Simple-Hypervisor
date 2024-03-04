@@ -27,4 +27,6 @@ enum SEGREGS {
     TR
 };
 
-extern "C" auto inline asmSetupVmcs(unsigned long) -> EVmErrors;
+extern "C" auto inline asm_setup_vmcs(unsigned long) -> EVmErrors;
+
+auto setup_vmcs(unsigned long, void*) -> EVmErrors;

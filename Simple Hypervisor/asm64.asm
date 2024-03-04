@@ -2,9 +2,11 @@
 ;PUBLIC	asmHostContinueExecution
 ;PUBLIC	asmGuestContinueExecution
 ;PUBLIC	hostTerminateHypervisor
-PUBLIC  asmSetupVmcs
+PUBLIC  asm_setup_vmcs
 ;PUBLIC	asmInveptGlobal
 ;PUBLIC	asmInveptContext
+
+;EXTERN	setupVmcs:PROC
 
 .CONST
 VM_ERROR_OK				EQU		00h
@@ -13,7 +15,7 @@ VM_ERROR_ERR_INFO_ERR	EQU		02h
 
 .code _text
 
-asmSetupVmcs PROC
+asm_setup_vmcs PROC
 	int		3
 	
 	PUSHFQ
@@ -44,7 +46,7 @@ asmSetupVmcs PROC
 
 	MOV		RDX, RSP
 	SUB		RSP, 020h
-    ;CALL	SetupVmcs
+    CALL	setup_vmcs
     ADD		RSP, 020h
 
 	MOVDQA  XMM0, xmmword ptr [RSP]
@@ -76,6 +78,6 @@ asmSetupVmcs PROC
 	POPFQ
 	RET
 
-AsmSetupVmcs ENDP
+asm_setup_vmcs ENDP
 
 END
