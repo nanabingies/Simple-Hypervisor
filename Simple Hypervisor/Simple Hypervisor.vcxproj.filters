@@ -65,9 +65,6 @@
     <ClInclude Include="VmUtils.hpp">
       <Filter>VmUtils</Filter>
     </ClInclude>
-    <ClInclude Include="ia32.h">
-      <Filter>VmUtils</Filter>
-    </ClInclude>
     <ClInclude Include="Vmcs.hpp">
       <Filter>Vmcs</Filter>
     </ClInclude>
@@ -79,6 +76,9 @@
     </ClInclude>
     <ClInclude Include="ia32.hpp">
       <Filter>VmUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="logger.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

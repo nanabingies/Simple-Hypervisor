@@ -157,7 +157,7 @@ namespace hv {
 		// Setup VMCS structure fields for that logical processor
 		//
 		// SetupVmcs(processorNumber)
-		if (AsmSetupVmcs(processor_number) != VM_ERROR_OK) {
+		if (asmSetupVmcs(processor_number) != VM_ERROR_OK) {
 			DbgPrint("[-] Failure setting Virtual Machine VMCS.\n");
 
 			size_t ErrorCode = 0;
