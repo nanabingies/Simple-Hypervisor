@@ -2,23 +2,23 @@
 _vmm_context* vmm_context;
 
 namespace vmx {
-	auto vmxIsVmxAvailable() -> bool {
+	auto vmx_is_vmx_available() -> bool {
 		PAGED_CODE();
 
 		//
 		// Check VMX Support for all Logical Processors
 		//
-		if (!vmxIsVmxSupport())	return false;
+		if (!vmx_is_vmx_support())	return false;
 
 		//
 		// Check Bios Lock Bit
 		//
-		if (!vmxCheckBiosLock())	return false;
+		if (!vmx_check_bios_lock())	return false;
 
 		//
 		// Enable VMXE for all processors
 		//
-		vmxEnableCR4();
+		vmx_enable_cr4();
 
 		//
 		// Check for EPT support for all processors
@@ -38,7 +38,7 @@ namespace vmx {
 		return TRUE;
 	}
 
-	auto vmxIsVmxSupport() -> bool {
+	auto vmx_is_vmx_support() -> bool {
 		PAGED_CODE();
 
 		PROCESSOR_NUMBER processor_number;
@@ -71,7 +71,7 @@ namespace vmx {
 		return true;
 	}
 
-	auto vmxCheckBiosLock() -> bool {
+	auto vmx_check_bios_lock() -> bool {
 		PAGED_CODE();
 
 		PROCESSOR_NUMBER processor_number;
@@ -111,7 +111,7 @@ namespace vmx {
 		return true;
 	}
 
-	auto vmxEnableCR4() -> void {
+	auto vmx_enable_cr4() -> void {
 		PAGED_CODE();
 
 		PROCESSOR_NUMBER processor_number;
@@ -143,7 +143,7 @@ namespace vmx {
 		return;
 	}
 
-	auto vmxAllocateVmxonRegion(uchar processor_number) -> bool {
+	auto vmx_allocate_vmxon_region(uchar processor_number) -> bool {
 		PAGED_CODE();
 
 		if (!vmm_context) {
@@ -187,7 +187,7 @@ namespace vmx {
 		return true;
 	}
 
-	auto vmxAllocateVmcsRegion(uchar processor_number) -> bool {
+	auto vmx_allocate_vmcs_region(uchar processor_number) -> bool {
 		PAGED_CODE();
 
 		if (!vmm_context) {
@@ -231,7 +231,7 @@ namespace vmx {
 		return true;
 	}
 
-	auto vmxAllocateVmExitStack(uchar processor_number) -> bool {
+	auto vmx_allocate_vmexit_stack(uchar processor_number) -> bool {
 		PAGED_CODE();
 
 		PHYSICAL_ADDRESS phys_addr;
@@ -251,7 +251,7 @@ namespace vmx {
 		return true;
 	}
 
-	auto vmxAllocateIoBitmapStack(uchar processor_number) -> bool {
+	auto vmx_allocate_io_bitmap_stack(uchar processor_number) -> bool {
 		PAGED_CODE();
 
 		PHYSICAL_ADDRESS phys_addr;
@@ -291,7 +291,7 @@ namespace vmx {
 		return true;
 	}
 
-	auto vmxAllocateMsrBitmap(uchar processor_number) -> bool {
+	auto vmx_allocate_msr_bitmap(uchar processor_number) -> bool {
 		PAGED_CODE();
 
 		PHYSICAL_ADDRESS phys_addr;
