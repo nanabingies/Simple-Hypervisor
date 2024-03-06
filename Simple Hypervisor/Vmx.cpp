@@ -171,7 +171,7 @@ namespace vmx {
 		*reinterpret_cast<uint64_t*>(vmxon) = vmx_basic.vmcs_revision_id;
 
 		vmm_context[processor_number].vmxon_region_virt_addr = reinterpret_cast<uint64_t>(vmxon);
-		vmm_context[processor_number].vmxon_region_phys_addr = virtualToPhysicalAddress(vmxon);
+		vmm_context[processor_number].vmxon_region_phys_addr = virtual_to_physical_address(vmxon);
 
 		//
 		// Execute VMXON
@@ -215,7 +215,7 @@ namespace vmx {
 		*reinterpret_cast<uint64_t*>(vmcs) = vmx_basic.vmcs_revision_id;
 
 		vmm_context[processor_number].vmcs_region_virt_addr = reinterpret_cast<UINT64>(vmcs);
-		vmm_context[processor_number].vmcs_region_phys_addr = static_cast<uint64_t>(virtualToPhysicalAddress(vmcs));
+		vmm_context[processor_number].vmcs_region_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(vmcs));
 
 		//
 		// Load current VMCS and make it active
@@ -266,7 +266,7 @@ namespace vmx {
 		RtlSecureZeroMemory(bitmap, PAGE_SIZE);
 
 		vmm_context[processor_number].io_bitmap_a_virt_addr = reinterpret_cast<uint64_t>(bitmap);
-		vmm_context[processor_number].io_bitmap_a_phys_addr = static_cast<uint64_t>(virtualToPhysicalAddress(bitmap));
+		vmm_context[processor_number].io_bitmap_a_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(bitmap));
 
 		phys_addr.QuadPart = static_cast<ULONGLONG>(~0);
 		bitmap = MmAllocateContiguousMemory(PAGE_SIZE, phys_addr);
@@ -278,7 +278,7 @@ namespace vmx {
 		RtlSecureZeroMemory(bitmap, PAGE_SIZE);
 
 		vmm_context[processor_number].io_bitmap_b_virt_addr = reinterpret_cast<uint64_t>(bitmap);
-		vmm_context[processor_number].io_bitmap_b_phys_addr = static_cast<uint64_t>(virtualToPhysicalAddress(bitmap));
+		vmm_context[processor_number].io_bitmap_b_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(bitmap));
 
 		LOG("[*] vmm_context[%x].io_bitmap_a_virt_addr : %llx\n", processor_number, vmm_context[processor_number].io_bitmap_a_virt_addr);
 		LOG("[*] vmm_context[%x].io_bitmap_b_virt_addr : %llx\n", processor_number, vmm_context[processor_number].io_bitmap_b_virt_addr);
@@ -306,7 +306,7 @@ namespace vmx {
 		RtlSecureZeroMemory(bitmap, PAGE_SIZE);
 
 		vmm_context[processor_number].msr_bitmap_virt_addr = reinterpret_cast<uint64_t>(bitmap);
-		vmm_context[processor_number].msr_bitmap_phys_addr = static_cast<uint64_t>(virtualToPhysicalAddress(bitmap));
+		vmm_context[processor_number].msr_bitmap_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(bitmap));
 
 		return true;
 	}
