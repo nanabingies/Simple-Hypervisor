@@ -6,7 +6,7 @@ PUBLIC  asm_setup_vmcs
 ;PUBLIC	asmInveptGlobal
 ;PUBLIC	asmInveptContext
 
-EXTERN	setup_vmcs:PROC
+EXTERN	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX@Z:PROC
 
 .CONST
 VM_ERROR_OK				EQU		00h
@@ -46,7 +46,7 @@ asm_setup_vmcs PROC
 
 	MOV		RDX, RSP
 	SUB		RSP, 020h
-    CALL	setup_vmcs
+    CALL	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX@Z
     ADD		RSP, 020h
 
 	MOVDQA  XMM0, xmmword ptr [RSP]
