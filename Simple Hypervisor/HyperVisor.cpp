@@ -1,4 +1,4 @@
-#include "vmx.hpp"
+#include "stdafx.h"
 #pragma warning(disable: 4996)
 
 namespace hv {
@@ -157,7 +157,7 @@ namespace hv {
 		// Setup VMCS structure fields for that logical processor
 		//
 		// SetupVmcs(processorNumber)
-		if (setup_vmcs(processor_number) != VM_ERROR_OK) {
+		if (asm_setup_vmcs(processor_number) != VM_ERROR_OK) {
 			DbgPrint("[-] Failure setting Virtual Machine VMCS.\n");
 
 			size_t ErrorCode = 0;

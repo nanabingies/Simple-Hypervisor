@@ -6,7 +6,7 @@ PUBLIC  asm_setup_vmcs
 ;PUBLIC	asmInveptGlobal
 ;PUBLIC	asmInveptContext
 
-;EXTERN	setupVmcs:PROC
+EXTERN	setup_vmcs:PROC
 
 .CONST
 VM_ERROR_OK				EQU		00h

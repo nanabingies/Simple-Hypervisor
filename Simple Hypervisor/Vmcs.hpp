@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#pragma once
 
 #define RPL_MASK                3
 #define SELECTOR_TABLE_INDEX    0x04

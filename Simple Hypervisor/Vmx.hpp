@@ -1,6 +1,4 @@
-#include "stdafx.h"
-//#include "logger.hpp"
-//#include "vmutils.hpp"
+#pragma once
 using uchar = unsigned char;
 
 namespace vmx {

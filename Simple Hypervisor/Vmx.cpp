@@ -1,5 +1,4 @@
-#include "vmx.hpp"
-
+#include "stdafx.h"
 _vmm_context* vmm_context;
 
 namespace vmx {
