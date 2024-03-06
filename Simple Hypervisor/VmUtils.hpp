@@ -43,7 +43,7 @@ struct _vmm_context {
 	//ept_state* ept_state;
 };
 
-extern bool VmOff;
+extern bool vm_off;
 extern unsigned g_num_processors;
 extern _vmm_context* vmm_context;
 
