@@ -5,14 +5,14 @@
 extern "C" {
 
 	auto DriverUnload(_In_ PDRIVER_OBJECT driver_object) -> void {
-		using hv::devirtualizeAllProcessors;
+		using hv::devirtualize_all_processors;
 
 		LOG("[*] Terminating VMs on processors...");
 
 		// Uninstall vmx on all processors
-		if (!VmOff) {
-			devirtualizeAllProcessors();
-			VmOff = true;
+		if (!vm_off) {
+			devirtualize_all_processors();
+			vm_off = true;
 		}
 
 		if (driver_object->DeviceObject != nullptr) {
@@ -33,17 +33,17 @@ extern "C" {
 		return STATUS_SUCCESS;
 	}
 
-	bool VmOff;
+	bool vm_off;
 	unsigned g_num_processors;
 
 	auto DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING registry_path) -> NTSTATUS {
-		using hv::virtualizeAllProcessors;
-		using hv::launchVM;
-		using vmx::vmxIsVmxAvailable;
+		using hv::virtualize_all_processors;
+		using hv::launch_vm;
+		using vmx::vmx_is_vmx_available;
 
 		LOG("[*] Loading file %wZ", registry_path);
 
-		VmOff = false;
+		vm_off = false;
 
 		// Opt-in to using non-executable pool memory on Windows 8 and later.
 		// https://msdn.microsoft.com/en-us/library/windows/hardware/hh920402(v=vs.85).aspx
@@ -71,11 +71,11 @@ extern "C" {
 		}
 		driver_object->DriverUnload = DriverUnload;
 
-		if (!vmxIsVmxAvailable())	return STATUS_FAILED_DRIVER_ENTRY;
+		if (!vmx_is_vmx_available())	return STATUS_FAILED_DRIVER_ENTRY;
 
-		if (!virtualizeAllProcessors())	return STATUS_FAILED_DRIVER_ENTRY;
+		if (!virtualize_all_processors())	return STATUS_FAILED_DRIVER_ENTRY;
 
-		KeIpiGenericCall(static_cast<PKIPI_BROADCAST_WORKER>(launchVM), 0);
+		KeIpiGenericCall(static_cast<PKIPI_BROADCAST_WORKER>(launch_vm), 0);
 
 		LOG("[*] The hypervisor has been installed.\n");
 
