@@ -2,12 +2,12 @@
 #pragma warning(disable: 4996)
 
 namespace hv {
-	auto virtualizeAllProcessors() -> bool {
-		using vmx::vmxAllocateVmxonRegion;
-		using vmx::vmxAllocateVmcsRegion;
-		using vmx::vmxAllocateVmExitStack;
-		using vmx::vmxAllocateIoBitmapStack;
-		using vmx::vmxAllocateMsrBitmap;
+	auto virtualize_all_processors() -> bool {
+		using vmx::vmx_allocate_vmxon_region;
+		using vmx::vmx_allocate_vmcs_region;
+		using vmx::vmx_allocate_vmexit_stack;
+		using vmx::vmx_allocate_io_bitmap_stack;
+		using vmx::vmx_allocate_msr_bitmap;
 
 		PAGED_CODE();
 
@@ -43,24 +43,24 @@ namespace hv {
 			//
 			// Allocate Memory for VMXON & VMCS regions and initialize
 			//
-			if (!vmxAllocateVmxonRegion(processor_number.Number))		return false;
-			if (!vmxAllocateVmcsRegion(processor_number.Number))		return false;
+			if (!vmx_allocate_vmxon_region(processor_number.Number))		return false;
+			if (!vmx_allocate_vmcs_region(processor_number.Number))		return false;
 
 			//
 			// Allocate space for VM EXIT Handler
 			//
-			if (!vmxAllocateVmExitStack(processor_number.Number))		return false;
+			if (!vmx_allocate_vmexit_stack(processor_number.Number))		return false;
 
 			//
 			// Allocate memory for IO Bitmap
 			//
-			if (!vmxAllocateIoBitmapStack(processor_number.Number))			return false;
+			if (!vmx_allocate_io_bitmap_stack(processor_number.Number))			return false;
 
 			//
 			// Future: Add MSR Bitmap support
 			// Update: Added MSR Bitmap support
 			//
-			if (!vmxAllocateMsrBitmap(processor_number.Number))			return false;
+			if (!vmx_allocate_msr_bitmap(processor_number.Number))			return false;
 
 			//
 			// Setup EPT support for that processor
@@ -74,7 +74,7 @@ namespace hv {
 		return true;
 	}
 
-	auto devirtualizeAllProcessors() -> void {
+	auto devirtualize_all_processors() -> void {
 		PROCESSOR_NUMBER processor_number;
 		GROUP_AFFINITY affinity, old_affinity;
 
@@ -128,7 +128,7 @@ namespace hv {
 		return;
 	}
 
-	auto launchVM(unsigned __int64) -> unsigned __int64 {
+	auto launch_vm(unsigned __int64) -> unsigned __int64 {
 		auto processor_number = KeGetCurrentProcessorNumber();
 
 		//
