@@ -26,5 +26,5 @@ namespace hv {
 }
 
 namespace vmexit {
-	auto vmexit_handler(void* guest_regs) -> void;
+	auto vmexit_handler(void* guest_regs) -> short;
 }
