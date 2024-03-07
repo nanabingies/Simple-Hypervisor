@@ -157,29 +157,29 @@ namespace hv {
 		// Setup VMCS structure fields for that logical processor
 		//
 		if (asm_setup_vmcs(processor_number) != VM_ERROR_OK) {
-			DbgPrint("[-] Failure setting Virtual Machine VMCS.\n");
+			LOG("[-] Failure setting Virtual Machine VMCS.\n");
 
-			size_t ErrorCode = 0;
-			__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &ErrorCode);
-			DbgPrint("[-] Exiting with error code : %llx\n", ErrorCode);
+			size_t error_code = 0;
+			__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &error_code);
+			LOG("[-] Exiting with error code : %llx\n", error_code);
 			LOG_ERROR();
 			return 0;
 		}
-		DbgPrint("[*] VMCS setup on processor %x done\n", processor_number);
+		LOG("[*] VMCS setup on processor %x done\n", processor_number);
 
 
 		//
 		// Launch VM into Outer Space :)
 		//
-		//__vmx_vmlaunch();
+		__vmx_vmlaunch();
 
 		// We should never get here
-		//DbgBreakPoint();
-		//LOG("[-] Failure launching Virtual Machine.\n");
+		DbgBreakPoint();
+		LOG("[-] Failure launching Virtual Machine.\n");
 
-		//size_t ErrorCode = 0;
-		//__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &ErrorCode);
-		//LOG("[-] Exiting with error code : %llx\n", ErrorCode);
+		size_t error_code = 0;
+		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &error_code);
+		LOG("[-] Exiting with error code : %llx\n", error_code);
 
 		return 0;
 	}
