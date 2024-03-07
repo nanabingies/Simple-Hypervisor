@@ -6,6 +6,13 @@ PUBLIC  asm_setup_vmcs
 ;PUBLIC	asmInveptGlobal
 ;PUBLIC	asmInveptContext
 
+PUBLIC	asm_get_tr
+PUBLIC	asm_get_ldtr
+PUBLIC	asm_get_idt_limit
+PUBLIC	asm_get_gdt_limit
+PUBLIC	asm_get_idt_base
+PUBLIC	asm_get_gdt_base
+
 EXTERN	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX@Z:PROC
 
 .CONST
@@ -79,5 +86,51 @@ asm_setup_vmcs PROC
 	RET
 
 asm_setup_vmcs ENDP
+
+;--------------------------------------------------------------------------------------------
+
+asm_get_idt_base PROC
+	LOCAL	IDTR[10]:BYTE
+	SIDT	IDTR
+	MOV		RAX, QWORD PTR IDTR[2]
+	RET
+asm_get_idt_base ENDP
+
+asm_get_gdt_limit PROC
+	LOCAL	GDTR[10]:BYTE
+	SGDT	GDTR
+	MOV		AX, WORD PTR GDTR[0]
+	RET
+asm_get_gdt_limit ENDP
+
+asm_get_idt_limit PROC
+	LOCAL	IDTR[10]:BYTE
+	SIDT	IDTR
+	MOV		AX, WORD PTR IDTR[0]
+	RET
+asm_get_idt_limit ENDP
+
+asm_get_rflags PROC
+	PUSHFQ
+	POP		RAX
+	RET
+asm_get_rflags ENDP
+
+asm_get_gdt_base PROC
+	LOCAL	GDTR[10]:BYTE
+	SGDT	GDTR
+	MOV		RAX, QWORD PTR GDTR[2]
+	RET
+asm_get_gdt_base ENDP
+
+asm_get_ldtr PROC
+	SLDT	RAX
+	RET
+asm_get_ldtr ENDP
+
+asm_get_tr PROC
+	STR		RAX
+	RET
+asm_get_tr ENDP
 
 END
