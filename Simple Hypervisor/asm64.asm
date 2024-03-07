@@ -24,6 +24,43 @@ VM_ERROR_ERR_INFO_ERR	EQU		02h
 
 .code _text
 
+SAVE_GP macro
+        push    rax
+        push    rcx
+        push    rdx
+        push    rbx
+        push    -01h ; placeholder for rsp
+        push    rbp 
+        push    rsi
+        push    rdi
+        push    r8
+        push    r9
+        push    r10
+        push    r11
+        push    r12
+        push    r13
+        push    r14
+        push    r15
+endm
+RESTORE_GP macro
+        pop     r15
+        pop     r14
+        pop     r13
+        pop     r12
+        pop     r11
+        pop     r10
+        pop     r9
+        pop     r8
+        pop     rdi
+        pop     rsi
+        pop     rbp
+        pop     rbx ; placeholder for rsp
+        pop     rbx
+        pop     rdx
+        pop     rcx
+        pop     rax
+endm
+
 asm_host_continue_execution PROC
 	int 3		; A VM Exit just occured
 
@@ -66,6 +103,9 @@ asm_host_continue_execution PROC
     MOVDQA  XMM5, xmmword ptr [RSP + 50h]
 	ADD     RSP,  060h
 
+	test	al, al
+	jz		exit_vm
+
 	POP		R15
 	POP		R14
 	POP		R12
@@ -86,6 +126,9 @@ asm_host_continue_execution PROC
 	POPFQ
 		
     ;JMP resume_vm
+
+exit_vm:
+	
 
 	RET
 asm_host_continue_execution ENDP
