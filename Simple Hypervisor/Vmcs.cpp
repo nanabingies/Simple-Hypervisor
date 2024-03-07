@@ -109,16 +109,16 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp) -> EVmErrors {
 	vmm_context[processor_number].guest_rip = reinterpret_cast<size_t>(guest_rsp); //AsmGuestContinueExecution;
 	vmm_context[processor_number].guest_rsp = reinterpret_cast<size_t>(guest_rsp);
 
-	vmm_context[processor_number].host_rip = reinterpret_cast<size_t>(AsmHostContinueExecution);
+	vmm_context[processor_number].host_rip = reinterpret_cast<size_t>(asm_host_continue_execution);
 	vmm_context[processor_number].host_rsp =
 		(reinterpret_cast<size_t>(vmm_context[processor_number].host_stack) + 
-			HOST_STACK_SIZE - sizeof(void*) - sizeof(_GuestRegisters));
+			HOST_STACK_SIZE - sizeof(void*) - sizeof(guest_registers));
 
-	__vmx_vmwrite(VMCS_GUEST_RSP, vmm_context[processor_number].GuestRsp);
-	__vmx_vmwrite(VMCS_GUEST_RIP, vmm_context[processor_number].GuestRip);
+	__vmx_vmwrite(VMCS_GUEST_RSP, vmm_context[processor_number].guest_rsp);
+	__vmx_vmwrite(VMCS_GUEST_RIP, vmm_context[processor_number].guest_rip);
 	__vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags());
 
-	__vmx_vmwrite(VMCS_HOST_RSP, vmm_context[processor_number].HostRsp);
+	__vmx_vmwrite(VMCS_HOST_RSP, vmm_context[processor_number].host_rsp);
 	// Address host should point to, to kick things off when vmexit occurs
 	__vmx_vmwrite(VMCS_HOST_RIP, vmm_context[processor_number].host_rip);
 
@@ -129,10 +129,10 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp) -> EVmErrors {
 	CONTEXT ctx;
 	RtlCaptureContext(&ctx);
 
-	UINT64 gdtBase = GetGdtBase();
-	VMX_GDTENTRY64 vmxGdtEntry;
+	uint64_t gdtBase = asm_get_gdt_base();
+	vmx_gdtentry64 vmxGdtEntry;
 
-	ShvUtilConvertGdtEntry((void*)gdtBase, ctx.SegCs, &vmxGdtEntry);
+	ShvUtilConvertGdtEntry(reinterpret_cast<void*>(gdtBase), ctx.SegCs, &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_CS_SELECTOR, vmxGdtEntry.Selector);
 	__vmx_vmwrite(VMCS_GUEST_CS_BASE, vmxGdtEntry.Base);
@@ -191,38 +191,38 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp) -> EVmErrors {
 	__vmx_vmwrite(VMCS_GUEST_GS_BASE, __readmsr(IA32_GS_BASE));
 
 
-	ShvUtilConvertGdtEntry((void*)gdtBase, GetLdtr(), &vmxGdtEntry);
+	ShvUtilConvertGdtEntry((void*)gdtBase, asm_get_ldtr(), &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_LDTR_SELECTOR, vmxGdtEntry.Selector);
 	__vmx_vmwrite(VMCS_GUEST_LDTR_BASE, vmxGdtEntry.Base);
 	__vmx_vmwrite(VMCS_GUEST_LDTR_LIMIT, vmxGdtEntry.Limit);
 	__vmx_vmwrite(VMCS_GUEST_LDTR_ACCESS_RIGHTS, vmxGdtEntry.AccessRights);
-	__vmx_vmwrite(VMCS_GUEST_LDTR_BASE, GetLdtr() & 0xF8);
+	__vmx_vmwrite(VMCS_GUEST_LDTR_BASE, asm_get_ldtr() & 0xF8);
 
 	// There is no field in the host - state area for the LDTR selector.
 
 
-	ShvUtilConvertGdtEntry((void*)gdtBase, GetTr(), &vmxGdtEntry);
+	ShvUtilConvertGdtEntry((void*)gdtBase, asm_get_tr(), &vmxGdtEntry);
 
 	__vmx_vmwrite(VMCS_GUEST_TR_SELECTOR, vmxGdtEntry.Selector);	// GETTR() & 0xF8
 	__vmx_vmwrite(VMCS_GUEST_TR_BASE, vmxGdtEntry.Base);
 	__vmx_vmwrite(VMCS_GUEST_TR_LIMIT, vmxGdtEntry.Limit);
 	__vmx_vmwrite(VMCS_GUEST_TR_ACCESS_RIGHTS, vmxGdtEntry.AccessRights);
 
-	__vmx_vmwrite(VMCS_HOST_TR_SELECTOR, (GetTr() & 0xF8));
+	__vmx_vmwrite(VMCS_HOST_TR_SELECTOR, (asm_get_tr() & 0xF8));
 	__vmx_vmwrite(VMCS_HOST_TR_BASE, vmxGdtEntry.Base);
 
 	//
 	// GDTR and IDTR 
 	//
 
-	__vmx_vmwrite(VMCS_GUEST_GDTR_BASE, GetGdtBase());
-	__vmx_vmwrite(VMCS_GUEST_GDTR_LIMIT, GetGdtLimit());
-	__vmx_vmwrite(VMCS_HOST_GDTR_BASE, GetGdtBase());
+	__vmx_vmwrite(VMCS_GUEST_GDTR_BASE, asm_get_gdt_base());
+	__vmx_vmwrite(VMCS_GUEST_GDTR_LIMIT, asm_get_gdt_limit());
+	__vmx_vmwrite(VMCS_HOST_GDTR_BASE, asm_get_gdt_base());
 
-	__vmx_vmwrite(VMCS_GUEST_IDTR_BASE, GetIdtBase());
-	__vmx_vmwrite(VMCS_GUEST_IDTR_LIMIT, GetIdtLimit());
-	__vmx_vmwrite(VMCS_HOST_IDTR_BASE, GetIdtBase());
+	__vmx_vmwrite(VMCS_GUEST_IDTR_BASE, asm_get_idt_base());
+	__vmx_vmwrite(VMCS_GUEST_IDTR_LIMIT, asm_get_idt_limit());
+	__vmx_vmwrite(VMCS_HOST_IDTR_BASE, asm_get_idt_base());
 
 	//
 	// The various MSRs as documented in the Intel SDM - Guest & Host
@@ -247,7 +247,7 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp) -> EVmErrors {
 	//
 	// VMCS link pointer
 	//
-	__vmx_vmwrite(VMCS_GUEST_VMCS_LINK_POINTER, (size_t)(~0));
+	__vmx_vmwrite(VMCS_GUEST_VMCS_LINK_POINTER, static_cast<size_t>(~0));
 
 	//
 	// VM Execution Control Fields
@@ -264,7 +264,7 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp) -> EVmErrors {
 
 	__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
 		AdjustControls(IA32_VMX_PROCBASED_CTLS2_ENABLE_XSAVES_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_RDTSCP_FLAG |
-			IA32_VMX_PROCBASED_CTLS2_ENABLE_EPT_FLAG | IA32_VMX_PROCBASED_CTLS2_DESCRIPTOR_TABLE_EXITING_FLAG |
+			/*IA32_VMX_PROCBASED_CTLS2_ENABLE_EPT_FLAG |*/ IA32_VMX_PROCBASED_CTLS2_DESCRIPTOR_TABLE_EXITING_FLAG |
 			IA32_VMX_PROCBASED_CTLS2_ENABLE_VPID_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_INVPCID_FLAG,
 			IA32_VMX_PROCBASED_CTLS2));
 
@@ -298,19 +298,19 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp) -> EVmErrors {
 	__vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY_STATE, 0);
 	__vmx_vmwrite(VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS, 0);
 
-	__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_A_ADDRESS, vmm_context[processorNumber].ioBitmapAPhys);
-	__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_B_ADDRESS, vmm_context[processorNumber].ioBitmapBPhys);
+	__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_A_ADDRESS, vmm_context[processor_number].io_bitmap_a_phys_addr);
+	__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_B_ADDRESS, vmm_context[processor_number].io_bitmap_b_phys_addr);
 
-	__vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, vmm_context[processorNumber].msrBitmapPhys);
+	__vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, vmm_context[processor_number].msr_bitmap_phys_addr);
 
-	__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vmm_context[processorNumber].EptPtr);
+	//__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vmm_context[processor_number].EptPtr);
 	__vmx_vmwrite(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, KeGetCurrentProcessorNumberEx(NULL) + 1);
 
-	IA32_VMX_MISC_REGISTER misc;
-	misc.AsUInt = __readmsr(IA32_VMX_MISC);
-	__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, misc.Cr3TargetCount);
+	ia32_vmx_misc_register misc;
+	misc.flags = __readmsr(IA32_VMX_MISC);
+	__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, misc.cr3_target_count);
 
-	for (unsigned iter = 0; iter < misc.Cr3TargetCount; iter++) {
+	for (unsigned iter = 0; iter < misc.cr3_target_count; iter++) {
 		__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_0 + (iter * 2), 0);
 
 	}
