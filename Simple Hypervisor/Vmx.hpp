@@ -24,3 +24,7 @@ namespace hv {
 	auto resume_vm(uchar) -> void;
 
 }
+
+namespace vmexit {
+	auto vmexit_handler(void* guest_regs) -> void;
+}
