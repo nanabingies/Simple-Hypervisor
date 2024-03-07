@@ -1,4 +1,7 @@
 #pragma once
+#pragma warning(disable : 4201)
+#pragma warning(disable : 4408)
+#pragma warning(disable : 4115)
 
 #define RPL_MASK                3
 #define SELECTOR_TABLE_INDEX    0x04
@@ -61,44 +64,44 @@ typedef struct _vmx_gdtentry64
     uint16_t Selector;
 } vmx_gdtentry64, *pvmx_gdtentry64;
 
-typedef union _kgdtentry64
+typedef union _KGDTENTRY64
 {
     struct
     {
-        uint16_t LimitLow;
-        uint16_t BaseLow;
+        UINT16 LimitLow;
+        UINT16 BaseLow;
         union
         {
             struct
             {
-                uint8_t BaseMiddle;
-                uint8_t Flags1;
-                uint8_t Flags2;
-                uint8_t BaseHigh;
+                UINT8 BaseMiddle;
+                UINT8 Flags1;
+                UINT8 Flags2;
+                UINT8 BaseHigh;
             } Bytes;
             struct
             {
-                uint32_t BaseMiddle : 8;
-                uint32_t Type : 5;
-                uint32_t Dpl : 2;
-                uint32_t Present : 1;
-                uint32_t LimitHigh : 4;
-                uint32_t System : 1;
-                uint32_t LongMode : 1;
-                uint32_t DefaultBig : 1;
-                uint32_t Granularity : 1;
-                uint32_t BaseHigh : 8;
+                UINT32 BaseMiddle : 8;
+                UINT32 Type : 5;
+                UINT32 Dpl : 2;
+                UINT32 Present : 1;
+                UINT32 LimitHigh : 4;
+                UINT32 System : 1;
+                UINT32 LongMode : 1;
+                UINT32 DefaultBig : 1;
+                UINT32 Granularity : 1;
+                UINT32 BaseHigh : 8;
             } Bits;
         };
-        uint32_t BaseUpper;
-        uint32_t MustBeZero;
+        UINT32 BaseUpper;
+        UINT32 MustBeZero;
     };
     struct
     {
-        int64_t DataLow;
-        int64_t DataHigh;
+        INT64 DataLow;
+        INT64 DataHigh;
     };
-} kgdtentry64, * pkgdtentry64;
+} KGDTENTRY64, * PKGDTENTRY64;
 
 extern "C" {
     auto inline asm_setup_vmcs(unsigned long) -> EVmErrors;
