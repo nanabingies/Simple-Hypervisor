@@ -14,7 +14,7 @@ PUBLIC	asm_get_idt_base
 PUBLIC	asm_get_gdt_base
 
 extern	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX@Z:PROC
-extern	?vmexit_handler@vmexit@@YAXPEAX@Z:PROC
+extern  ?vmexit_handler@vmexit@@YAFPEAX@Z:PROC
 
 .CONST
 VM_ERROR_OK				EQU		00h
@@ -62,7 +62,7 @@ RESTORE_GP macro
 endm
 
 asm_host_continue_execution PROC
-	int 3		; A VM Exit just occured
+	;int 3		; A VM Exit just occured
 
 	PUSHFQ
 	SAVE_GP
@@ -77,7 +77,7 @@ asm_host_continue_execution PROC
 
 	mov rcx, rsp
 	sub rsp, 020h
-	call ?vmexit_handler@vmexit@@YAXPEAX@Z			; handle VM exit 
+	call ?vmexit_handler@vmexit@@YAFPEAX@Z			; handle VM exit 
 	add rsp, 020h
 
 	movdqa  xmm0, xmmword ptr [rsp]
@@ -136,65 +136,33 @@ asm_host_continue_execution ENDP
 asm_setup_vmcs PROC
 	int		3
 	
-	PUSHFQ
-	PUSH	RAX
-	PUSH	RBX
-	PUSH	RCX
-	PUSH	RDX
-	PUSH	RBP
-	PUSH	-1				; Dummy for RSP
-	PUSH	RSI
-	PUSH	RDI
-	PUSH	R8
-	PUSH	R9
-	PUSH	R10
-	PUSH	R11
-	PUSH	R12
-	PUSH	R13
-	PUSH	R14
-	PUSH	R15
+	pushfq
+	SAVE_GP
 
-	SUB     RSP, 060h
-	MOVDQA  xmmword ptr [RSP], XMM0
-    MOVDQA  xmmword ptr [RSP + 10h], XMM1
-    MOVDQA  xmmword ptr [RSP + 20h], XMM2
-    MOVDQA  xmmword ptr [RSP + 30h], XMM3
-    MOVDQA  xmmword ptr [RSP + 40h], XMM4
-    MOVDQA  xmmword ptr [RSP + 50h], XMM5
+	sub     RSP, 060h
+	movdqa  xmmword ptr [RSP], XMM0
+    movdqa  xmmword ptr [RSP + 10h], XMM1
+    movdqa  xmmword ptr [RSP + 20h], XMM2
+    movdqa  xmmword ptr [RSP + 30h], XMM3
+    movdqa  xmmword ptr [RSP + 40h], XMM4
+    movdqa  xmmword ptr [RSP + 50h], XMM5
 
-	MOV		RDX, RSP
-	SUB		RSP, 020h
-    CALL	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX@Z
-    ADD		RSP, 020h
+	mov		RDX, RSP
+	sub		RSP, 020h
+    call	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX@Z
+    add		RSP, 020h
 
-	MOVDQA  XMM0, xmmword ptr [RSP]
-    MOVDQA  XMM1, xmmword ptr [RSP + 10h]
-    MOVDQA  XMM2, xmmword ptr [RSP + 20h]
-    MOVDQA  XMM3, xmmword ptr [RSP + 30h]
-    MOVDQA  XMM4, xmmword ptr [RSP + 40h]
-    MOVDQA  XMM5, xmmword ptr [RSP + 50h]
-	ADD     RSP,  060h
+	movdqa  XMM0, xmmword ptr [RSP]
+    movdqa  XMM1, xmmword ptr [RSP + 10h]
+    movdqa  XMM2, xmmword ptr [RSP + 20h]
+    movdqa  XMM3, xmmword ptr [RSP + 30h]
+    movdqa  XMM4, xmmword ptr [RSP + 40h]
+    movdqa  XMM5, xmmword ptr [RSP + 50h]
+	add     RSP,  060h
 
-	POP		R15
-	POP		R14
-	POP		R12
-	POP		R13
-	POP		R12
-	POP		R11
-	POP		R10
-	POP		R9
-	POP		R8
-	POP		RDI
-	POP		RSI
-	;ADD     RSP, 8    ; dummy for rsp
-	POP		RBP
-	POP		RDX
-	POP		RCX
-	POP		RBX
-	POP		RAX
-
-	POPFQ
-	RET
+	RESTORE_GP
+	popfq
+	ret
 
 asm_setup_vmcs ENDP
 
