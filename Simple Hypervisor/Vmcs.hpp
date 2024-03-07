@@ -30,4 +30,3 @@ enum SEGREGS {
 extern "C" auto inline asm_setup_vmcs(unsigned long) -> EVmErrors;
 
 auto setup_vmcs(unsigned long, void*) -> EVmErrors;
-
