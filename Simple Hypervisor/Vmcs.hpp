@@ -104,12 +104,11 @@ extern "C" {
     auto inline asm_setup_vmcs(unsigned long) -> EVmErrors;
     auto inline __stdcall asm_host_continue_execution() -> unsigned __int64;
     auto inline asm_guest_continue_execution() -> void;
+    auto inline asm_get_ldtr() -> unsigned short;
+    auto inline asm_get_tr() -> unsigned short;
+    auto inline asm_get_idt_limit() -> unsigned short;
+    auto inline asm_get_gdt_limit() -> unsigned short;
+    auto inline asm_get_rflags() -> unsigned __int64;
 }
-
-auto GetLdtr() -> unsigned short;
-auto GetTr() -> unsigned short;
-auto GetIdtLimit() -> unsigned short;
-auto  GetGdtLimit() -> unsigned short;
-auto GetRflags() -> unsigned __int64;
 
 auto setup_vmcs(unsigned long, void*) -> EVmErrors;
