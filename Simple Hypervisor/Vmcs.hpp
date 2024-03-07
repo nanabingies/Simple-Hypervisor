@@ -100,6 +100,9 @@ typedef union _kgdtentry64
     };
 } kgdtentry64, * pkgdtentry64;
 
-extern "C" auto inline asm_setup_vmcs(unsigned long)->EVmErrors;
+extern "C" {
+    auto inline asm_setup_vmcs(unsigned long)->EVmErrors;
+    auto inline __stdcall asm_host_continue_execution() -> unsigned __int64;
+}
 
 auto setup_vmcs(unsigned long, void*) -> EVmErrors;
