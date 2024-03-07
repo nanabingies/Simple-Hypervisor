@@ -20,4 +20,7 @@ namespace hv {
 	auto devirtualize_all_processors() -> void;
 
 	auto launch_vm(unsigned __int64) -> unsigned __int64;
+	auto terminate_vm(uchar) -> void;
+	auto resume_vm(uchar) -> void;
+
 }
