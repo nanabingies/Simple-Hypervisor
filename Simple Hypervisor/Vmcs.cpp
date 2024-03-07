@@ -12,7 +12,7 @@ ShvUtilConvertGdtEntry(
 	_Out_ pvmx_gdtentry64 VmxGdtEntry
 )
 {
-	pkgdtentry64 gdtEntry;
+	PKGDTENTRY64 gdtEntry;
 
 	//
 	// Reject LDT or NULL entries
@@ -30,7 +30,7 @@ ShvUtilConvertGdtEntry(
 	//
 	// Read the GDT entry at the given selector, masking out the RPL bits.
 	//
-	gdtEntry = (pkgdtentry64)((uintptr_t)GdtBase + (Selector & ~RPL_MASK)); // &0xF8
+	gdtEntry = (PKGDTENTRY64)((uintptr_t)GdtBase + (Selector & ~RPL_MASK)); // &0xF8
 
 	//
 	// Write the selector directly 
@@ -111,7 +111,7 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp) -> EVmErrors {
 
 	vmm_context[processor_number].host_rip = reinterpret_cast<size_t>(asm_host_continue_execution);
 	vmm_context[processor_number].host_rsp =
-		(reinterpret_cast<size_t>(vmm_context[processor_number].host_stack) + 
+		(static_cast<size_t>(vmm_context[processor_number].host_stack) + 
 			HOST_STACK_SIZE - sizeof(void*) - sizeof(guest_registers));
 
 	__vmx_vmwrite(VMCS_GUEST_RSP, vmm_context[processor_number].guest_rsp);
