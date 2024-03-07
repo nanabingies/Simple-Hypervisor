@@ -69,12 +69,12 @@ asm_host_continue_execution PROC
 	SAVE_GP
 
 	sub     rsp, 060h
-	movdqa  xmmword ptr [rsp], XMM0
-    movdqa  xmmword ptr [rsp + 10h], XMM1
-    movdqa  xmmword ptr [rsp + 20h], XMM2
-    movdqa  xmmword ptr [rsp + 30h], XMM3
-    movdqa  xmmword ptr [rsp + 40h], XMM4
-    movdqa  xmmword ptr [rsp + 50h], XMM5
+	movdqa  xmmword ptr [rsp], xmm0
+    movdqa  xmmword ptr [rsp + 10h], xmm1
+    movdqa  xmmword ptr [rsp + 20h], xmm2
+    movdqa  xmmword ptr [rsp + 30h], xmm3
+    movdqa  xmmword ptr [rsp + 40h], xmm4
+    movdqa  xmmword ptr [rsp + 50h], xmm5
 
 	mov rcx, rsp
 	sub rsp, 020h
@@ -89,34 +89,47 @@ asm_host_continue_execution PROC
     movdqa  xmm5, xmmword ptr [rsp + 50h]
 	add     rsp,  060h
 
-	test	al, al
-	jz		exit_vm
+	cmp     al, 1
+    jnz      exit
 
-	POP		R15
-	POP		R14
-	POP		R12
-	POP		R13
-	POP		R12
-	POP		R11
-	POP		R10
-	POP		R9
-	POP		R8
-	POP		RDI
-	POP		RSI
-	;ADD     RSP, 8    ; dummy for rsp
-	POP		RBP
-	POP		RDX
-	POP		RCX
-	POP		RBX
-	POP		RAX
-	POPFQ
-		
-    ;JMP resume_vm
+	RESTORE_GP
+    vmresume
 
-exit_vm:
-	
+exit:
+	sub rsp, 20h
+    ;call ?return_rsp_for_vmxoff@@YA_KXZ
+    add rsp, 20h
 
-	RET
+	push rax
+
+    sub rsp, 20h
+    ;call ?return_rip_for_vmxoff@@YA_KXZ
+    add rsp, 20h
+
+	push rax
+
+    mov rcx,rsp
+    mov rsp,[rcx+8h]
+    mov rax,[rcx]
+    push rax
+
+    mov r15, [rcx + 10h]
+    mov r14, [rcx + 18h]
+    mov r13, [rcx + 20h]
+    mov r12, [rcx + 28h]
+    mov r11, [rcx + 30h]
+    mov r10, [rcx + 38h]
+    mov r9,  [rcx + 40h]
+    mov r8,  [rcx + 48h]
+    mov rdi, [rcx + 50h]
+    mov rsi, [rcx + 58h]
+    mov rbp, [rcx + 60h]
+    mov rbx, [rcx + 70h]
+    mov rdx, [rcx + 78h]
+    mov rax, [rcx + 88h]
+    mov rcx, [rcx + 80h]
+
+	ret
 asm_host_continue_execution ENDP
 
 ;----------------------------------------------------------------------------------------------------
