@@ -1,9 +1,9 @@
 #include "stdafx.h"
 
 namespace vmexit {
-	auto vmexit_handler(void* _guest_registers) -> void {
+	auto vmexit_handler(void* _guest_registers) -> short {
 		auto guest_regs = reinterpret_cast<guest_registers*>(_guest_registers);
-		if (!guest_regs)	return;
+		if (!guest_regs)	return VM_ERROR_ERR_INFO_ERR;
 
 		vmx_vmexit_reason vmexit_reason;
 		__vmx_vmread(VMCS_EXIT_REASON, reinterpret_cast<size_t*>(&vmexit_reason));
@@ -378,7 +378,7 @@ namespace vmexit {
 			if (exitQualification.ept_executable || exitQualification.ept_readable || exitQualification.ept_writeable) {
 				__debugbreak();
 				LOG("Error: VA = %llx, PA = %llx", linear_addr, phys_addr);
-				return;
+				return VM_ERROR_ERR_INFO_ERR;
 			}
 
 			//HandleEptViolation(phys_addr, linear_addr);
@@ -488,6 +488,6 @@ namespace vmexit {
 			break;
 		}
 
-		return;
+		return VM_ERROR_OK;
 	}
 }
