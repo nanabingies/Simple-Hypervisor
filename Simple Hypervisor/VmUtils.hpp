@@ -58,6 +58,20 @@ struct _vmm_context {
 		uint64_t	g_base_pointer_for_returning;
 	};
 
+	struct {
+		// vm exit info
+		guest_registers* guest_regs;
+
+		uint64_t vmexit_guest_rip;
+		uint64_t vmexit_guest_rsp;
+
+		uint64_t vmexit_reason;
+		uint64_t vmexit_qualification;
+
+		uint64_t vmexit_instruction_information;
+		uint64_t vmexit_instruction_length;
+	};
+
 	uint64_t	ept_ptr;
 	uint64_t	ept_pml4;
 	//ept_state* ept_state;
