@@ -85,7 +85,7 @@ asm_host_continue_execution PROC
 	POP		RAX
 	POPFQ
 		
-    JMP resume_vm
+    ;JMP resume_vm
 
 	RET
 asm_host_continue_execution ENDP
