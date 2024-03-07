@@ -88,7 +88,7 @@ asm_host_continue_execution PROC
     movdqa  xmm5, xmmword ptr [rsp + 50h]
 	add     rsp,  060h
 
-	cmp     al, 1
+	cmp     al, 0
     jnz      exit
 
 	RESTORE_GP
