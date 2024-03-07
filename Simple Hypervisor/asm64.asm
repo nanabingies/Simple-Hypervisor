@@ -13,7 +13,9 @@ PUBLIC	asm_get_gdt_limit
 PUBLIC	asm_get_idt_base
 PUBLIC	asm_get_gdt_base
 
-EXTERN	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX@Z:PROC
+extern	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX@Z:PROC
+;extern  terminate_vm:PROC
+;extern  resume_vm:PROC
 
 .CONST
 VM_ERROR_OK				EQU		00h
@@ -53,7 +55,7 @@ asm_host_continue_execution PROC
 
 	MOV RCX, RSP
 	SUB RSP, 020h
-	;CALL VmExitHandler
+	;CALL VmExitHandler			; handle VM exit 
 	ADD RSP, 020h
 
 	MOVDQA  XMM0, xmmword ptr [RSP]
@@ -83,7 +85,7 @@ asm_host_continue_execution PROC
 	POP		RAX
 	POPFQ
 		
-    ;JMP ResumeVm
+    JMP resume_vm
 
 	RET
 asm_host_continue_execution ENDP
