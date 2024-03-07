@@ -166,6 +166,7 @@ namespace hv {
 			return 0;
 		}
 		DbgPrint("[*] VMCS setup on processor %x done\n", processor_number);
+		vmexit::vmexit_handler(nullptr);
 
 
 		//
