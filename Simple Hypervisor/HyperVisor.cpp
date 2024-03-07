@@ -167,6 +167,8 @@ namespace hv {
 		}
 		DbgPrint("[*] VMCS setup on processor %x done\n", processor_number);
 
+		terminate_vm(0);
+		resume_vm(0);
 
 
 		//
@@ -183,6 +185,35 @@ namespace hv {
 		//LOG("[-] Exiting with error code : %llx\n", ErrorCode);
 
 		return 0;
+	}
+
+	auto inline terminate_vm(uchar processor_number) -> void {
+
+		//
+		// Set VMCS state to inactive
+		//
+		__vmx_vmclear(&vmm_context[processor_number].vmcs_region_phys_addr);
+
+		return;
+	}
+
+	auto resume_vm(uchar processor_number) -> void {
+		UNREFERENCED_PARAMETER(processor_number);
+
+		size_t Rip, InstLen;
+		__vmx_vmread(VMCS_GUEST_RIP, &Rip);
+		__vmx_vmread(VMCS_VMEXIT_INSTRUCTION_LENGTH, &InstLen);
+
+		Rip += InstLen;
+		__vmx_vmwrite(VMCS_GUEST_RIP, Rip);
+
+		//
+		// the VMRESUME instruction requires a VMCS whose launch state is set to launched .
+		// we're still in launch mode
+		//
+		__vmx_vmresume();
+
+		return;
 	}
 
 }
