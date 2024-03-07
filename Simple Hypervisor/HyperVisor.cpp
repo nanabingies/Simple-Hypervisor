@@ -167,9 +167,6 @@ namespace hv {
 		}
 		DbgPrint("[*] VMCS setup on processor %x done\n", processor_number);
 
-		terminate_vm(0);
-		resume_vm(0);
-
 
 		//
 		// Launch VM into Outer Space :)
