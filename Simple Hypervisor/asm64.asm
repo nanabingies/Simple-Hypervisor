@@ -42,6 +42,7 @@ SAVE_GP macro
         push    r14
         push    r15
 endm
+
 RESTORE_GP macro
         pop     r15
         pop     r14
@@ -65,43 +66,28 @@ asm_host_continue_execution PROC
 	int 3		; A VM Exit just occured
 
 	PUSHFQ
-	PUSH	RAX
-	PUSH	RBX
-	PUSH	RCX
-	PUSH	RDX
-	PUSH	RBP
-	PUSH	-1				; Dummy for RSP
-	PUSH	RSI
-	PUSH	RDI
-	PUSH	R8
-	PUSH	R9
-	PUSH	R10
-	PUSH	R11
-	PUSH	R12
-	PUSH	R13
-	PUSH	R14
-	PUSH	R15
+	SAVE_GP
 
-	SUB     RSP, 060h
-	MOVDQA  xmmword ptr [RSP], XMM0
-    MOVDQA  xmmword ptr [RSP + 10h], XMM1
-    MOVDQA  xmmword ptr [RSP + 20h], XMM2
-    MOVDQA  xmmword ptr [RSP + 30h], XMM3
-    MOVDQA  xmmword ptr [RSP + 40h], XMM4
-    MOVDQA  xmmword ptr [RSP + 50h], XMM5
+	sub     rsp, 060h
+	movdqa  xmmword ptr [rsp], XMM0
+    movdqa  xmmword ptr [rsp + 10h], XMM1
+    movdqa  xmmword ptr [rsp + 20h], XMM2
+    movdqa  xmmword ptr [rsp + 30h], XMM3
+    movdqa  xmmword ptr [rsp + 40h], XMM4
+    movdqa  xmmword ptr [rsp + 50h], XMM5
 
-	MOV RCX, RSP
-	SUB RSP, 020h
+	mov rcx, rsp
+	sub rsp, 020h
 	;CALL VmExitHandler			; handle VM exit 
-	ADD RSP, 020h
+	add rsp, 020h
 
-	MOVDQA  XMM0, xmmword ptr [RSP]
-    MOVDQA  XMM1, xmmword ptr [RSP + 10h]
-    MOVDQA  XMM2, xmmword ptr [RSP + 20h]
-    MOVDQA  XMM3, xmmword ptr [RSP + 30h]
-    MOVDQA  XMM4, xmmword ptr [RSP + 40h]
-    MOVDQA  XMM5, xmmword ptr [RSP + 50h]
-	ADD     RSP,  060h
+	movdqa  xmm0, xmmword ptr [rsp]
+    movdqa  xmm1, xmmword ptr [rsp + 10h]
+    movdqa  xmm2, xmmword ptr [rsp + 20h]
+    movdqa  xmm3, xmmword ptr [rsp + 30h]
+    movdqa  xmm4, xmmword ptr [rsp + 40h]
+    movdqa  xmm5, xmmword ptr [rsp + 50h]
+	add     rsp,  060h
 
 	test	al, al
 	jz		exit_vm
