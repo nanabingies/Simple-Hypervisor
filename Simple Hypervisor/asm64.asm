@@ -83,12 +83,12 @@ asm_host_continue_execution PROC
 	POP		RAX
 	POPFQ
 		
-    JMP ResumeVm
+    ;JMP ResumeVm
 
 	RET
 asm_host_continue_execution ENDP
 
-----------------------------------------------------------------------------------------------------
+;----------------------------------------------------------------------------------------------------
 
 asm_setup_vmcs PROC
 	int		3
