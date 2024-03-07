@@ -24,7 +24,7 @@ using guest_registers = struct guest_registers {
 	uint64_t	R13;
 	uint64_t	R14;
 	uint64_t	R15;
-	__m128	xmm[6];
+	__m128		xmm[6];
 } ;
 
 struct _vmm_context {
