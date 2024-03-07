@@ -14,8 +14,7 @@ PUBLIC	asm_get_idt_base
 PUBLIC	asm_get_gdt_base
 
 extern	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX@Z:PROC
-;extern  terminate_vm:PROC
-;extern  resume_vm:PROC
+extern	?vmexit_handler@vmexit@@YAXPEAX@Z:PROC
 
 .CONST
 VM_ERROR_OK				EQU		00h
@@ -78,7 +77,7 @@ asm_host_continue_execution PROC
 
 	mov rcx, rsp
 	sub rsp, 020h
-	;CALL VmExitHandler			; handle VM exit 
+	call ?vmexit_handler@vmexit@@YAXPEAX@Z			; handle VM exit 
 	add rsp, 020h
 
 	movdqa  xmm0, xmmword ptr [rsp]
