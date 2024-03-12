@@ -39,6 +39,7 @@ extern "C" {
 	auto DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING registry_path) -> NTSTATUS {
 		using hv::virtualize_all_processors;
 		using hv::launch_vm;
+		using hv::launch_all_vmms;
 		using vmx::vmx_is_vmx_available;
 
 		LOG("[*] Loading file %wZ", registry_path);
@@ -75,7 +76,8 @@ extern "C" {
 
 		if (!virtualize_all_processors())	return STATUS_FAILED_DRIVER_ENTRY;
 
-		KeIpiGenericCall(static_cast<PKIPI_BROADCAST_WORKER>(launch_vm), 0);
+		//KeIpiGenericCall(static_cast<PKIPI_BROADCAST_WORKER>(launch_vm), 0);
+		launch_all_vmms();
 
 		LOG("[*] The hypervisor has been installed.\n");
 
