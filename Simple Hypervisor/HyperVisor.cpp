@@ -128,8 +128,8 @@ namespace hv {
 		return;
 	}
 
-	auto launch_vm(unsigned __int64) -> unsigned __int64 {
-		auto processor_number = KeGetCurrentProcessorNumber();
+	auto launch_vm() -> void {
+		ulong processor_number = KeGetCurrentProcessorNumber();
 
 		//
 		// Set VMCS state to inactive
@@ -138,9 +138,8 @@ namespace hv {
 		if (ret > 0) {
 			LOG("[-] VMCLEAR operation failed.\n");
 			LOG_ERROR();
-			return 0;
+			return;
 		}
-		LOG("[*] VMCS for processor (%x) set to inactive.\n", processor_number);
 
 		//
 		//  Make VMCS the current and active on that processor
@@ -149,24 +148,23 @@ namespace hv {
 		if (ret > 0) {
 			LOG("[-] VMPTRLD operation failed.\n");
 			LOG_ERROR();
-			return 0;
+			return;
 		}
-		LOG("[*] VMCS is current and active on processor %x\n", processor_number);
 
 		//
 		// Setup VMCS structure fields for that logical processor
 		//
+		// SetupVmcs(processorNumber)
 		if (asm_setup_vmcs(processor_number) != VM_ERROR_OK) {
-			LOG("[-] Failure setting Virtual Machine VMCS.\n");
+			LOG("[-] Failure setting Virtual Machine VMCS for processor %x.\n", processor_number);
 
 			size_t error_code = 0;
 			__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &error_code);
 			LOG("[-] Exiting with error code : %llx\n", error_code);
-			LOG_ERROR();
-			return 0;
+			return;
 		}
 		LOG("[*] VMCS setup on processor %x done\n", processor_number);
-
+		__debugbreak();
 
 		//
 		// Launch VM into Outer Space :)
@@ -181,7 +179,28 @@ namespace hv {
 		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &error_code);
 		LOG("[-] Exiting with error code : %llx\n", error_code);
 
-		return 0;
+		return;
+	}
+
+	auto dpc_broadcast_initialize_guest(KDPC* Dpc, void* DeferredContext, void* SystemArgument1, void* SystemArgument2) -> void {
+		UNREFERENCED_PARAMETER(DeferredContext);
+		UNREFERENCED_PARAMETER(Dpc);
+
+		launch_vm();
+
+		// Wait for all DPCs to synchronize at this point
+		KeSignalCallDpcSynchronize(SystemArgument2);
+
+		// Mark the DPC as being complete
+		KeSignalCallDpcDone(SystemArgument1);
+	}
+
+	auto launch_all_vmms() -> void {
+		
+		//KeIpiGenericCall((PKIPI_BROADCAST_WORKER)LaunchVm, 0);
+		KeGenericCallDpc(dpc_broadcast_initialize_guest, 0);
+
+		return;
 	}
 
 	auto inline terminate_vm(uchar processor_number) -> void {
