@@ -128,7 +128,7 @@ namespace hv {
 		return;
 	}
 
-	auto launch_vm() -> void {
+	auto launch_vm(ULONG_PTR arg) -> ULONG_PTR {
 		ulong processor_number = KeGetCurrentProcessorNumber();
 
 		//
@@ -138,7 +138,7 @@ namespace hv {
 		if (ret > 0) {
 			LOG("[-] VMCLEAR operation failed.\n");
 			LOG_ERROR();
-			return;
+			return arg;
 		}
 
 		//
@@ -148,7 +148,7 @@ namespace hv {
 		if (ret > 0) {
 			LOG("[-] VMPTRLD operation failed.\n");
 			LOG_ERROR();
-			return;
+			return arg;
 		}
 
 		//
@@ -161,7 +161,7 @@ namespace hv {
 			size_t error_code = 0;
 			__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &error_code);
 			LOG("[-] Exiting with error code : %llx\n", error_code);
-			return;
+			return arg;
 		}
 		LOG("[*] VMCS setup on processor %x done\n", processor_number);
 		__debugbreak();
@@ -179,14 +179,14 @@ namespace hv {
 		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &error_code);
 		LOG("[-] Exiting with error code : %llx\n", error_code);
 
-		return;
+		return arg;
 	}
 
 	auto dpc_broadcast_initialize_guest(KDPC* Dpc, void* DeferredContext, void* SystemArgument1, void* SystemArgument2) -> void {
 		UNREFERENCED_PARAMETER(DeferredContext);
 		UNREFERENCED_PARAMETER(Dpc);
 
-		launch_vm();
+		//launch_vm();
 
 		// Wait for all DPCs to synchronize at this point
 		KeSignalCallDpcSynchronize(SystemArgument2);
@@ -197,8 +197,8 @@ namespace hv {
 
 	auto launch_all_vmms() -> void {
 		
-		//KeIpiGenericCall((PKIPI_BROADCAST_WORKER)LaunchVm, 0);
-		KeGenericCallDpc(dpc_broadcast_initialize_guest, 0);
+		KeIpiGenericCall((PKIPI_BROADCAST_WORKER)launch_vm, 0);
+		//KeGenericCallDpc(dpc_broadcast_initialize_guest, 0);
 
 		return;
 	}
