@@ -1,4 +1,5 @@
 #pragma once
+#include <basetsd.h>
 using uchar = unsigned char;
 
 namespace vmx {
@@ -19,7 +20,7 @@ namespace hv {
 
 	auto devirtualize_all_processors() -> void;
 
-	auto launch_vm() -> void;
+	auto launch_vm(ULONG_PTR) -> ULONG_PTR;
 	auto terminate_vm(uchar) -> void;
 	auto resume_vm(uchar) -> void;
 
