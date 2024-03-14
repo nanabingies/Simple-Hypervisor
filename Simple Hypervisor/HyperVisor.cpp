@@ -154,17 +154,16 @@ namespace hv {
 		//
 		// Setup VMCS structure fields for that logical processor
 		//
-		// SetupVmcs(processorNumber)
-		if (asm_setup_vmcs(processor_number) != VM_ERROR_OK) {
+		asm_setup_vmcs(processor_number);
+		/*if (asm_setup_vmcs(processor_number) != VM_ERROR_OK) {
 			LOG("[-] Failure setting Virtual Machine VMCS for processor %x.\n", processor_number);
 
 			size_t error_code = 0;
 			__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &error_code);
 			LOG("[-] Exiting with error code : %llx\n", error_code);
 			return arg;
-		}
+		}*/
 		LOG("[*] VMCS setup on processor %x done\n", processor_number);
-		__debugbreak();
 
 		//
 		// Launch VM into Outer Space :)
