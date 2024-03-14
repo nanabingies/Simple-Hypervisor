@@ -134,7 +134,6 @@ asm_host_continue_execution ENDP
 ;----------------------------------------------------------------------------------------------------
 
 asm_setup_vmcs PROC
-	int		3
 	
 	pushfq
 	SAVE_GP
