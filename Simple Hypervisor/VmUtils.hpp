@@ -8,23 +8,23 @@
 #define HOST_STACK_SIZE  (20 * PAGE_SIZE)
 
 using guest_registers = struct guest_registers {
-	uint64_t	rax;
-	uint64_t	rbx;
-	uint64_t	rcx;
-	uint64_t	rdx;
-	uint64_t	rsp;
-	uint64_t	rbp;
-	uint64_t	rsi;
-	uint64_t	rdi;
-	uint64_t	r8;
-	uint64_t	r9;
-	uint64_t	r10;
-	uint64_t	r11;
-	uint64_t	r12;
-	uint64_t	r13;
-	uint64_t	r14;
-	uint64_t	r15;
-	__m128		xmm[6];
+	__m128 xmm[6];
+	unsigned __int64 r15;
+	unsigned __int64 r14;
+	unsigned __int64 r13;
+	unsigned __int64 r12;
+	unsigned __int64 r11;
+	unsigned __int64 r10;
+	unsigned __int64 r9;
+	unsigned __int64 r8;
+	unsigned __int64 rdi;
+	unsigned __int64 rsi;
+	unsigned __int64 rbp;
+	unsigned __int64 rsp;
+	unsigned __int64 rbx;
+	unsigned __int64 rdx;
+	unsigned __int64 rcx;
+	unsigned __int64 rax;
 } ;
 
 struct _vmm_context {
