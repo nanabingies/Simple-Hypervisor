@@ -13,8 +13,9 @@ PUBLIC	asm_get_gdt_limit
 PUBLIC	asm_get_idt_base
 PUBLIC	asm_get_gdt_base
 
-extern	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX@Z:PROC
-extern  ?vmexit_handler@vmexit@@YAFPEAX@Z:PROC
+extern	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX@Z:proc
+extern  ?vmexit_handler@vmexit@@YAFPEAX@Z:proc
+extern  ret_val:dword
 
 .CONST
 VM_ERROR_OK				EQU		00h
@@ -138,7 +139,7 @@ asm_setup_vmcs PROC
 	pushfq
 	SAVE_GP
 
-	sub     RSP, 060h
+	sub     rsp, 060h
 	movdqa  xmmword ptr [RSP], XMM0
     movdqa  xmmword ptr [RSP + 10h], XMM1
     movdqa  xmmword ptr [RSP + 20h], XMM2
@@ -146,21 +147,23 @@ asm_setup_vmcs PROC
     movdqa  xmmword ptr [RSP + 40h], XMM4
     movdqa  xmmword ptr [RSP + 50h], XMM5
 
-	mov		RDX, RSP
-	sub		RSP, 020h
+	mov		rdx, rsp
+	sub		rsp, 020h
     call	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX@Z
-    add		RSP, 020h
+    mov     ret_val, eax
+    add		rsp, 020h
 
-	movdqa  XMM0, xmmword ptr [RSP]
-    movdqa  XMM1, xmmword ptr [RSP + 10h]
-    movdqa  XMM2, xmmword ptr [RSP + 20h]
-    movdqa  XMM3, xmmword ptr [RSP + 30h]
-    movdqa  XMM4, xmmword ptr [RSP + 40h]
-    movdqa  XMM5, xmmword ptr [RSP + 50h]
-	add     RSP,  060h
+	movdqa  XMM0, xmmword ptr [rsp]
+    movdqa  XMM1, xmmword ptr [rsp + 10h]
+    movdqa  XMM2, xmmword ptr [rsp + 20h]
+    movdqa  XMM3, xmmword ptr [rsp + 30h]
+    movdqa  XMM4, xmmword ptr [rsp + 40h]
+    movdqa  XMM5, xmmword ptr [rsp + 50h]
+	add     rsp,  060h
 
 	RESTORE_GP
 	popfq
+    mov     eax, ret_val
 	ret
 
 asm_setup_vmcs ENDP
