@@ -81,8 +81,11 @@ auto AdjustControls(ulong Ctl, ulong Msr) -> unsigned __int64 {
 	return Ctl;
 }
 
-auto setup_vmcs(unsigned long processor_number, void* guest_rsp) -> EVmErrors {
+auto setup_vmcs(unsigned long processor_number, void* guest_rsp, uint64_t cr3) -> EVmErrors {
 	PAGED_CODE();
+	ret_val = 0;
+
+	UNREFERENCED_PARAMETER(cr3);
 
 	//
 	// Control Registers - Guest & Host
@@ -314,7 +317,6 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp) -> EVmErrors {
 	misc.flags = __readmsr(IA32_VMX_MISC);
 	
 	if (__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, misc.cr3_target_count) != 0)	return VM_ERROR_ERR_INFO_ERR;
-	LOG("[*][Debugging] misc.cr3_target_count : %x\n", misc.cr3_target_count);
 
 	for (unsigned iter = 0; iter < misc.cr3_target_count; iter++) {
 		if (__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_0 + (iter * 2), 0) != 0)	return VM_ERROR_ERR_INFO_ERR;
