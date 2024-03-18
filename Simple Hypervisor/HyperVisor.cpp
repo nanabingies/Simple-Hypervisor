@@ -152,17 +152,21 @@ namespace hv {
 		}
 
 		//
+		//	read cr3 and save for guest
+		//
+		cr3_val = __readcr3();
+
+		//
 		// Setup VMCS structure fields for that logical processor
 		//
-		asm_setup_vmcs(processor_number);
-		/*if (asm_setup_vmcs(processor_number) != VM_ERROR_OK) {
+		if (asm_setup_vmcs(processor_number) != VM_ERROR_OK) {
 			LOG("[-] Failure setting Virtual Machine VMCS for processor %x.\n", processor_number);
 
 			size_t error_code = 0;
 			__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &error_code);
 			LOG("[-] Exiting with error code : %llx\n", error_code);
 			return arg;
-		}*/
+		}
 		LOG("[*] VMCS setup on processor %x done\n", processor_number);
 
 		//
@@ -185,7 +189,7 @@ namespace hv {
 		UNREFERENCED_PARAMETER(DeferredContext);
 		UNREFERENCED_PARAMETER(Dpc);
 
-		//launch_vm();
+		launch_vm(0);
 
 		// Wait for all DPCs to synchronize at this point
 		KeSignalCallDpcSynchronize(SystemArgument2);
@@ -196,8 +200,8 @@ namespace hv {
 
 	auto launch_all_vmms() -> void {
 		
-		KeIpiGenericCall((PKIPI_BROADCAST_WORKER)launch_vm, 0);
-		//KeGenericCallDpc(dpc_broadcast_initialize_guest, 0);
+		//KeIpiGenericCall((PKIPI_BROADCAST_WORKER)launch_vm, 0);
+		KeGenericCallDpc(dpc_broadcast_initialize_guest, 0);
 
 		return;
 	}
