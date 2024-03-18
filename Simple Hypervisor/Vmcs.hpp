@@ -104,6 +104,9 @@ typedef union _KGDTENTRY64
 } KGDTENTRY64, * PKGDTENTRY64;
 
 extern "C" {
+    unsigned long inline ret_val;
+    unsigned __int64 inline cr3_val;
+
     auto inline asm_setup_vmcs(unsigned long) -> EVmErrors;
 
     auto inline __stdcall asm_host_continue_execution() -> unsigned __int64;
@@ -119,4 +122,4 @@ extern "C" {
     auto inline asm_get_idt_base() -> unsigned __int64;
 }
 
-auto setup_vmcs(unsigned long, void*) -> EVmErrors;
+auto setup_vmcs(unsigned long, void*, uint64_t) -> EVmErrors;
