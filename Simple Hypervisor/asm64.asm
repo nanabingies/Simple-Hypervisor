@@ -176,44 +176,44 @@ asm_get_idt_base proc
 	LOCAL	IDTR[10]:BYTE
 	SIDT	IDTR
 	MOV		RAX, QWORD PTR IDTR[2]
-	RET
+	ret
 asm_get_idt_base endp
 
 asm_get_gdt_limit proc
 	LOCAL	GDTR[10]:BYTE
 	SGDT	GDTR
 	MOV		AX, WORD PTR GDTR[0]
-	RET
+	ret
 asm_get_gdt_limit endp
 
 asm_get_idt_limit proc
 	LOCAL	IDTR[10]:BYTE
 	SIDT	IDTR
 	MOV		AX, WORD PTR IDTR[0]
-	RET
+	ret
 asm_get_idt_limit endp
 
 asm_get_rflags proc
 	PUSHFQ
 	POP		RAX
-	RET
+	ret
 asm_get_rflags endp
 
 asm_get_gdt_base proc
 	LOCAL	GDTR[10]:BYTE
 	SGDT	GDTR
 	MOV		RAX, QWORD PTR GDTR[2]
-	RET
+	ret
 asm_get_gdt_base endp
 
 asm_get_ldtr proc
 	SLDT	RAX
-	RET
+	ret
 asm_get_ldtr endp
 
 asm_get_tr proc
 	STR		RAX
-	RET
+	ret
 asm_get_tr endp
 
 end
