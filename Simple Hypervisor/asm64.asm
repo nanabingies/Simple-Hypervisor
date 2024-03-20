@@ -13,9 +13,10 @@ PUBLIC	asm_get_gdt_limit
 PUBLIC	asm_get_idt_base
 PUBLIC	asm_get_gdt_base
 
-extern	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX@Z:proc
+extern	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z:proc
 extern  ?vmexit_handler@vmexit@@YAFPEAX@Z:proc
 extern  ret_val:dword
+extern  cr3_val:qword
 
 .CONST
 VM_ERROR_OK				EQU		00h
@@ -148,8 +149,9 @@ asm_setup_vmcs PROC
     movdqa  xmmword ptr [RSP + 50h], XMM5
 
 	mov		rdx, rsp
+    mov     r8,  cr3_val
 	sub		rsp, 020h
-    call	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX@Z
+    call	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z
     mov     ret_val, eax
     add		rsp, 020h
 
