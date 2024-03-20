@@ -85,8 +85,6 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp, uint64_t cr3) -
 	PAGED_CODE();
 	ret_val = 0;
 
-	UNREFERENCED_PARAMETER(cr3);
-
 	//
 	// Control Registers - Guest & Host
 	//
@@ -95,7 +93,7 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp, uint64_t cr3) -
 	if (__vmx_vmwrite(VMCS_GUEST_CR4, __readcr4()) != 0)	return VM_ERROR_ERR_INFO_ERR;
 
 	if (__vmx_vmwrite(VMCS_HOST_CR0, __readcr0()) != 0)		return VM_ERROR_ERR_INFO_ERR;
-	if (__vmx_vmwrite(VMCS_HOST_CR3, __readcr3()) != 0)		return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_HOST_CR3, static_cast<size_t>(cr3)) != 0)		return VM_ERROR_ERR_INFO_ERR;
 	if (__vmx_vmwrite(VMCS_HOST_CR4, __readcr4()) != 0)		return VM_ERROR_ERR_INFO_ERR;
 
 	if (__vmx_vmwrite(VMCS_CTRL_CR0_READ_SHADOW, __readcr0()) != 0)	return VM_ERROR_ERR_INFO_ERR;
