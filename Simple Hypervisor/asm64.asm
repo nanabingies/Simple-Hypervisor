@@ -63,7 +63,7 @@ RESTORE_GP macro
         pop     rax
 endm
 
-asm_host_continue_execution PROC
+asm_host_continue_execution proc
 	;int 3		; A VM Exit just occured
 
 	PUSHFQ
@@ -135,7 +135,7 @@ asm_host_continue_execution ENDP
 
 ;----------------------------------------------------------------------------------------------------
 
-asm_setup_vmcs PROC
+asm_setup_vmcs proc
 	
 	pushfq
 	SAVE_GP
@@ -168,52 +168,52 @@ asm_setup_vmcs PROC
     mov     eax, ret_val
 	ret
 
-asm_setup_vmcs ENDP
+asm_setup_vmcs endp
 
 ;--------------------------------------------------------------------------------------------
 
-asm_get_idt_base PROC
+asm_get_idt_base proc
 	LOCAL	IDTR[10]:BYTE
 	SIDT	IDTR
 	MOV		RAX, QWORD PTR IDTR[2]
 	RET
-asm_get_idt_base ENDP
+asm_get_idt_base endp
 
-asm_get_gdt_limit PROC
+asm_get_gdt_limit proc
 	LOCAL	GDTR[10]:BYTE
 	SGDT	GDTR
 	MOV		AX, WORD PTR GDTR[0]
 	RET
-asm_get_gdt_limit ENDP
+asm_get_gdt_limit endp
 
-asm_get_idt_limit PROC
+asm_get_idt_limit proc
 	LOCAL	IDTR[10]:BYTE
 	SIDT	IDTR
 	MOV		AX, WORD PTR IDTR[0]
 	RET
-asm_get_idt_limit ENDP
+asm_get_idt_limit endp
 
-asm_get_rflags PROC
+asm_get_rflags proc
 	PUSHFQ
 	POP		RAX
 	RET
-asm_get_rflags ENDP
+asm_get_rflags endp
 
-asm_get_gdt_base PROC
+asm_get_gdt_base proc
 	LOCAL	GDTR[10]:BYTE
 	SGDT	GDTR
 	MOV		RAX, QWORD PTR GDTR[2]
 	RET
-asm_get_gdt_base ENDP
+asm_get_gdt_base endp
 
-asm_get_ldtr PROC
+asm_get_ldtr proc
 	SLDT	RAX
 	RET
-asm_get_ldtr ENDP
+asm_get_ldtr endp
 
-asm_get_tr PROC
+asm_get_tr proc
 	STR		RAX
 	RET
-asm_get_tr ENDP
+asm_get_tr endp
 
-END
+end
