@@ -200,8 +200,8 @@ namespace hv {
 
 	auto launch_all_vmms() -> void {
 		
-		//KeIpiGenericCall((PKIPI_BROADCAST_WORKER)launch_vm, 0);
-		KeGenericCallDpc(dpc_broadcast_initialize_guest, 0);
+		KeIpiGenericCall((PKIPI_BROADCAST_WORKER)launch_vm, 0);
+		//KeGenericCallDpc(dpc_broadcast_initialize_guest, 0);
 
 		return;
 	}
