@@ -1,17 +1,17 @@
 
-PUBLIC	asm_host_continue_execution
-;PUBLIC	asmGuestContinueExecution
-;PUBLIC	hostTerminateHypervisor
-PUBLIC  asm_setup_vmcs
-;PUBLIC	asmInveptGlobal
-;PUBLIC	asmInveptContext
+public	asm_host_continue_execution
+;public	asmGuestContinueExecution
+;public	hostTerminateHypervisor
+public  asm_setup_vmcs
+;public	asmInveptGlobal
+;public	asmInveptContext
 
-PUBLIC	asm_get_tr
-PUBLIC	asm_get_ldtr
-PUBLIC	asm_get_idt_limit
-PUBLIC	asm_get_gdt_limit
-PUBLIC	asm_get_idt_base
-PUBLIC	asm_get_gdt_base
+public	asm_get_tr
+public	asm_get_ldtr
+public	asm_get_idt_limit
+public	asm_get_gdt_limit
+public	asm_get_idt_base
+public	asm_get_gdt_base
 
 extern	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z:proc
 extern  ?vmexit_handler@vmexit@@YAFPEAX@Z:proc
@@ -19,9 +19,9 @@ extern  ret_val:dword
 extern  cr3_val:qword
 
 .CONST
-VM_ERROR_OK				EQU		00h
-VM_ERROR_ERR_INFO_OK	EQU		01h
-VM_ERROR_ERR_INFO_ERR	EQU		02h
+VM_ERROR_OK				equ		00h
+VM_ERROR_ERR_INFO_OK	equ		01h
+VM_ERROR_ERR_INFO_ERR	equ		02h
 
 .code _text
 
@@ -66,7 +66,7 @@ endm
 asm_host_continue_execution proc
 	;int 3		; A VM Exit just occured
 
-	PUSHFQ
+	pushfq
 	SAVE_GP
 
 	sub     rsp, 060h
@@ -141,12 +141,12 @@ asm_setup_vmcs proc
 	SAVE_GP
 
 	sub     rsp, 060h
-	movdqa  xmmword ptr [RSP], XMM0
-    movdqa  xmmword ptr [RSP + 10h], XMM1
-    movdqa  xmmword ptr [RSP + 20h], XMM2
-    movdqa  xmmword ptr [RSP + 30h], XMM3
-    movdqa  xmmword ptr [RSP + 40h], XMM4
-    movdqa  xmmword ptr [RSP + 50h], XMM5
+	movdqa  xmmword ptr [rsp], xmm0
+    movdqa  xmmword ptr [rsp + 10h], xmm1
+    movdqa  xmmword ptr [rsp + 20h], xmm2
+    movdqa  xmmword ptr [rsp + 30h], xmm3
+    movdqa  xmmword ptr [rsp + 40h], xmm4
+    movdqa  xmmword ptr [rsp + 50h], xmm5
 
 	mov		rdx, rsp
     mov     r8,  cr3_val
@@ -155,12 +155,12 @@ asm_setup_vmcs proc
     mov     ret_val, eax
     add		rsp, 020h
 
-	movdqa  XMM0, xmmword ptr [rsp]
-    movdqa  XMM1, xmmword ptr [rsp + 10h]
-    movdqa  XMM2, xmmword ptr [rsp + 20h]
-    movdqa  XMM3, xmmword ptr [rsp + 30h]
-    movdqa  XMM4, xmmword ptr [rsp + 40h]
-    movdqa  XMM5, xmmword ptr [rsp + 50h]
+	movdqa  xmm0, xmmword ptr [rsp]
+    movdqa  xmm1, xmmword ptr [rsp + 10h]
+    movdqa  xmm2, xmmword ptr [rsp + 20h]
+    movdqa  xmm3, xmmword ptr [rsp + 30h]
+    movdqa  xmm4, xmmword ptr [rsp + 40h]
+    movdqa  xmm5, xmmword ptr [rsp + 50h]
 	add     rsp,  060h
 
 	RESTORE_GP
