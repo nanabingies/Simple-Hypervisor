@@ -173,23 +173,23 @@ asm_setup_vmcs endp
 ;--------------------------------------------------------------------------------------------
 
 asm_get_idt_base proc
-	local	IDTR[10]:BYTE
-	SIDT	IDTR
-	MOV		RAX, QWORD PTR IDTR[2]
+	local	idtr[10]:byte
+	sidt	idtr
+	mov		RAX, qword ptr idtr[2]
 	ret
 asm_get_idt_base endp
 
 asm_get_gdt_limit proc
-	local	GDTR[10]:BYTE
-	SGDT	GDTR
-	mov		AX, WORD PTR GDTR[0]
+	local	gdtr[10]:byte
+	sgdt	gdtr
+	mov		ax, word ptr gdtr[0]
 	ret
 asm_get_gdt_limit endp
 
 asm_get_idt_limit proc
-	local	IDTR[10]:BYTE
-	SIDT	IDTR
-	mov		AX, WORD PTR IDTR[0]
+	local	idtr[10]:byte
+	SIDT	idtr
+	mov		ax, word ptr idtr[0]
 	ret
 asm_get_idt_limit endp
 
