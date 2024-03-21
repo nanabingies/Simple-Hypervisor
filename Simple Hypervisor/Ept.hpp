@@ -67,6 +67,15 @@ using ept_state = struct _ept_state {
 	ept_page_table* ept_page_table;
 };
 
+using vmx_non_root_memory = struct vmx_non_root_memory {
+	void*	pre_allocated_buffer;
+};
+
 namespace ept {
+	static inline uint64_t g_mtrr_num = 0;
+	static inline const ulong max_ept_walk_length = 0x4;
+
+	inline uint64_t g_default_memory_type;
+
 	auto check_ept_support() -> bool;
 }
