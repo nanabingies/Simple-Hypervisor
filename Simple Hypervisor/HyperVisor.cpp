@@ -8,6 +8,7 @@ namespace hv {
 		using vmx::vmx_allocate_vmexit_stack;
 		using vmx::vmx_allocate_io_bitmap_stack;
 		using vmx::vmx_allocate_msr_bitmap;
+		using ept::initialize_ept;
 
 		PAGED_CODE();
 
@@ -65,7 +66,7 @@ namespace hv {
 			//
 			// Setup EPT support for that processor
 			//
-			//if (!initializeEpt(processor_number.Number))				return false;
+			if (!initialize_ept(processor_number.Number))				return false;
 
 			KeLowerIrql(irql);
 			KeRevertToUserGroupAffinityThread(&old_affinity);
