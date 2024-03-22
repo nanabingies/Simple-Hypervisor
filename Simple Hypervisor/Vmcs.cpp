@@ -308,7 +308,7 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp, uint64_t cr3) -
 
 	if (__vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, vmm_context[processor_number].msr_bitmap_phys_addr) != 0)	return VM_ERROR_ERR_INFO_ERR;
 
-	//__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vmm_context[processor_number].EptPtr);
+	if (__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vmm_context[processor_number].ept_ptr) != 0)	return VM_ERROR_ERR_INFO_ERR;
 	if (__vmx_vmwrite(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, KeGetCurrentProcessorNumberEx(NULL) + 1) != 0)	return VM_ERROR_ERR_INFO_ERR;
 
 	ia32_vmx_misc_register misc;
