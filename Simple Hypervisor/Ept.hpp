@@ -1,4 +1,7 @@
-#include "stdafx.h"
+#pragma once
+#pragma warning(disable : 4183)
+
+#define	PAGE_SIZE			0x1000
 
 #define numPagesToAllocate	10
 #define numMtrrEntries		255
@@ -16,11 +19,11 @@
 #define MASK_EPT_PML4_INDEX(_VAR_) ((_VAR_ & 0xFF8000000000ULL) >> 39)
 
 using ia32_mtrr_fixed_range_msr = union ia32_mtrr_fixed_range_msr {
-	uint64_t all;
+	unsigned __int64 all;
 	struct {
-		uchar types[8];
+		unsigned char types[8];
 	} fields;
-} ;
+};
 
 enum mtrr_memory_type {
 	Uncacheable = 0l,
@@ -42,27 +45,33 @@ enum inv_ept_type {
 using mtrr_entry = struct _mtrr_entry {
 	bool		mtrr_enabled;
 	bool		mtrr_fixed;
-	uint64_t	memory_type;
-	uint64_t	physical_address_start;
-	uint64_t	physical_address_end;
+	unsigned __int64	memory_type;
+	unsigned __int64	physical_address_start;
+	unsigned __int64	physical_address_end;
 };
 
-using ept_split_page = struct _ept_split_page {
-	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pte ept_pte[512];
+/*using ept_split_page = __declspec(align(PAGE_SIZE)) struct _ept_split_page {
+	ept_pte eptpte[512];
 	ept_pde_2mb*				ept_pde;
 	LIST_ENTRY					split_pages;
-};
+};*/
+
+typedef struct _ept_split_page {
+	ept_pte eptpte[512];
+	ept_pde_2mb* ept_pde;
+	LIST_ENTRY					split_pages;
+}ept_split_pages;
 
 using ept_page_table = struct _ept_page_table {
 	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pml4e ept_pml4[EPTPML4ENTRIES];
 	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pdpte ept_pdpte[EPTPDPTEENTRIES];
 	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pde_2mb ept_pde[EPTPML4ENTRIES][EPTPDPTEENTRIES];
 	ept_entry**					dynamic_pages;
-	uint64_t					dynamic_pages_count;
+	unsigned __int64					dynamic_pages_count;
 };
 
 using ept_state = struct _ept_state {
-	uint64_t		guest_address_width_value;
+	unsigned __int64		guest_address_width_value;
 	ept_pointer*	ept_ptr;
 	ept_page_table* ept_page_table;
 };
@@ -78,4 +87,34 @@ namespace ept {
 	inline uint64_t g_default_memory_type;
 
 	auto check_ept_support() -> bool;
+
+	auto initialize_ept(unsigned char) -> bool;
+
+	auto ept_build_mtrr_map() -> bool;
+
+	auto create_ept_state(ept_state*) -> bool;
+
+	auto handle_ept_violation(uint64_t, uint64_t) -> void;
+
+	auto setup_pml2_entries(ept_state*, ept_pde_2mb*, uint64_t) -> void;
+
+	auto is_in_range(uint64_t, uint64_t, uint64_t) -> bool;
+
+	auto is_valid_for_large_page(uint64_t) -> bool;
+
+	auto get_pte_entry(ept_page_table*, uint64_t) -> ept_pte*;
+
+	auto get_pde_entry(ept_page_table*, uint64_t) -> ept_pde_2mb;
+
+	auto ept_construct_tables(ept_entry*, uint64_t, uint64_t, ept_page_table*) -> ept_entry*;
+
+	auto ept_init_table_entry(ept_entry*, uint64_t, uint64_t) -> void;
+
+	auto ept_allocate_ept_entry(ept_page_table*) -> ept_entry*;
+
+	auto ept_get_memory_type(uint64_t, bool) -> uint64_t;
+
+	auto ept_inv_global_entry() -> uint64_t;
+
+	auto split_pde(ept_page_table*, void*, uint64_t) -> void;
 }
