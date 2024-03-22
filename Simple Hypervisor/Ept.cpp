@@ -1,6 +1,8 @@
 #include "ept.hpp"
 
 namespace ept {
+	static mtrr_entry g_MtrrEntries[numMtrrEntries];
+
 	auto check_ept_support() -> bool {
 		PAGED_CODE();
 
@@ -32,5 +34,12 @@ namespace ept {
 		}
 
 		return true;
+	}
+
+	auto IsInRange(unsigned __int64 val, unsigned __int64 start, unsigned __int64 end) -> bool {
+		if (val > start && val <= end)
+			return true;
+
+		return false;
 	}
 }
