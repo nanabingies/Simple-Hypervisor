@@ -193,7 +193,7 @@ namespace ept {
 		RtlSecureZeroMemory(ept_ptr, PAGE_SIZE);
 
 
-		if (CreateEptState(_ept_state) == false) {
+		if (create_ept_state(_ept_state) == false) {
 			DbgPrint("[-] Failed to set Ept Page Table Entries.\n");
 			LOG_ERROR();
 			ExFreePoolWithTag(ept_ptr, VMM_POOL_TAG);
