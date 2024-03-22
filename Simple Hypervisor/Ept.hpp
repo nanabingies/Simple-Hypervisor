@@ -86,27 +86,27 @@ namespace ept {
 
 	auto create_ept_state(ept_state*) -> bool;
 
-	auto handle_ept_violation(uint64_t, uint64_t) -> void;
+	auto handle_ept_violation(unsigned long long, unsigned long long) -> void;
 
-	auto setup_pml2_entries(ept_state*, ept_pde_2mb*, uint64_t) -> void;
+	auto setup_pml2_entries(ept_state*, ept_pde_2mb*, unsigned long long) -> void;
 
-	auto is_in_range(uint64_t, uint64_t, uint64_t) -> bool;
+	auto is_in_range(unsigned long long, unsigned long long, unsigned long long) -> bool;
 
-	auto is_valid_for_large_page(uint64_t) -> bool;
+	auto is_valid_for_large_page(unsigned long long) -> bool;
 
-	auto get_pte_entry(ept_page_table*, uint64_t) -> ept_pte*;
+	auto get_pte_entry(ept_page_table*, unsigned long long) -> ept_pte*;
 
-	auto get_pde_entry(ept_page_table*, uint64_t) -> ept_pde_2mb;
+	auto get_pde_entry(ept_page_table*, unsigned long long) -> ept_pde_2mb;
 
-	auto ept_construct_tables(ept_entry*, uint64_t, uint64_t, ept_page_table*) -> ept_entry*;
+	auto ept_construct_tables(ept_entry*, unsigned long long, unsigned long long, ept_page_table*) -> ept_entry*;
 
-	auto ept_init_table_entry(ept_entry*, uint64_t, uint64_t) -> void;
+	auto ept_init_table_entry(ept_entry*, unsigned long long, unsigned long long) -> void;
 
 	auto ept_allocate_ept_entry(ept_page_table*) -> ept_entry*;
 
-	auto ept_get_memory_type(uint64_t, bool) -> uint64_t;
+	auto ept_get_memory_type(unsigned long long, bool) -> unsigned long long;
 
-	auto ept_inv_global_entry() -> uint64_t;
+	auto ept_inv_global_entry() -> unsigned long long;
 
-	auto split_pde(ept_page_table*, void*, uint64_t) -> void;
+	auto split_pde(ept_page_table*, void*, unsigned long long) -> void;
 }
