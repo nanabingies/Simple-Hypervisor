@@ -43,9 +43,9 @@ enum inv_ept_type {
 using mtrr_entry = struct _mtrr_entry {
 	bool		mtrr_enabled;
 	bool		mtrr_fixed;
-	unsigned long long	memory_type;
-	unsigned long long	physical_address_start;
-	unsigned long long	physical_address_end;
+	unsigned __int64	memory_type;
+	unsigned __int64	physical_address_start;
+	unsigned __int64	physical_address_end;
 };
 
 using ept_split_page = struct _ept_split_page {
@@ -59,11 +59,11 @@ using ept_page_table = struct _ept_page_table {
 	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pdpte ept_pdpte[EPTPDPTEENTRIES];
 	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pde_2mb ept_pde[EPTPML4ENTRIES][EPTPDPTEENTRIES];
 	ept_entry** dynamic_pages;
-	unsigned long long					dynamic_pages_count;
+	unsigned __int64					dynamic_pages_count;
 };
 
 using ept_state = struct _ept_state {
-	unsigned long long		guest_address_width_value;
+	unsigned __int64		guest_address_width_value;
 	ept_pointer* ept_ptr;
 	ept_page_table* ept_page_table;
 };
@@ -73,10 +73,10 @@ using vmx_non_root_memory = struct vmx_non_root_memory {
 };
 
 namespace ept {
-	static inline unsigned long long g_mtrr_num = 0;
-	static inline const unsigned long max_ept_walk_length = 0x4;
+	static inline unsigned __int64 g_mtrr_num = 0;
+	static inline unsigned __int64 max_ept_walk_length = 0x4;
 
-	inline unsigned long long g_default_memory_type;
+	inline unsigned __int64 g_default_memory_type;
 
 	auto check_ept_support() -> bool;
 
@@ -86,27 +86,27 @@ namespace ept {
 
 	auto create_ept_state(ept_state*) -> bool;
 
-	auto handle_ept_violation(unsigned long long, unsigned long long) -> void;
+	auto handle_ept_violation(unsigned __int64, unsigned __int64) -> void;
 
-	auto setup_pml2_entries(ept_state*, ept_pde_2mb*, unsigned long long) -> void;
+	auto setup_pml2_entries(ept_state*, ept_pde_2mb*, unsigned __int64) -> void;
 
-	auto is_in_range(unsigned long long, unsigned long long, unsigned long long) -> bool;
+	auto is_in_range(unsigned __int64, unsigned __int64, unsigned __int64) -> bool;
 
-	auto is_valid_for_large_page(unsigned long long) -> bool;
+	auto is_valid_for_large_page(unsigned __int64) -> bool;
 
-	auto get_pte_entry(ept_page_table*, unsigned long long) -> ept_pte*;
+	auto get_pte_entry(ept_page_table*, unsigned __int64) -> ept_pte*;
 
-	auto get_pde_entry(ept_page_table*, unsigned long long) -> ept_pde_2mb;
+	auto get_pde_entry(ept_page_table*, unsigned __int64) -> ept_pde_2mb;
 
-	auto ept_construct_tables(ept_entry*, unsigned long long, unsigned long long, ept_page_table*) -> ept_entry*;
+	auto ept_construct_tables(ept_entry*, unsigned __int64, unsigned __int64, ept_page_table*) -> ept_entry*;
 
-	auto ept_init_table_entry(ept_entry*, unsigned long long, unsigned long long) -> void;
+	auto ept_init_table_entry(ept_entry*, unsigned __int64, unsigned __int64) -> void;
 
 	auto ept_allocate_ept_entry(ept_page_table*) -> ept_entry*;
 
-	auto ept_get_memory_type(unsigned long long, bool) -> unsigned long long;
+	auto ept_get_memory_type(unsigned __int64, bool) -> unsigned __int64;
 
-	auto ept_inv_global_entry() -> unsigned long long;
+	auto ept_inv_global_entry() -> unsigned __int64;
 
-	auto split_pde(ept_page_table*, void*, unsigned long long) -> void;
+	auto split_pde(ept_page_table*, void*, unsigned __int64) -> void;
 }
