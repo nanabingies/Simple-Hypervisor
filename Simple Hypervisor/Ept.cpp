@@ -1,7 +1,7 @@
 #include "ept.hpp"
 
 namespace ept {
-	auto checkEPTSupport() -> bool {
+	auto check_ept_support() -> bool {
 		PAGED_CODE();
 
 		PROCESSOR_NUMBER processor_number;
