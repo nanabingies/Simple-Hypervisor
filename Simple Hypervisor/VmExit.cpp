@@ -364,6 +364,7 @@ namespace vmexit {
 		case VMX_EXIT_REASON_EPT_VIOLATION: {
 			using ept::handle_ept_violation;
 			LOG("[*] ept violation\n");
+			__debugbreak();
 
 			vmx_exit_qualification_ept_violation exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
