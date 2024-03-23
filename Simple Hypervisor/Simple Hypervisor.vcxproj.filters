@@ -36,25 +36,25 @@
     </Inf>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main.c">
+    <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VmUtils.c">
+    <ClCompile Include="VmUtils.cpp">
       <Filter>VmUtils</Filter>
     </ClCompile>
-    <ClCompile Include="Vmcs.c">
+    <ClCompile Include="Vmcs.cpp">
       <Filter>Vmcs</Filter>
     </ClCompile>
-    <ClCompile Include="Ept.c">
+    <ClCompile Include="Ept.cpp">
       <Filter>Ept</Filter>
     </ClCompile>
-    <ClCompile Include="Vmx.c">
+    <ClCompile Include="Vmx.cpp">
       <Filter>Vmx</Filter>
     </ClCompile>
-    <ClCompile Include="HyperVisor.c">
+    <ClCompile Include="HyperVisor.cpp">
       <Filter>Vmx</Filter>
     </ClCompile>
-    <ClCompile Include="VmExit.c">
+    <ClCompile Include="VmExit.cpp">
       <Filter>Vmx</Filter>
     </ClCompile>
   </ItemGroup>
@@ -62,20 +62,23 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VmUtils.h">
+    <ClInclude Include="VmUtils.hpp">
       <Filter>VmUtils</Filter>
     </ClInclude>
-    <ClInclude Include="ia32.h">
-      <Filter>VmUtils</Filter>
-    </ClInclude>
-    <ClInclude Include="Vmcs.h">
+    <ClInclude Include="Vmcs.hpp">
       <Filter>Vmcs</Filter>
     </ClInclude>
-    <ClInclude Include="Ept.h">
+    <ClInclude Include="Ept.hpp">
       <Filter>Ept</Filter>
     </ClInclude>
-    <ClInclude Include="Vmx.h">
+    <ClInclude Include="Vmx.hpp">
       <Filter>Vmx</Filter>
+    </ClInclude>
+    <ClInclude Include="ia32.hpp">
+      <Filter>VmUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="logger.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

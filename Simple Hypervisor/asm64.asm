@@ -1,292 +1,235 @@
 
-PUBLIC	AsmHostContinueExecution
-PUBLIC	AsmGuestContinueExecution
-PUBLIC	HostTerminateHypervisor
-PUBLIC  AsmSetupVmcs
-PUBLIC	AsmInveptGlobal
-PUBLIC	AsmInveptContext
+public	asm_host_continue_execution
+public  asm_setup_vmcs
+public  asm_inv_ept_global
 
+public	asm_get_tr
+public	asm_get_ldtr
+public	asm_get_idt_limit
+public	asm_get_gdt_limit
+public	asm_get_idt_base
+public	asm_get_gdt_base
 
-PUBLIC	GetTr
-PUBLIC	GetLdtr
-PUBLIC	GetIdtLimit
-PUBLIC	GetGdtLimit
-PUBLIC	GetIdtBase
-PUBLIC	GetGdtBase
-
-EXTERN	g_StackPointerForReturning:QWORD
-EXTERN	g_BasePointerForReturning:QWORD
-
-EXTERN	VmExitHandler:PROC
-EXTERN	ResumeVm:PROC
-EXTERN	SetupVmcs:PROC
+extern	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z:proc
+extern  ?vmexit_handler@vmexit@@YAFPEAX@Z:proc
+extern  ret_val:dword
+extern  cr3_val:qword
 
 .CONST
-VM_ERROR_OK				EQU		00h
-VM_ERROR_ERR_INFO_OK	EQU		01h
-VM_ERROR_ERR_INFO_ERR	EQU		02h
+VM_ERROR_OK				equ		00h
+VM_ERROR_ERR_INFO_OK	equ		01h
+VM_ERROR_ERR_INFO_ERR	equ		02h
 
 .code _text
 
+SAVE_GP macro
+        push    rax
+        push    rcx
+        push    rdx
+        push    rbx
+        push    -01h ; placeholder for rsp
+        push    rbp 
+        push    rsi
+        push    rdi
+        push    r8
+        push    r9
+        push    r10
+        push    r11
+        push    r12
+        push    r13
+        push    r14
+        push    r15
+endm
 
-HostTerminateHypervisor PROC
-	VMXOFF
+RESTORE_GP macro
+        pop     r15
+        pop     r14
+        pop     r13
+        pop     r12
+        pop     r11
+        pop     r10
+        pop     r9
+        pop     r8
+        pop     rdi
+        pop     rsi
+        pop     rbp
+        pop     rbx ; placeholder for rsp
+        pop     rbx
+        pop     rdx
+        pop     rcx
+        pop     rax
+endm
 
-	MOV RSP, g_StackPointerForReturning
-	MOV RBP, g_BasePointerForReturning
-
-	ADD RSP, 8
-	
-	XOR RAX, RAX
-	MOV RAX, 1
-
-	; Return Section
-	int 3			; Debugging
-	LEA R11, [RSP+60h]
-	MOV RBX, [R11+18h]
-	MOV RSI, [R11+20h]
-	MOV RDI, [R11+28h]
-	MOV RSP, R11
-	POP RBP
-	RET
-
-HostTerminateHypervisor ENDP
-
-; ----------------------------------------------------------------------------------- ;
-
-AsmHostContinueExecution PROC
+asm_host_continue_execution proc
 	;int 3		; A VM Exit just occured
 
-	PUSHFQ
-	PUSH	RAX
-	PUSH	RBX
-	PUSH	RCX
-	PUSH	RDX
-	PUSH	RBP
-	PUSH	-1				; Dummy for RSP
-	PUSH	RSI
-	PUSH	RDI
-	PUSH	R8
-	PUSH	R9
-	PUSH	R10
-	PUSH	R11
-	PUSH	R12
-	PUSH	R13
-	PUSH	R14
-	PUSH	R15
+	pushfq
+	SAVE_GP
 
-	SUB     RSP, 060h
-	MOVDQA  xmmword ptr [RSP], XMM0
-    MOVDQA  xmmword ptr [RSP + 10h], XMM1
-    MOVDQA  xmmword ptr [RSP + 20h], XMM2
-    MOVDQA  xmmword ptr [RSP + 30h], XMM3
-    MOVDQA  xmmword ptr [RSP + 40h], XMM4
-    MOVDQA  xmmword ptr [RSP + 50h], XMM5
+	sub     rsp, 060h
+	movdqa  xmmword ptr [rsp], xmm0
+    movdqa  xmmword ptr [rsp + 10h], xmm1
+    movdqa  xmmword ptr [rsp + 20h], xmm2
+    movdqa  xmmword ptr [rsp + 30h], xmm3
+    movdqa  xmmword ptr [rsp + 40h], xmm4
+    movdqa  xmmword ptr [rsp + 50h], xmm5
 
-	MOV RCX, RSP
-	SUB RSP, 020h
-	CALL VmExitHandler
-	ADD RSP, 020h
+	mov rcx, rsp
+	sub rsp, 020h
+	call ?vmexit_handler@vmexit@@YAFPEAX@Z			; handle VM exit 
+	add rsp, 020h
 
-	MOVDQA  XMM0, xmmword ptr [RSP]
-    MOVDQA  XMM1, xmmword ptr [RSP + 10h]
-    MOVDQA  XMM2, xmmword ptr [RSP + 20h]
-    MOVDQA  XMM3, xmmword ptr [RSP + 30h]
-    MOVDQA  XMM4, xmmword ptr [RSP + 40h]
-    MOVDQA  XMM5, xmmword ptr [RSP + 50h]
-	ADD     RSP,  060h
+	movdqa  xmm0, xmmword ptr [rsp]
+    movdqa  xmm1, xmmword ptr [rsp + 10h]
+    movdqa  xmm2, xmmword ptr [rsp + 20h]
+    movdqa  xmm3, xmmword ptr [rsp + 30h]
+    movdqa  xmm4, xmmword ptr [rsp + 40h]
+    movdqa  xmm5, xmmword ptr [rsp + 50h]
+	add     rsp,  060h
 
-	POP		R15
-	POP		R14
-	POP		R12
-	POP		R13
-	POP		R12
-	POP		R11
-	POP		R10
-	POP		R9
-	POP		R8
-	POP		RDI
-	POP		RSI
-	;ADD     RSP, 8    ; dummy for rsp
-	POP		RBP
-	POP		RDX
-	POP		RCX
-	POP		RBX
-	POP		RAX
-	POPFQ
-		
-    JMP ResumeVm
+	cmp     al, 0
+    jnz      exit
 
-	RET
-AsmHostContinueExecution ENDP
+	RESTORE_GP
+    vmresume
 
-; ----------------------------------------------------------------------------------- ;
+exit:
+	sub rsp, 20h
+    ;call ?return_rsp_for_vmxoff@@YA_KXZ
+    add rsp, 20h
 
-AsmGuestContinueExecution PROC
-	int		3				; Local Kernel Debugging
+	push rax
 
-	SUB		RSP, 088h
-	POP		R15
-	POP		R14
-	POP		R12
-	POP		R13
-	POP		R12
-	POP		R11
-	POP		R10
-	POP		R9
-	POP		R8
-	POP		RDI
-	POP		RSI
-	ADD     RSP, 8    ; dummy for rsp
-	POP		RBP
-	POP		RDX
-	POP		RCX
-	POP		RBX
-	POP		RAX
+    sub rsp, 20h
+    ;call ?return_rip_for_vmxoff@@YA_KXZ
+    add rsp, 20h
 
-	POPFQ
-	RET
+	push rax
 
-AsmGuestContinueExecution ENDP
+    mov rcx,rsp
+    mov rsp,[rcx+8h]
+    mov rax,[rcx]
+    push rax
 
-; ----------------------------------------------------------------------------------- ;
+    mov r15, [rcx + 10h]
+    mov r14, [rcx + 18h]
+    mov r13, [rcx + 20h]
+    mov r12, [rcx + 28h]
+    mov r11, [rcx + 30h]
+    mov r10, [rcx + 38h]
+    mov r9,  [rcx + 40h]
+    mov r8,  [rcx + 48h]
+    mov rdi, [rcx + 50h]
+    mov rsi, [rcx + 58h]
+    mov rbp, [rcx + 60h]
+    mov rbx, [rcx + 70h]
+    mov rdx, [rcx + 78h]
+    mov rax, [rcx + 88h]
+    mov rcx, [rcx + 80h]
 
+	ret
+asm_host_continue_execution ENDP
 
-AsmSetupVmcs PROC
+;----------------------------------------------------------------------------------------------------
+
+asm_setup_vmcs proc
 	
-	PUSHFQ
-	PUSH	RAX
-	PUSH	RBX
-	PUSH	RCX
-	PUSH	RDX
-	PUSH	RBP
-	PUSH	-1				; Dummy for RSP
-	PUSH	RSI
-	PUSH	RDI
-	PUSH	R8
-	PUSH	R9
-	PUSH	R10
-	PUSH	R11
-	PUSH	R12
-	PUSH	R13
-	PUSH	R14
-	PUSH	R15
+	pushfq
+	SAVE_GP
 
-	SUB     RSP, 060h
-	MOVDQA  xmmword ptr [RSP], XMM0
-    MOVDQA  xmmword ptr [RSP + 10h], XMM1
-    MOVDQA  xmmword ptr [RSP + 20h], XMM2
-    MOVDQA  xmmword ptr [RSP + 30h], XMM3
-    MOVDQA  xmmword ptr [RSP + 40h], XMM4
-    MOVDQA  xmmword ptr [RSP + 50h], XMM5
+	sub     rsp, 060h
+	movdqa  xmmword ptr [rsp], xmm0
+    movdqa  xmmword ptr [rsp + 10h], xmm1
+    movdqa  xmmword ptr [rsp + 20h], xmm2
+    movdqa  xmmword ptr [rsp + 30h], xmm3
+    movdqa  xmmword ptr [rsp + 40h], xmm4
+    movdqa  xmmword ptr [rsp + 50h], xmm5
 
-	MOV		RDX, RSP
-	SUB		RSP, 020h
-    CALL	SetupVmcs
-    ADD		RSP, 020h
+	mov		rdx, rsp
+    mov     r8,  cr3_val
+	sub		rsp, 020h
+    call	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z
+    mov     ret_val, eax
+    add		rsp, 020h
 
-	MOVDQA  XMM0, xmmword ptr [RSP]
-    MOVDQA  XMM1, xmmword ptr [RSP + 10h]
-    MOVDQA  XMM2, xmmword ptr [RSP + 20h]
-    MOVDQA  XMM3, xmmword ptr [RSP + 30h]
-    MOVDQA  XMM4, xmmword ptr [RSP + 40h]
-    MOVDQA  XMM5, xmmword ptr [RSP + 50h]
-	ADD     RSP,  060h
+	movdqa  xmm0, xmmword ptr [rsp]
+    movdqa  xmm1, xmmword ptr [rsp + 10h]
+    movdqa  xmm2, xmmword ptr [rsp + 20h]
+    movdqa  xmm3, xmmword ptr [rsp + 30h]
+    movdqa  xmm4, xmmword ptr [rsp + 40h]
+    movdqa  xmm5, xmmword ptr [rsp + 50h]
+	add     rsp,  060h
 
-	POP		R15
-	POP		R14
-	POP		R12
-	POP		R13
-	POP		R12
-	POP		R11
-	POP		R10
-	POP		R9
-	POP		R8
-	POP		RDI
-	POP		RSI
-	;ADD     RSP, 8    ; dummy for rsp
-	POP		RBP
-	POP		RDX
-	POP		RCX
-	POP		RBX
-	POP		RAX
+	RESTORE_GP
+	popfq
+    mov     eax, ret_val
+	ret
 
-	POPFQ
-	RET
+asm_setup_vmcs endp
 
-AsmSetupVmcs ENDP
+;----------------------------------------------------------------------------------------------------
 
+asm_get_idt_base proc
+	local	idtr[10]:byte
+	sidt	idtr
+	mov		RAX, qword ptr idtr[2]
+	ret
+asm_get_idt_base endp
 
-; ----------------------------------------------------------------------------------- ;
+asm_get_gdt_limit proc
+	local	gdtr[10]:byte
+	sgdt	gdtr
+	mov		ax, word ptr gdtr[0]
+	ret
+asm_get_gdt_limit endp
 
+asm_get_idt_limit proc
+	local	idtr[10]:byte
+	SIDT	idtr
+	mov		ax, word ptr idtr[0]
+	ret
+asm_get_idt_limit endp
 
-GetIdtBase PROC
-	LOCAL	IDTR[10]:BYTE
-	SIDT	IDTR
-	MOV		RAX, QWORD PTR IDTR[2]
-	RET
-GetIdtBase ENDP
+asm_get_rflags proc
+	pushfq
+	POP		rax
+	ret
+asm_get_rflags endp
 
-GetGdtLimit PROC
-	LOCAL	GDTR[10]:BYTE
-	SGDT	GDTR
-	MOV		AX, WORD PTR GDTR[0]
-	RET
-GetGdtLimit ENDP
+asm_get_gdt_base proc
+	local	gdtr[10]:byte
+	sgdt	gdtr
+	mov		rax, qword ptr gdtr[2]
+	ret
+asm_get_gdt_base endp
 
-GetIdtLimit PROC
-	LOCAL	IDTR[10]:BYTE
-	SIDT	IDTR
-	MOV		AX, WORD PTR IDTR[0]
-	RET
-GetIdtLimit ENDP
+asm_get_ldtr proc
+	sldt	rax
+	ret
+asm_get_ldtr endp
 
-GetRflags PROC
-	PUSHFQ
-	POP		RAX
-	RET
-GetRflags ENDP
+asm_get_tr proc
+	str		rax
+	ret
+asm_get_tr endp
 
-GetGdtBase PROC
-	LOCAL	GDTR[10]:BYTE
-	SGDT	GDTR
-	MOV		RAX, QWORD PTR GDTR[2]
-	RET
-GetGdtBase ENDP
+;----------------------------------------------------------------------------------------------------
 
-GetLdtr PROC
-	SLDT	RAX
-	RET
-GetLdtr ENDP
+asm_inv_ept_global proc
+    invept	rcx, oword ptr [rdx]
+	jz      error_with_code						; if (ZF) jmp
+    jc      error_without_code					; if (CF) jmp
+    xor		rax, rax						    ; VM_ERROR_OK
+    ret
 
-GetTr PROC
-	STR		RAX
-	RET
-GetTr ENDP
+error_with_code:
+	mov		rax, 02h
+    ret
 
+error_without_code:
+	mov		rax, 01h
+	ret
 
-; ----------------------------------------------------------------------------------- ;
+asm_inv_ept_global endp
 
-AsmInveptGlobal PROC
-	INVEPT	RCX,	OWORD PTR [RDX]
-	JZ errorWithCode						; if (ZF) jmp
-    JC errorWithoutCode						; if (CF) jmp
-    XOR		RAX,	RAX						; VM_ERROR_OK
-    RET
-
-errorWithCode:
-	MOV		RAX,	VM_ERROR_ERR_INFO_ERR
-    RET
-
-errorWithoutCode:
-	MOV		RAX,	VM_ERROR_ERR_INFO_OK
-	RET
-
-AsmInveptGlobal	ENDP
-
-AsmInveptContext PROC
-
-AsmInveptContext ENDP
-
-
-END
+end
