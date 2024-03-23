@@ -292,8 +292,8 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp, uint64_t cr3) -
 	// VM-exit information fields. 
 	// These fields receive information on VM exits and describe the cause and the nature of VM exits.
 	//
-	if (__vmx_vmwrite(VMCS_VMEXIT_INSTRUCTION_INFO,
-		AdjustControls(IA32_VMX_EXIT_CTLS_HOST_ADDRESS_SPACE_SIZE_FLAG, IA32_VMX_EXIT_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	//if (__vmx_vmwrite(VMCS_VMEXIT_INSTRUCTION_INFO,
+	//	AdjustControls(IA32_VMX_EXIT_CTLS_HOST_ADDRESS_SPACE_SIZE_FLAG, IA32_VMX_EXIT_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
 
 	//__debugbreak();
 
