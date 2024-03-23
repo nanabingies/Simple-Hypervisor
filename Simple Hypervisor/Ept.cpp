@@ -491,8 +491,9 @@ namespace ept {
 		}
 
 		// EPT entry miss
-		//EPT_ENTRY* pml4e = (EPT_ENTRY*)ept_state->EptPageTable->EptPml4;
-		//EptConstructTables(pml4e, 4, phys_addr, ept_state->EptPageTable);
+		ept_entry* pml4e = reinterpret_cast<ept_entry*>
+			(_ept_state->ept_page_table->ept_pml4);
+		ept_construct_tables(pml4e, 4, phys_addr, _ept_state->ept_page_table);
 
 		// invalidate Global EPT entries
 		ept_inv_global_entry();
