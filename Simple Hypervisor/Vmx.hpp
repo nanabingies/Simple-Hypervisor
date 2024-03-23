@@ -31,3 +31,8 @@ namespace hv {
 namespace vmexit {
 	auto vmexit_handler(void* guest_regs) -> short;
 }
+
+extern "C" {
+	inline EVmErrors asm_inv_ept_global(unsigned __int64, const ept_error*);
+	inline EVmErrors AsmInveptContext();
+}
