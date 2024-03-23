@@ -349,4 +349,91 @@ namespace ept {
 
 		return memory_type;
 	}
+
+	auto get_pde_entry(ept_page_table* page_table, unsigned __int64 pfn) -> ept_pde_2mb* {
+		uint64_t pml4_index = MASK_EPT_PML4_INDEX(pfn);
+		uint64_t pml3_index = MASK_EPT_PML3_INDEX(pfn);
+		uint64_t pml2_index = MASK_EPT_PML2_INDEX(pfn);
+
+		if (pml4_index > 0) {
+			LOG("Address above 512GB is invalid\n");
+			LOG_ERROR();
+			return nullptr;
+		}
+
+		return &page_table->ept_pde[pml3_index][pml2_index];
+	}
+
+	auto get_pte_entry(ept_page_table* page_table, unsigned __int64 pfn) -> ept_pte* {
+		ept_pde_2mb* pde_entry = get_pde_entry(page_table, pfn);
+		if (!pde_entry) {
+			LOG("[-] Invalid pde address passed.\n");
+			LOG_ERROR();
+			return nullptr;
+		}
+
+		// Check to ensure the page is split
+		if (pde_entry->large_page) {
+			return nullptr;
+		}
+
+		ept_pte* pte_entry = reinterpret_cast<ept_pte*>
+			(physical_to_virtual_address(pde_entry->page_frame_number << PAGE_SHIFT));
+		if (!pte_entry)	return nullptr;
+
+		uint64_t pte_index = MASK_EPT_PML1_INDEX(pfn);
+
+		pte_entry = &pte_entry[pte_index];
+		return pte_entry;
+	}
+
+	auto split_pde(ept_page_table* page_table, void* buffer, unsigned __int64 pfn) -> void {
+		ept_pde_2mb* pde_entry = get_pde_entry(page_table, pfn);
+		if (!pde_entry) {
+			LOG("[-] Invalid pde address passed.\n");
+			LOG_ERROR();
+			return;
+		}
+
+		// If this large page is not marked a large page, that means it's a pointer already.
+		// That page is therefore already split.
+		if (!pde_entry->large_page) {
+			return;
+		}
+
+		ept_split_page* split_page = reinterpret_cast<ept_split_page*>(buffer);
+		RtlSecureZeroMemory(split_page, sizeof ept_split_page);
+
+		// Set all pages as rwx to prevent unwanted ept violation
+		split_page->ept_pde = pde_entry;
+
+		ept_pte pte_template = { 0 };
+		pte_template.read_access = 1;
+		pte_template.write_access = 1;
+		pte_template.execute_access = 1;
+		pte_template.memory_type = pde_entry->memory_type;
+		pte_template.ignore_pat = pde_entry->ignore_pat;
+		pte_template.suppress_ve = pde_entry->suppress_ve;
+
+		__stosq((SIZE_T*)&split_page->ept_pte[0], pte_template.flags, 512);
+		for (unsigned idx = 0; idx < 512; idx++) {
+			uint64_t page_number = ((pde_entry->page_frame_number * PAGE2MB) >> PAGE_SHIFT) + idx;
+			split_page->ept_pte[idx].page_frame_number = page_number;
+			//split_page->ept_pte[idx].memory_type = get_memory_type(page_number, FALSE);
+		}
+
+		ept_pde_2mb pde_2 = { 0 };
+		pde_2.read_access = 1;
+		pde_2.write_access = 1;
+		pde_2.execute_access = 1;
+
+		pde_2.page_frame_number = (virtual_to_physical_address((void*)&split_page->ept_pte[0]) >> PAGE_SHIFT);
+
+		RtlCopyMemory(pde_entry, &pde_2, sizeof(pde_2));
+
+		// Add our allocation to the linked list of dynamic splits for later deallocation 
+		InsertHeadList((PLIST_ENTRY)&page_table->dynamic_pages, &split_page->split_pages);
+
+		return;
+	}
 }
