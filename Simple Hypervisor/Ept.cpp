@@ -280,7 +280,7 @@ namespace ept {
 		return true;
 	}
 
-	auto setup_pml2_entries(ept_state* _ept_state, ept_pde_2mb* pde_entry, uint64_t pfn) -> void {
+	auto setup_pml2_entries(ept_state* _ept_state, ept_pde_2mb* pde_entry, unsigned __int64 pfn) -> void {
 		UNREFERENCED_PARAMETER(_ept_state);
 
 		pde_entry->page_frame_number = pfn;
@@ -476,8 +476,7 @@ namespace ept {
 
 	auto ept_inv_global_entry() -> unsigned __int64 {
 		ept_error err = { 0 };
-		//return AsmInveptGlobal(InveptAllContext, &err);
-		return 0;
+		return asm_inv_ept_global(invept_all_context, &err);
 	}
 
 	auto handle_ept_violation(unsigned __int64 phys_addr, unsigned __int64 linear_addr) -> void {
