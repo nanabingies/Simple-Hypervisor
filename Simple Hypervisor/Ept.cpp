@@ -436,4 +436,17 @@ namespace ept {
 
 		return;
 	}
+
+	auto ept_init_table_entry(ept_entry* _ept_entry, unsigned __int64 level, unsigned __int64 pfn) -> void {
+		_ept_entry->read_access = 1;
+		_ept_entry->write_access = 1;
+		_ept_entry->execute_access = 1;
+		_ept_entry->page_frame_number = pfn >> PAGE_SHIFT;
+
+		if (level == 1) {
+			_ept_entry->memory_type = ept_get_memory_type(pfn, false);
+		}
+
+		return;
+	}
 }
