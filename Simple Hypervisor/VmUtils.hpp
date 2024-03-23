@@ -77,6 +77,11 @@ struct _vmm_context {
 	struct _ept_state* ept_state;
 };
 
+typedef struct _ept_error {
+	void*	param_1;
+	void*	param_2;
+} ept_error;
+
 extern bool vm_off;
 extern unsigned g_num_processors;
 extern _vmm_context* vmm_context;
