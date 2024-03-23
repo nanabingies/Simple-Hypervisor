@@ -82,6 +82,7 @@ auto AdjustControls(ulong Ctl, ulong Msr) -> unsigned __int64 {
 }
 
 auto setup_vmcs(unsigned long processor_number, void* guest_rsp, uint64_t cr3) -> EVmErrors {
+	UNREFERENCED_PARAMETER(cr3);
 	PAGED_CODE();
 	ret_val = 0;
 
@@ -93,7 +94,7 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp, uint64_t cr3) -
 	if (__vmx_vmwrite(VMCS_GUEST_CR4, __readcr4()) != 0)	return VM_ERROR_ERR_INFO_ERR;
 
 	if (__vmx_vmwrite(VMCS_HOST_CR0, __readcr0()) != 0)		return VM_ERROR_ERR_INFO_ERR;
-	if (__vmx_vmwrite(VMCS_HOST_CR3, static_cast<size_t>(cr3)) != 0)		return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_HOST_CR3, __readcr3()) != 0)		return VM_ERROR_ERR_INFO_ERR;	// static_cast<size_t>(cr3)
 	if (__vmx_vmwrite(VMCS_HOST_CR4, __readcr4()) != 0)		return VM_ERROR_ERR_INFO_ERR;
 
 	if (__vmx_vmwrite(VMCS_CTRL_CR0_READ_SHADOW, __readcr0()) != 0)	return VM_ERROR_ERR_INFO_ERR;
@@ -291,8 +292,8 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp, uint64_t cr3) -
 	// VM-exit information fields. 
 	// These fields receive information on VM exits and describe the cause and the nature of VM exits.
 	//
-	//if (__vmx_vmwrite(VMCS_VMEXIT_INSTRUCTION_INFO,
-	//	AdjustControls(IA32_VMX_EXIT_CTLS_HOST_ADDRESS_SPACE_SIZE_FLAG, IA32_VMX_EXIT_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_VMEXIT_INSTRUCTION_INFO,
+		AdjustControls(IA32_VMX_EXIT_CTLS_HOST_ADDRESS_SPACE_SIZE_FLAG, IA32_VMX_EXIT_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
 
 	//__debugbreak();
 
