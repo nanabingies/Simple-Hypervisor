@@ -473,4 +473,12 @@ namespace ept {
 			return page_table->dynamic_pages[count - 1];
 		}
 	}
+
+	auto ept_inv_global_entry() -> unsigned __int64 {
+		ept_error err = { 0 };
+		//return AsmInveptGlobal(InveptAllContext, &err);
+		return 0;
+	}
+
+
 }
