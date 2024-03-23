@@ -1,7 +1,8 @@
 #include "ept.hpp"
+#pragma warning(disable: 4996)
 
 namespace ept {
-	static mtrr_entry g_MtrrEntries[num_mtrr_entries];
+	static mtrr_entry g_mtrr_entries[num_mtrr_entries];
 
 	auto check_ept_support() -> bool {
 		PAGED_CODE();
@@ -46,7 +47,7 @@ namespace ept {
 	auto ept_build_mtrr_map() -> bool {
 		PAGED_CODE();
 
-		mtrr_entry* _mtrr_entry = g_MtrrEntries;
+		mtrr_entry* _mtrr_entry = g_mtrr_entries;
 		RtlSecureZeroMemory(_mtrr_entry, num_mtrr_entries * sizeof(mtrr_entry));
 
 		ia32_mtrr_capabilities_register mtrr_cap;
@@ -170,7 +171,7 @@ namespace ept {
 		return true;
 	}
 
-	auto InitializeEpt(unsigned char processor_number) -> bool {
+	auto initialize_ept(unsigned char processor_number) -> bool {
 		PAGED_CODE();
 
 		ept_state* _ept_state = reinterpret_cast<ept_state*>
@@ -207,5 +208,145 @@ namespace ept {
 
 		LOG("[*] EPT initialized on processor (%x)\n", processor_number);
 		return true;
+	}
+
+	auto create_ept_state(ept_state* _ept_state) -> bool {
+		ept_page_table* page_table = reinterpret_cast<ept_page_table*>
+			(ExAllocatePoolWithTag(NonPagedPool, sizeof ept_page_table, VMM_POOL_TAG));
+		if (!page_table)	return false;
+		_ept_state->ept_page_table = page_table;
+
+		ept_pml4e* pml4e = reinterpret_cast<ept_pml4e*>(&page_table->ept_pml4[0]);
+		ept_pdpte* pdpte = reinterpret_cast<ept_pdpte*>(&page_table->ept_pdpte[0]);
+
+		_ept_state->ept_ptr->page_frame_number = (virtual_to_physical_address(&pml4e) >> PAGE_SHIFT);
+		_ept_state->ept_ptr->enable_access_and_dirty_flags = 0;
+		_ept_state->ept_ptr->memory_type = WriteBack;
+		_ept_state->ept_ptr->page_walk_length = max_ept_walk_length - 1;
+
+		vmm_context[KeGetCurrentProcessorNumber()].ept_pml4 = pml4e->flags;
+
+		pml4e->page_frame_number = (virtual_to_physical_address(&pdpte) >> PAGE_SHIFT);
+		pml4e->execute_access = 1;
+		pml4e->read_access = 1;
+		pml4e->user_mode_execute = 1;
+		pml4e->write_access = 1;
+
+		ept_pdpte pdpte_template = { 0 };
+		pdpte_template.read_access = 1;
+		pdpte_template.write_access = 1;
+		pdpte_template.execute_access = 1;
+
+		__stosq((SIZE_T*)&page_table->ept_pdpte[0], pdpte_template.flags, EPTPDPTEENTRIES);
+		for (unsigned idx = 0; idx < EPTPDPTEENTRIES; idx++) {
+			page_table->ept_pdpte[idx].page_frame_number = (virtual_to_physical_address(&page_table->ept_pde[idx][0]) >> PAGE_SHIFT);
+		}
+
+		ept_pde_2mb pde_template = { 0 };
+		pde_template.read_access = 1;
+		pde_template.write_access = 1;
+		pde_template.execute_access = 1;
+		pde_template.large_page = 1;
+
+		__stosq((SIZE_T*)&page_table->ept_pde[0], pde_template.flags, EPTPDEENTRIES);
+		for (unsigned i = 0; i < EPTPML4ENTRIES; i++) {
+			for (unsigned j = 0; j < EPTPDPTEENTRIES; j++) {
+				setup_pml2_entries(_ept_state, &page_table->ept_pde[i][j], (i * 512) + j);
+			}
+		}
+
+		// Allocate preallocated entries
+		const uint64_t preallocated_entries_size = sizeof(ept_entry) * DYNAMICPAGESCOUNT;
+		/*const*/ ept_entry** dynamic_pages = reinterpret_cast<ept_entry**>
+			(ExAllocatePoolWithTag(NonPagedPool, preallocated_entries_size, VMM_POOL_TAG));
+		if (!dynamic_pages) {
+			ExFreePoolWithTag(page_table, VMM_POOL_TAG);
+			return FALSE;
+		}
+		RtlSecureZeroMemory(dynamic_pages, preallocated_entries_size);
+
+		/*const*/ ept_entry * _ept_entry = ept_allocate_ept_entry(NULL);
+		if (!_ept_entry) {
+			ExFreePoolWithTag(dynamic_pages, VMM_POOL_TAG);
+			ExFreePoolWithTag(page_table, VMM_POOL_TAG);
+			return FALSE;
+		}
+		dynamic_pages[0] = _ept_entry;
+
+		page_table->dynamic_pages_count = 0;
+		page_table->dynamic_pages = const_cast<ept_entry**>(dynamic_pages);
+		_ept_state->guest_address_width_value = max_ept_walk_length - 1;
+
+		return true;
+	}
+
+	auto setup_pml2_entries(ept_state* _ept_state, ept_pde_2mb* pde_entry, uint64_t pfn) -> void {
+		UNREFERENCED_PARAMETER(_ept_state);
+
+		pde_entry->page_frame_number = pfn;
+
+		uint64_t addrOfPage = pfn * PAGE2MB;
+		if (pfn == 0) {
+			pde_entry->memory_type = Uncacheable;
+			return;
+		}
+
+		uint64_t memory_type = WriteBack;
+		mtrr_entry* temp = reinterpret_cast<mtrr_entry*>(g_mtrr_entries);
+		for (unsigned idx = 0; idx < g_mtrr_num; idx++) {
+			if (addrOfPage <= temp[idx].physical_address_end) {
+				if ((addrOfPage + PAGE2MB - 1) >= temp[idx].physical_address_start) {
+					memory_type = temp[idx].memory_type;
+					if (memory_type == Uncacheable) {
+						break;
+					}
+				}
+			}
+		}
+
+		pde_entry->memory_type = memory_type;
+
+		return;
+	}
+
+	auto is_valid_for_large_page(unsigned __int64 pfn) -> bool {
+		UNREFERENCED_PARAMETER(pfn);
+
+		uint64_t page_start = pfn * PAGE2MB;
+		uint64_t page_end = (pfn * PAGE2MB) + (PAGE2MB - 1);
+
+		mtrr_entry* temp = reinterpret_cast<mtrr_entry*>(g_mtrr_entries);
+
+		for (unsigned idx = 0; idx < g_mtrr_num; idx++) {
+			if (page_start <= temp[idx].physical_address_end && page_end > temp[idx].physical_address_end)
+				return false;
+
+			else if (page_start < temp[idx].physical_address_start && page_end >= temp[idx].physical_address_start)
+				return false;
+		}
+
+		return true;
+	}
+
+	auto ept_get_memory_type(unsigned __int64 pfn, bool large_page) -> unsigned __int64 {
+		uint64_t page_start = large_page == true ? pfn * PAGE2MB : pfn * PAGE_SIZE;
+		uint64_t page_end = large_page == true ? (pfn * PAGE2MB) + (PAGE2MB - 1) : (pfn * PAGE_SIZE) + (PAGE_SIZE - 1);
+		uint64_t memory_type = g_default_memory_type;
+
+		mtrr_entry* temp = reinterpret_cast<mtrr_entry*>(g_mtrr_entries);
+
+		for (unsigned idx = 0; idx < g_mtrr_num; idx++) {
+			if (page_start >= temp[idx].physical_address_start && page_end <= temp[idx].physical_address_end) {
+				memory_type = temp[idx].memory_type;
+
+				if (temp[idx].mtrr_fixed == true)
+					break;
+
+				if (memory_type == Uncacheable)
+					break;
+			}
+		}
+
+		return memory_type;
 	}
 }
