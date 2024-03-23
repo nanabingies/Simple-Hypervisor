@@ -96,7 +96,7 @@ namespace ept {
 
 	auto get_pte_entry(ept_page_table*, unsigned __int64) -> ept_pte*;
 
-	auto get_pde_entry(ept_page_table*, unsigned __int64) -> ept_pde_2mb;
+	auto get_pde_entry(ept_page_table*, unsigned __int64) -> ept_pde_2mb*;
 
 	auto ept_construct_tables(ept_entry*, unsigned __int64, unsigned __int64, ept_page_table*) -> ept_entry*;
 
