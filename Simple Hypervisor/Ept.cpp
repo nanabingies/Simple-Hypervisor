@@ -449,4 +449,28 @@ namespace ept {
 
 		return;
 	}
+
+	auto ept_allocate_ept_entry(ept_page_table* page_table) -> ept_entry* {
+		if (!page_table) {
+			static const uint64_t kAllocSize = 512 * sizeof(ept_entry*);
+			ept_entry* entry = reinterpret_cast<ept_entry*>
+				(ExAllocatePoolZero(NonPagedPool, kAllocSize, VMM_POOL_TAG));
+			if (!entry)
+				return nullptr;
+
+			RtlSecureZeroMemory(entry, kAllocSize);
+			return entry;
+		}
+
+		else {
+			const uint64_t count = InterlockedIncrement((LONG volatile*)&page_table->dynamic_pages_count);
+
+			// How many EPT entries are preallocated. When the number exceeds it, return
+			if (count > DYNAMICPAGESCOUNT) {
+				return nullptr;
+			}
+
+			return page_table->dynamic_pages[count - 1];
+		}
+	}
 }
