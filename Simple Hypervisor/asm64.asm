@@ -15,6 +15,7 @@ public	asm_get_gdt_base
 
 extern	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z:proc
 extern  ?vmexit_handler@vmexit@@YAFPEAX@Z:proc
+extern  asm_inv_ept_global:proc
 extern  ret_val:dword
 extern  cr3_val:qword
 
@@ -170,7 +171,7 @@ asm_setup_vmcs proc
 
 asm_setup_vmcs endp
 
-;--------------------------------------------------------------------------------------------
+;----------------------------------------------------------------------------------------------------
 
 asm_get_idt_base proc
 	local	idtr[10]:byte
@@ -215,5 +216,23 @@ asm_get_tr proc
 	str		rax
 	ret
 asm_get_tr endp
+
+;----------------------------------------------------------------------------------------------------
+
+asm_inv_ept_global proc
+    invept	rcx, oword ptr [rdx]
+	jz      error_with_code						; if (ZF) jmp
+    jc      error_without_code					; if (CF) jmp
+    xor		rax, rax						    ; VM_ERROR_OK
+    ret
+
+error_with_code:
+	mov		rax,	VM_ERROR_ERR_INFO_ERR
+    ret
+
+error_without_code:
+	mov		rax,	VM_ERROR_ERR_INFO_OK
+	ret
+asm_inv_ept_global endp
 
 end
