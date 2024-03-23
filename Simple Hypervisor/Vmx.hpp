@@ -33,6 +33,6 @@ namespace vmexit {
 }
 
 extern "C" {
-	inline EVmErrors asm_inv_ept_global(unsigned __int64, const ept_error*);
-	inline EVmErrors AsmInveptContext();
+	auto inline asm_inv_ept_global(unsigned __int64, struct _ept_error*) -> unsigned __int32;
+	//inline EVmErrors AsmInveptContext();
 }
