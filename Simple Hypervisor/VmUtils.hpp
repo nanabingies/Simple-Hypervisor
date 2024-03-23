@@ -74,7 +74,7 @@ struct _vmm_context {
 
 	uint64_t	ept_ptr;
 	uint64_t	ept_pml4;
-	ept_state* ept_state;
+	struct _ept_state* ept_state;
 };
 
 extern bool vm_off;
