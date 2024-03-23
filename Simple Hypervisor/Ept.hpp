@@ -109,4 +109,6 @@ namespace ept {
 	auto ept_inv_global_entry() -> unsigned __int64;
 
 	auto split_pde(ept_page_table*, void*, unsigned __int64) -> void;
+
+	auto handle_ept_violation(unsigned __int64, unsigned __int64) -> void;
 }
