@@ -1,10 +1,7 @@
 
 public	asm_host_continue_execution
-;public	asmGuestContinueExecution
-;public	hostTerminateHypervisor
 public  asm_setup_vmcs
-;public	asmInveptGlobal
-;public	asmInveptContext
+public  asm_inv_ept_global
 
 public	asm_get_tr
 public	asm_get_ldtr
@@ -15,7 +12,6 @@ public	asm_get_gdt_base
 
 extern	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z:proc
 extern  ?vmexit_handler@vmexit@@YAFPEAX@Z:proc
-extern  asm_inv_ept_global:proc
 extern  ret_val:dword
 extern  cr3_val:qword
 
@@ -227,12 +223,13 @@ asm_inv_ept_global proc
     ret
 
 error_with_code:
-	mov		rax,	VM_ERROR_ERR_INFO_ERR
+	mov		rax, 02h
     ret
 
 error_without_code:
-	mov		rax,	VM_ERROR_ERR_INFO_OK
+	mov		rax, 01h
 	ret
+
 asm_inv_ept_global endp
 
 end
