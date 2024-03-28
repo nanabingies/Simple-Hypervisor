@@ -488,13 +488,14 @@ namespace ept {
 		if (pte_entry && pte_entry->flags) {
 			__debugbreak();
 			LOG("[!][%ws] PteEntry: VA = %llx, PA = %llx", __FUNCTIONW__, linear_addr, phys_addr);
+			LOG_ERROR();
 			return false;
 		}
 
 		// EPT entry miss
 		ept_entry* pml4e = reinterpret_cast<ept_entry*>
 			(_ept_state->ept_page_table->ept_pml4);
-		ept_construct_tables(pml4e, 4, linear_addr, _ept_state->ept_page_table); //
+		ept_construct_tables(pml4e, 4, phys_addr, _ept_state->ept_page_table);
 
 		// invalidate Global EPT entries
 		ept_inv_global_entry();
