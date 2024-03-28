@@ -383,7 +383,9 @@ namespace vmexit {
 				return VM_ERROR_ERR_INFO_ERR;
 			}
 
-			//handle_ept_violation(phys_addr, linear_addr);
+			if (!handle_ept_violation(phys_addr, linear_addr)) {
+				LOG("[!][%ws] Error handling apt violation\n", __FUNCTIONW__);
+			}
 		}
 										  break;
 
