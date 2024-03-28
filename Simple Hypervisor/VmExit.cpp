@@ -55,41 +55,41 @@ namespace vmexit {
 								   break;
 
 		case VMX_EXIT_REASON_SMI: {
-			LOG("[*] smi\n");
+			LOG("[*][%ws] smi\n", __FUNCTIONW__);
 		}
 								break;
 
 		case VMX_EXIT_REASON_INTERRUPT_WINDOW: {
-			LOG("[*] interrupt window\n");
+			LOG("[*][%ws] interrupt window\n", __FUNCTIONW__);
 		}
 											 break;
 
 		case VMX_EXIT_REASON_NMI_WINDOW: {
-			LOG("[*] nmi window\n");
+			LOG("[*][%ws] nmi window\n", __FUNCTIONW__);
 		}
 									   break;
 
 		case VMX_EXIT_REASON_TASK_SWITCH: {
-			LOG("[*] task switch\n");
+			LOG("[*][%ws] task switch\n", __FUNCTIONW__);
 			vmx_exit_qualification_task_switch exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 		}
 										break;
 
 		case VMX_EXIT_REASON_EXECUTE_CPUID: {
-			LOG("[*] execute cpuid\n");
+			LOG("[*][%ws] execute cpuid\n", __FUNCTIONW__);
 			int cpuInfo[4] = { 0 };
 			__cpuidex(reinterpret_cast<int*>(&cpuInfo), static_cast<int>(guest_regs->rax), static_cast<int>(guest_regs->rcx));
 		}
 										  break;
 
 		case VMX_EXIT_REASON_EXECUTE_GETSEC: {
-			LOG("[*] execute getsec\n");
+			LOG("[*][%ws] execute getsec\n", __FUNCTIONW__);
 		}
 										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_HLT: {
-			LOG("[*] execute hlt\n");
+			LOG("[*][%ws] execute hlt\n", __FUNCTIONW__);
 
 			//
 			// Terminate HyperVisor
@@ -99,32 +99,32 @@ namespace vmexit {
 										break;
 
 		case VMX_EXIT_REASON_EXECUTE_INVD: {
-			LOG("[*] execute invd\n");
+			LOG("[*][%ws] execute invd\n", __FUNCTIONW__);
 		}
 										 break;
 
 		case VMX_EXIT_REASON_EXECUTE_INVLPG: {
-			LOG("[*] execute invlpg\n");
+			LOG("[*][%ws] execute invlpg\n", __FUNCTIONW__);
 		}
 										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_RDPMC: {
-			LOG("[*] execute rdpmc\n");
+			LOG("[*][%ws] execute rdpmc\n", __FUNCTIONW__);
 		}
 										  break;
 
 		case VMX_EXIT_REASON_EXECUTE_RDTSC: {
-			LOG("[*] execute rdtsc\n");
+			LOG("[*][%ws] execute rdtsc\n", __FUNCTIONW__);
 		}
 										  break;
 
 		case VMX_EXIT_REASON_EXECUTE_RSM_IN_SMM: {
-			LOG("[*] execute rsm in smm\n");
+			LOG("[*][%ws] execute rsm in smm\n", __FUNCTIONW__);
 		}
 											   break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMCALL: {
-			LOG("[*] execute vmcall\n");
+			LOG("[*][%ws] execute vmcall\n", __FUNCTIONW__);
 		}
 										   break;
 
