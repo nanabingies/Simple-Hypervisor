@@ -481,19 +481,20 @@ namespace ept {
 
 	auto handle_ept_violation(unsigned __int64 phys_addr, unsigned __int64 linear_addr) -> bool {
 		ept_state* _ept_state = vmm_context[KeGetCurrentProcessorNumber()].ept_state;
+		__debugbreak();
 
 		// Get faulting page table entry (PTE)
 		const ept_pte* pte_entry = get_pte_entry(_ept_state->ept_page_table, phys_addr);
 		if (pte_entry && pte_entry->flags) {
 			__debugbreak();
-			LOG("PteEntry: VA = %llx, PA = %llx", linear_addr, phys_addr);
+			LOG("[!][%ws] PteEntry: VA = %llx, PA = %llx", __FUNCTIONW__, linear_addr, phys_addr);
 			return false;
 		}
 
 		// EPT entry miss
 		ept_entry* pml4e = reinterpret_cast<ept_entry*>
 			(_ept_state->ept_page_table->ept_pml4);
-		ept_construct_tables(pml4e, 4, phys_addr, _ept_state->ept_page_table);
+		ept_construct_tables(pml4e, 4, linear_addr, _ept_state->ept_page_table); //
 
 		// invalidate Global EPT entries
 		ept_inv_global_entry();
