@@ -25,32 +25,32 @@ namespace vmexit {
 		switch (vmexit_reason.basic_exit_reason)
 		{
 		case VMX_EXIT_REASON_EXCEPTION_OR_NMI: {
-			LOG("[*] exception or nmi\n");
+			LOG("[*][%ws] exception or nmi\n", __FUNCTIONW__);
 		}
 											 break;
 
 		case VMX_EXIT_REASON_EXTERNAL_INTERRUPT: {
-			LOG("[*] external interrupt\n");
+			LOG("[*][%ws] external interrupt\n", __FUNCTIONW__);
 		}
 											   break;
 
 		case VMX_EXIT_REASON_TRIPLE_FAULT: {
-			LOG("[*] triple fault\n");
+			LOG("[*][%ws] triple fault\n", __FUNCTIONW__);
 		}
 										 break;
 
 		case VMX_EXIT_REASON_INIT_SIGNAL: {
-			LOG("[*] init signal\n");
+			LOG("[*][%ws] init signal\n", __FUNCTIONW__);
 		}
 										break;
 
 		case VMX_EXIT_REASON_STARTUP_IPI: {
-			LOG("[*] startup ipi\n");
+			LOG("[*][%ws] startup ipi\n", __FUNCTIONW__);
 		}
 										break;
 
 		case VMX_EXIT_REASON_IO_SMI: {
-			LOG("[*] io smi\n");
+			LOG("[*][%ws] io smi\n", __FUNCTIONW__);
 		}
 								   break;
 
