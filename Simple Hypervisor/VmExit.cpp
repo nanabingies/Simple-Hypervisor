@@ -269,7 +269,7 @@ namespace vmexit {
 												   break;
 
 		case VMX_EXIT_REASON_EXECUTE_RDMSR: {
-			LOG("[*] execute rdmsr\n");
+			LOG("[*][%ws] execute rdmsr\n", __FUNCTIONW__);
 			if ((guest_regs->rcx <= 0x00001FFF) ||
 				((guest_regs->rcx >= 0xC0000000) && (guest_regs->rcx <= 0xC0001FFF))) {
 
@@ -282,7 +282,7 @@ namespace vmexit {
 										  break;
 
 		case VMX_EXIT_REASON_EXECUTE_WRMSR: {
-			LOG("[*] execute wrmsr\n");
+			LOG("[*][%ws] execute wrmsr\n", __FUNCTIONW__);
 			if ((guest_regs->rcx <= 0x00001FFF) ||
 				((guest_regs->rcx >= 0xC0000000) && (guest_regs->rcx <= 0xC0001FFF))) {
 
@@ -296,66 +296,66 @@ namespace vmexit {
 										  break;
 
 		case VMX_EXIT_REASON_ERROR_INVALID_GUEST_STATE: {
-			LOG("[*] invalid guest state\n");
+			LOG("[*][%ws] invalid guest state\n", __FUNCTIONW__);
 		}
 													  break;
 
 		case VMX_EXIT_REASON_ERROR_MSR_LOAD: {
-			LOG("[*] error msr load\n");
+			LOG("[*][%ws] error msr load\n", __FUNCTIONW__);
 		}
 										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_MWAIT: {
-			LOG("[*] execute mwait\n");
+			LOG("[*][%ws] execute mwait\n", __FUNCTIONW__);
 		}
 										  break;
 
 		case VMX_EXIT_REASON_MONITOR_TRAP_FLAG: {
-			LOG("[*] monitor trap flag\n");
+			LOG("[*][%ws] monitor trap flag\n", __FUNCTIONW__);
 		}
 											  break;
 
 		case VMX_EXIT_REASON_EXECUTE_MONITOR: {
-			LOG("[*] execute monitor\n");
+			LOG("[*][%ws] execute monitor\n", __FUNCTIONW__);
 		}
 											break;
 
 		case VMX_EXIT_REASON_EXECUTE_PAUSE: {
-			LOG("[*] execute pause\n");
+			LOG("[*][%ws] execute pause\n", __FUNCTIONW__);
 		}
 										  break;
 
 		case VMX_EXIT_REASON_ERROR_MACHINE_CHECK: {
-			LOG("[*] error machine check\n");
+			LOG("[*][%ws] error machine check\n", __FUNCTIONW__);
 		}
 												break;
 
 		case VMX_EXIT_REASON_TPR_BELOW_THRESHOLD: {
-			LOG("[*] below threshold\n");
+			LOG("[*][%ws] below threshold\n", __FUNCTIONW__);
 		}
 												break;
 
 		case VMX_EXIT_REASON_APIC_ACCESS: {
-			LOG("[*] apic access\n");
+			LOG("[*][%ws] apic access\n", __FUNCTIONW__);
 			vmx_exit_qualification_apic_access exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 		}
 										break;
 
 		case VMX_EXIT_REASON_VIRTUALIZED_EOI: {
-			LOG("[*] virtualized eoi\n");
+			LOG("[*][%ws] virtualized eoi\n", __FUNCTIONW__);
 		}
 											break;
 
 		case VMX_EXIT_REASON_GDTR_IDTR_ACCESS: {
-			LOG("[*] gdtr idtr access\n");
+			LOG("[*][%ws] gdtr idtr access\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_gdtr_idtr_access exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 		}
 											 break;
 
 		case VMX_EXIT_REASON_LDTR_TR_ACCESS: {
-			LOG("[*] ldtr tr access\n");
+			LOG("[*][%ws] ldtr tr access\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_ldtr_tr_access exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 		}
