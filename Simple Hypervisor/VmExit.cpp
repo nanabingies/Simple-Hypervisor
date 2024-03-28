@@ -363,7 +363,7 @@ namespace vmexit {
 
 		case VMX_EXIT_REASON_EPT_VIOLATION: {
 			using ept::handle_ept_violation;
-			LOG("[*] ept violation\n");
+			LOG("[*][%ws] ept violation\n", __FUNCTIONW__);
 
 			vmx_exit_qualification_ept_violation exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
@@ -377,6 +377,7 @@ namespace vmexit {
 			__vmx_vmread(VMCS_EXIT_GUEST_LINEAR_ADDRESS, &linear_addr);
 
 			if (exitQualification.ept_executable || exitQualification.ept_readable || exitQualification.ept_writeable) {
+				// These caused an EPT Violation
 				__debugbreak();
 				LOG("Error: VA = %llx, PA = %llx", linear_addr, phys_addr);
 				return VM_ERROR_ERR_INFO_ERR;
@@ -387,7 +388,7 @@ namespace vmexit {
 										  break;
 
 		case VMX_EXIT_REASON_EPT_MISCONFIGURATION: {
-			LOG("[*] EPT Misconfiguration\n");
+			LOG("[*][%ws] EPT Misconfiguration\n", __FUNCTIONW__);
 			LOG_ERROR();
 			__debugbreak();
 
@@ -398,7 +399,7 @@ namespace vmexit {
 												 break;
 
 		case VMX_EXIT_REASON_EXECUTE_INVEPT: {
-			LOG("[*] invept\n");
+			LOG("[*][%ws] invept\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_invalidate exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 			__debugbreak();
@@ -406,39 +407,39 @@ namespace vmexit {
 										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_RDTSCP: {
-			LOG("[*] rdtscp\n");
+			LOG("[*][%ws] rdtscp\n", __FUNCTIONW__);
 		}
 										   break;
 
 		case VMX_EXIT_REASON_VMX_PREEMPTION_TIMER_EXPIRED: {
-			LOG("[*] timer expired\n");
+			LOG("[*][%ws] timer expired\n", __FUNCTIONW__);
 		}
 														 break;
 
 		case VMX_EXIT_REASON_EXECUTE_INVVPID: {
-			LOG("[*] invvpid\n");
+			LOG("[*][%ws] invvpid\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_invalidate exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 		}
 											break;
 
 		case VMX_EXIT_REASON_EXECUTE_WBINVD: {
-			LOG("[*] wbinvd\n");
+			LOG("[*][%ws] wbinvd\n", __FUNCTIONW__);
 		}
 										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_XSETBV: {
-			LOG("[*] xsetvb\n");
+			LOG("[*][%ws] xsetvb\n", __FUNCTIONW__);
 		}
 										   break;
 
 		case VMX_EXIT_REASON_APIC_WRITE: {
-			LOG("[*] apic write\n");
+			LOG("[*][%ws] apic write\n", __FUNCTIONW__);
 		}
 									   break;
 
 		case VMX_EXIT_REASON_EXECUTE_RDRAND: {
-			LOG("[*] rdrand\n");
+			LOG("[*][%ws] rdrand\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_rdrand_rdseed exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 		}
