@@ -129,62 +129,62 @@ namespace vmexit {
 										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMCLEAR: {
-			LOG("[*] execute vmclear\n");
+			LOG("[*][%ws] execute vmclear\n", __FUNCTIONW__);
 		}
 											break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMLAUNCH: {
-			LOG("[*] execute vmlaunch\n");
+			LOG("[*][%ws] execute vmlaunch\n", __FUNCTIONW__);
 		}
 											 break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMPTRLD: {
-			LOG("[*] execute vmptrld\n");
+			LOG("[*][%ws] execute vmptrld\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 		}
 											break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMPTRST: {
-			LOG("[*] execute vmptrst\n");
+			LOG("[*][%ws] execute vmptrst\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 		}
 											break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMREAD: {
-			LOG("[*] execute vmread\n");
+			LOG("[*][%ws] execute vmread\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_vmread_vmwrite exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 		}
 										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMRESUME: {
-			LOG("[*] execute vmresume\n");
+			LOG("[*][%ws] execute vmresume\n", __FUNCTIONW__);
 		}
 											 break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMWRITE: {
-			LOG("[*] execute vmwrite\n");
+			LOG("[*][%ws] execute vmwrite\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_vmread_vmwrite exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 		}
 											break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMXOFF: {
-			LOG("[*] execute vmxoff\n");
+			LOG("[*][%ws] execute vmxoff\n", __FUNCTIONW__);
 		}
 										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMXON: {
-			LOG("[*] execute vmxon\n");
+			LOG("[*][%ws] execute vmxon\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 		}
 										  break;
 
 		case VMX_EXIT_REASON_MOV_CR: {
-			LOG("[*] mov cr\n");
+			LOG("[*][%ws] mov cr\n", __FUNCTIONW__);
 
 			//
 			// Check whether it was a mov to or mov from CR
@@ -255,14 +255,14 @@ namespace vmexit {
 								   break;
 
 		case VMX_EXIT_REASON_MOV_DR: {
-			LOG("[*] mov dr\n");
+			LOG("[*][%ws] mov dr\n", __FUNCTIONW__);
 			vmx_exit_qualification_mov_dr exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 		}
 								   break;
 
 		case VMX_EXIT_REASON_EXECUTE_IO_INSTRUCTION: {
-			LOG("[*] execute io\n");
+			LOG("[*][%ws] execute io\n", __FUNCTIONW__);
 			vmx_exit_qualification_io_instruction exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 		}
