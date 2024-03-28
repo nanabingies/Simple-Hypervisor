@@ -84,9 +84,9 @@ namespace ept {
 
 	auto ept_build_mtrr_map() -> bool;
 
-	auto create_ept_state(ept_state*) -> bool;
+	auto create_ept_state(ept_state**) -> bool;
 
-	auto handle_ept_violation(unsigned __int64, unsigned __int64) -> void;
+	//auto handle_ept_violation(unsigned __int64, unsigned __int64) -> void;
 
 	auto setup_pml2_entries(ept_state*, ept_pde_2mb*, unsigned __int64) -> void;
 
@@ -110,5 +110,5 @@ namespace ept {
 
 	auto split_pde(ept_page_table*, void*, unsigned __int64) -> void;
 
-	auto handle_ept_violation(unsigned __int64, unsigned __int64) -> void;
+	auto handle_ept_violation(unsigned __int64, unsigned __int64) -> bool;
 }
