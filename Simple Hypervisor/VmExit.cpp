@@ -446,41 +446,41 @@ namespace vmexit {
 										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_INVPCID: {
-			LOG("[*] invpcid\n");
+			LOG("[*][%ws] invpcid\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_invalidate exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 		}
 											break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMFUNC: {
-			LOG("[*] vmfunc\n");
+			LOG("[*][%ws] vmfunc\n", __FUNCTIONW__);
 		}
 										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_ENCLS: {
-			LOG("[*] execute encls\n");
+			LOG("[*][%ws] execute encls\n", __FUNCTIONW__);
 		}
 										  break;
 
 		case VMX_EXIT_REASON_EXECUTE_RDSEED: {
-			LOG("[*] execute rdseed\n");
+			LOG("[*][%ws] execute rdseed\n", __FUNCTIONW__);
 		}
 										   break;
 
 		case VMX_EXIT_REASON_PAGE_MODIFICATION_LOG_FULL: {
-			LOG("[*] modification log full\n");
+			LOG("[*][%ws] modification log full\n", __FUNCTIONW__);
 		}
 													   break;
 
 		case VMX_EXIT_REASON_EXECUTE_XSAVES: {
-			LOG("[*] execute xsaves\n");
+			LOG("[*][%ws] execute xsaves\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 		}
 										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_XRSTORS: {
-			LOG("[*] execute xstors\n");
+			LOG("[*][%ws] execute xstors\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 		}
