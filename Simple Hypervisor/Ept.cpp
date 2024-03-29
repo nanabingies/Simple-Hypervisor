@@ -529,6 +529,16 @@ namespace ept {
 			const uint64_t pml3_index = MASK_EPT_PML3_INDEX(pfn);
 			ept_entry* pdpt_entry = &_ept_entry[pml3_index];
 			LOG("[*] pdpt_entry : %p\n", pdpt_entry);
+
+			// ---------------------------------
+			if (!pdpt_entry->read_access)
+				pdpt_entry->read_access = 0x1;
+			if (!pdpt_entry->write_access)
+				pdpt_entry->write_access = 0x1;
+			if (!pdpt_entry->execute_access)
+				pdpt_entry->execute_access = 0x1;
+			// ----------------------------------
+
 			if (!pdpt_entry->flags) {
 				ept_entry* _ept_pde = reinterpret_cast<ept_entry*>
 					(ept_allocate_ept_entry(page_table));
@@ -548,6 +558,10 @@ namespace ept {
 			const uint64_t pml2_index = MASK_EPT_PML2_INDEX(pfn);
 			ept_entry* pde_entry = &_ept_entry[pml2_index];
 			LOG("[*] pde_entry : %p\n", pde_entry);
+			if (pde_entry == nullptr) {
+				ept_entry* ept_pt = ept_allocate_ept_entry(page_table);
+				return;
+			}
 			if (!pde_entry->flags) {
 				ept_entry* ept_pt = ept_allocate_ept_entry(page_table);
 				if (!ept_pt)
