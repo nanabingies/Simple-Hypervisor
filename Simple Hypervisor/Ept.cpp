@@ -531,12 +531,12 @@ namespace ept {
 			LOG("[*] pdpt_entry : %p\n", pdpt_entry);
 
 			// ---------------------------------
-			if (!pdpt_entry->read_access)
+			/*if (!pdpt_entry->read_access)
 				pdpt_entry->read_access = 0x1;
 			if (!pdpt_entry->write_access)
 				pdpt_entry->write_access = 0x1;
 			if (!pdpt_entry->execute_access)
-				pdpt_entry->execute_access = 0x1;
+				pdpt_entry->execute_access = 0x1;*/
 			// ----------------------------------
 
 			if (!pdpt_entry->flags) {
@@ -560,7 +560,8 @@ namespace ept {
 			LOG("[*] pde_entry : %p\n", pde_entry);
 			if (pde_entry == nullptr) {
 				ept_entry* ept_pt = ept_allocate_ept_entry(page_table);
-				return;
+				LOG("[*] ept entry : %p\n", static_cast<void*>(ept_pt));
+				return nullptr;
 			}
 			if (!pde_entry->flags) {
 				ept_entry* ept_pt = ept_allocate_ept_entry(page_table);
