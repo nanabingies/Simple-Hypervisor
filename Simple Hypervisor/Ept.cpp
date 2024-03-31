@@ -47,6 +47,7 @@ namespace ept {
 	auto ept_build_mtrr_map() -> bool {
 		PAGED_CODE();
 
+		__debugbreak();
 		mtrr_entry* _mtrr_entry = g_mtrr_entries;
 		RtlSecureZeroMemory(_mtrr_entry, num_mtrr_entries * sizeof(mtrr_entry));
 
@@ -80,7 +81,7 @@ namespace ept {
 		ia32_mtrr_fixed_range_msr msr64k;
 		msr64k.all = __readmsr(IA32_MTRR_FIX64K_00000);
 		for (unsigned idx = 0; idx < 8; idx++) {
-			UINT64 base = k64k_base + offset;
+			uint64_t base = k64k_base + offset;
 			offset += k64k_managed_size;
 
 			// Save the MTRR
@@ -143,6 +144,9 @@ namespace ept {
 			}
 		}
 
+		//__debugbreak();
+		//mtrr_range_descriptor mtrr_decriptor = _ept_state->mtrr_ranges[_ept_state->num_enabled_memory_ranges];
+
 		for (unsigned iter = 0; iter < var_cnt; iter++) {
 			mtrr_phys_base.flags = __readmsr(IA32_MTRR_PHYSBASE0 + (iter * 2));
 			mtrr_phys_mask.flags = __readmsr(IA32_MTRR_PHYSMASK0 + (iter * 2));
@@ -168,6 +172,8 @@ namespace ept {
 			_mtrr_entry++;
 		}
 
+		LOG("[*] _mtrr_entry : %p\n", reinterpret_cast<void*>(_mtrr_entry));
+		LOG("[*] g_mtrr_num : %llx\n", g_mtrr_num);
 		return true;
 	}
 
@@ -192,6 +198,11 @@ namespace ept {
 		}
 		_ept_state->ept_ptr = ept_ptr;
 		RtlSecureZeroMemory(ept_ptr, PAGE_SIZE);
+
+		// 
+		// Build MTRR Map for that processor before setting up EPT
+		//
+		ept_build_mtrr_map();
 
 
 		if (create_ept_state(_ept_state) == false) {
@@ -291,8 +302,11 @@ namespace ept {
 			return;
 		}
 
+		__debugbreak();
+		
 		uint64_t memory_type = WriteBack;
 		mtrr_entry* temp = reinterpret_cast<mtrr_entry*>(g_mtrr_entries);
+		LOG("[*] g_mtrr_entries : %p\n", reinterpret_cast<void*>(temp));
 		for (unsigned idx = 0; idx < g_mtrr_num; idx++) {
 			if (addrOfPage <= temp[idx].physical_address_end) {
 				if ((addrOfPage + PAGE2MB - 1) >= temp[idx].physical_address_start) {
@@ -315,6 +329,7 @@ namespace ept {
 		uint64_t page_start = pfn * PAGE2MB;
 		uint64_t page_end = (pfn * PAGE2MB) + (PAGE2MB - 1);
 
+		__debugbreak();
 		mtrr_entry* temp = reinterpret_cast<mtrr_entry*>(g_mtrr_entries);
 
 		for (unsigned idx = 0; idx < g_mtrr_num; idx++) {
@@ -333,6 +348,7 @@ namespace ept {
 		uint64_t page_end = large_page == true ? (pfn * PAGE2MB) + (PAGE2MB - 1) : (pfn * PAGE_SIZE) + (PAGE_SIZE - 1);
 		uint64_t memory_type = g_default_memory_type;
 
+		__debugbreak();
 		mtrr_entry* temp = reinterpret_cast<mtrr_entry*>(g_mtrr_entries);
 
 		for (unsigned idx = 0; idx < g_mtrr_num; idx++) {
