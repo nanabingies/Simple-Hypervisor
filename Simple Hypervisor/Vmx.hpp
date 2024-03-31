@@ -3,7 +3,7 @@
 using uchar = unsigned char;
 
 enum vmcall_numbers : unsigned long { 
-	vmx_test_vmcall = 0,
+	vmx_test_vmcall = 0ul,
 	vmx_vmoff,
 	vmx_hook_page,
 	vmx_invept_global_context,
