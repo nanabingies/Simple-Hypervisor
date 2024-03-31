@@ -2,6 +2,14 @@
 #include <basetsd.h>
 using uchar = unsigned char;
 
+enum vmcall_numbers : unsigned long { 
+	vmx_test_vmcall = 0,
+	vmx_vmoff,
+	vmx_hook_page,
+	vmx_invept_global_context,
+	vmx_invept_single_context,
+};
+
 namespace vmx {
 	auto vmx_is_vmx_available() -> bool;
 	auto vmx_is_vmx_support() -> bool;
@@ -13,6 +21,8 @@ namespace vmx {
 	auto vmx_allocate_vmexit_stack(uchar) -> bool;
 	auto vmx_allocate_io_bitmap_stack(uchar) -> bool;
 	auto vmx_allocate_msr_bitmap(uchar) -> bool;
+
+	auto vmx_handle_vmcall(unsigned __int64, unsigned __int64, unsigned __int64, unsigned __int64) -> unsigned __int64;
 }
 
 namespace hv {
@@ -35,4 +45,6 @@ namespace vmexit {
 extern "C" {
 	auto inline asm_inv_ept_global(unsigned __int64, struct _ept_error*) -> unsigned __int32;
 	//inline EVmErrors AsmInveptContext();
+
+	auto inline asm_vmx_vmcall(unsigned __int64, unsigned __int64, unsigned __int64, unsigned __int64) -> void;
 }
