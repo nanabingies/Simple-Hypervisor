@@ -58,92 +58,92 @@ namespace ept {
 		mtrr_cap.flags = __readmsr(IA32_MTRR_CAPABILITIES);
 		mtrr_def.flags = __readmsr(IA32_MTRR_DEF_TYPE);
 
-		uint64_t varCnt = mtrr_cap.variable_range_count;
-		uint64_t FixRangeSupport = mtrr_cap.fixed_range_supported;
-		uint64_t FixRangeEnable = mtrr_def.fixed_range_mtrr_enable;
+		uint64_t var_cnt = mtrr_cap.variable_range_count;
+		uint64_t fix_range_support = mtrr_cap.fixed_range_supported;
+		uint64_t fix_range_enable = mtrr_def.fixed_range_mtrr_enable;
 		g_default_memory_type = mtrr_def.default_memory_type;
 
-		if (FixRangeSupport && FixRangeEnable) {
-			// Handle Fix Ranged MTRR
+		if (!fix_range_enable && !fix_range_support)	return false;
 
-			static const uint64_t k64kBase = IA32_MTRR_FIX64K_BASE;
-			static const uint64_t k64kManagedSize = IA32_MTRR_FIX64K_SIZE;	// 64K
-			static const uint64_t k16kBase = IA32_MTRR_FIX16K_BASE;
-			static const uint64_t k16kManagedSize = IA32_MTRR_FIX16K_SIZE;
-			static const uint64_t k4kBase = IA32_MTRR_FIX4K_BASE;
-			static const uint64_t k4kManagedSize = IA32_MTRR_FIX4K_SIZE;
+		// Handle Fix Ranged MTRR
 
-			uint64_t offset = 0x0;
+		static const uint64_t k64k_base = IA32_MTRR_FIX64K_BASE;
+		static const uint64_t k64k_managed_size = IA32_MTRR_FIX64K_SIZE;	// 64K
+		static const uint64_t k16k_base = IA32_MTRR_FIX16K_BASE;
+		static const uint64_t k16k_managed_size = IA32_MTRR_FIX16K_SIZE;
+		static const uint64_t k4k_base = IA32_MTRR_FIX4K_BASE;
+		static const uint64_t k4k_managed_size = IA32_MTRR_FIX4K_SIZE;
 
-			// Let's first set Fix64K MTRR
-			ia32_mtrr_fixed_range_msr msr64k;
-			msr64k.all = __readmsr(IA32_MTRR_FIX64K_00000);
+		uint64_t offset = 0x0;
+
+		// Let's first set Fix64K MTRR
+		ia32_mtrr_fixed_range_msr msr64k;
+		msr64k.all = __readmsr(IA32_MTRR_FIX64K_00000);
+		for (unsigned idx = 0; idx < 8; idx++) {
+			UINT64 base = k64k_base + offset;
+			offset += k64k_managed_size;
+
+			// Save the MTRR
+			_mtrr_entry->mtrr_enabled = true;
+			_mtrr_entry->memory_type = msr64k.fields.types[idx];
+			_mtrr_entry->mtrr_fixed = true;
+			_mtrr_entry->physical_address_start = base;
+			_mtrr_entry->physical_address_end = base + k64k_managed_size - 1;
+
+			g_mtrr_num += 1;
+			_mtrr_entry++;
+		}
+
+
+		// let's set Fix16k MTRR
+		ia32_mtrr_fixed_range_msr msr16k;
+		// start -- IA32_MTRR_FIX16K_80000	
+		// end   -- IA32_MTRR_FIX16K_A0000
+		offset = 0;
+
+		for (unsigned start = IA32_MTRR_FIX16K_80000; start <= IA32_MTRR_FIX16K_A0000; start++) {
+			msr16k.all = __readmsr(start);
 			for (unsigned idx = 0; idx < 8; idx++) {
-				UINT64 base = k64kBase + offset;
-				offset += k64kManagedSize;
+				uint64_t base = k16k_base + offset;
+				offset += k16k_managed_size;
 
 				// Save the MTRR
+				_mtrr_entry->memory_type = msr16k.fields.types[idx];
 				_mtrr_entry->mtrr_enabled = true;
-				_mtrr_entry->memory_type = msr64k.fields.types[idx];
 				_mtrr_entry->mtrr_fixed = true;
 				_mtrr_entry->physical_address_start = base;
-				_mtrr_entry->physical_address_end = base + k64kManagedSize - 1;
+				_mtrr_entry->physical_address_end = base + k16k_managed_size - 1;
 
 				g_mtrr_num += 1;
 				_mtrr_entry++;
 			}
+		}
 
 
-			// let's set Fix16k MTRR
-			ia32_mtrr_fixed_range_msr msr16k;
-			// start -- IA32_MTRR_FIX16K_80000	
-			// end   -- IA32_MTRR_FIX16K_A0000
-			offset = 0;
+		// let's set Fix4k MTRR
+		ia32_mtrr_fixed_range_msr msr4k;
+		// start -- IA32_MTRR_FIX4K_C0000	
+		// end   -- IA32_MTRR_FIX4K_F8000
+		offset = 0;
 
-			for (unsigned start = IA32_MTRR_FIX16K_80000; start <= IA32_MTRR_FIX16K_A0000; start++) {
-				msr16k.all = __readmsr(start);
-				for (unsigned idx = 0; idx < 8; idx++) {
-					uint64_t base = k16kBase + offset;
-					offset += k16kManagedSize;
+		for (unsigned start = IA32_MTRR_FIX4K_C0000; start <= IA32_MTRR_FIX4K_F8000; start++) {
+			msr4k.all = __readmsr(start);
+			for (unsigned idx = 0; idx < 8; idx++) {
+				uint64_t base = k4k_base + offset;
+				offset += k4k_managed_size;
 
-					// Save the MTRR
-					_mtrr_entry->memory_type = msr16k.fields.types[idx];
-					_mtrr_entry->mtrr_enabled = true;
-					_mtrr_entry->mtrr_fixed = true;
-					_mtrr_entry->physical_address_start = base;
-					_mtrr_entry->physical_address_end = base + k16kManagedSize - 1;
+				// Save the MTRR
+				_mtrr_entry->memory_type = msr4k.fields.types[idx];
+				_mtrr_entry->mtrr_enabled = true;
+				_mtrr_entry->mtrr_fixed = true;
+				_mtrr_entry->physical_address_start = base;
+				_mtrr_entry->physical_address_end = base + k4k_managed_size - 1;
 
-					g_mtrr_num += 1;
-					_mtrr_entry++;
-				}
-			}
-
-
-			// let's set Fix4k MTRR
-			ia32_mtrr_fixed_range_msr msr4k;
-			// start -- IA32_MTRR_FIX4K_C0000	
-			// end   -- IA32_MTRR_FIX4K_F8000
-			offset = 0;
-
-			for (unsigned start = IA32_MTRR_FIX4K_C0000; start <= IA32_MTRR_FIX4K_F8000; start++) {
-				msr4k.all = __readmsr(start);
-				for (unsigned idx = 0; idx < 8; idx++) {
-					uint64_t base = k4kBase + offset;
-					offset += k4kManagedSize;
-
-					// Save the MTRR
-					_mtrr_entry->memory_type = msr4k.fields.types[idx];
-					_mtrr_entry->mtrr_enabled = true;
-					_mtrr_entry->mtrr_fixed = true;
-					_mtrr_entry->physical_address_start = base;
-					_mtrr_entry->physical_address_end = base + k4kManagedSize - 1;
-
-					_mtrr_entry++;
-				}
+				_mtrr_entry++;
 			}
 		}
 
-		for (unsigned iter = 0; iter < varCnt; iter++) {
+		for (unsigned iter = 0; iter < var_cnt; iter++) {
 			mtrr_phys_base.flags = __readmsr(IA32_MTRR_PHYSBASE0 + (iter * 2));
 			mtrr_phys_mask.flags = __readmsr(IA32_MTRR_PHYSMASK0 + (iter * 2));
 
@@ -152,12 +152,12 @@ namespace ept {
 				continue;
 
 			// Get the length this MTRR manages
-			ULONG length;
+			unsigned long length;
 			BitScanForward64(&length, mtrr_phys_mask.page_frame_number * PAGE_SIZE);
 
 			uint64_t physical_base_start, physical_base_end;
 			physical_base_start = mtrr_phys_base.page_frame_number * PAGE_SIZE;
-			physical_base_end = physical_base_start + ((1ull << length) - 1);
+			physical_base_end = physical_base_start + ((1ull << length) - 1ull);
 
 			_mtrr_entry->mtrr_enabled = true;
 			_mtrr_entry->mtrr_fixed = false;
