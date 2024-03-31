@@ -310,4 +310,36 @@ namespace vmx {
 
 		return true;
 	}
+
+	auto vmx_handle_vmcall(unsigned __int64 vmcall_number, unsigned __int64 param1, unsigned __int64 param2, unsigned __int64 param3) -> unsigned __int64 {
+		UNREFERENCED_PARAMETER(param1);
+		UNREFERENCED_PARAMETER(param2);
+		UNREFERENCED_PARAMETER(param3);
+		
+		LOG("[*] Executing vmcall with number : %x\n", vmcall_number);
+		unsigned __int64 vmcall_status = STATUS_SUCCESS;
+
+		switch (vmcall_number) {
+		case vmcall_numbers::vmx_test_vmcall:
+			break;
+
+		case vmcall_numbers::vmx_vmoff:
+			break;
+
+		case vmcall_numbers::vmx_hook_page:
+			break;
+
+		case vmcall_numbers::vmx_invept_global_context:
+			break;
+
+		case vmcall_numbers::vmx_invept_single_context:
+			break;
+
+		default:
+			__debugbreak();
+			vmcall_status = STATUS_UNSUCCESSFUL;
+		}
+
+		return vmcall_status;
+	}
 }
