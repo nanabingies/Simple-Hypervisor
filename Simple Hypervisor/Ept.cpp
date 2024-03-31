@@ -194,7 +194,7 @@ namespace ept {
 		RtlSecureZeroMemory(ept_ptr, PAGE_SIZE);
 
 
-		if (create_ept_state(&_ept_state) == false) {
+		if (create_ept_state(_ept_state) == false) {
 			DbgPrint("[-] Failed to set Ept Page Table Entries.\n");
 			LOG_ERROR();
 			ExFreePoolWithTag(ept_ptr, VMM_POOL_TAG);
@@ -210,19 +210,19 @@ namespace ept {
 		return true;
 	}
 
-	auto create_ept_state(ept_state** _ept_state) -> bool {
+	auto create_ept_state(ept_state* _ept_state) -> bool {
 		ept_page_table* page_table = reinterpret_cast<ept_page_table*>
 			(ExAllocatePoolWithTag(NonPagedPool, sizeof ept_page_table, VMM_POOL_TAG));
 		if (!page_table)	return false;
-		(*_ept_state)->ept_page_table = page_table;
+		_ept_state->ept_page_table = page_table;
 
 		ept_pml4e* pml4e = reinterpret_cast<ept_pml4e*>(&page_table->ept_pml4[0]);
 		ept_pdpte* pdpte = reinterpret_cast<ept_pdpte*>(&page_table->ept_pdpte[0]);
 
-		(*_ept_state)->ept_ptr->page_frame_number = (virtual_to_physical_address(&pml4e) >> PAGE_SHIFT);
-		(*_ept_state)->ept_ptr->enable_access_and_dirty_flags = 0;
-		(*_ept_state)->ept_ptr->memory_type = WriteBack;
-		(*_ept_state)->ept_ptr->page_walk_length = max_ept_walk_length - 1;
+		_ept_state->ept_ptr->page_frame_number = (virtual_to_physical_address(&pml4e) >> PAGE_SHIFT);
+		_ept_state->ept_ptr->enable_access_and_dirty_flags = 0;
+		_ept_state->ept_ptr->memory_type = WriteBack;
+		_ept_state->ept_ptr->page_walk_length = max_ept_walk_length - 1;
 
 		vmm_context[KeGetCurrentProcessorNumber()].ept_pml4 = pml4e->flags;
 
@@ -251,7 +251,7 @@ namespace ept {
 		__stosq((SIZE_T*)&page_table->ept_pde[0], pde_template.flags, EPTPDEENTRIES);
 		for (unsigned i = 0; i < EPTPML4ENTRIES; i++) {
 			for (unsigned j = 0; j < EPTPDPTEENTRIES; j++) {
-				setup_pml2_entries((*_ept_state), &page_table->ept_pde[i][j], (i * 512) + j);
+				setup_pml2_entries(_ept_state, &page_table->ept_pde[i][j], (i * 512) + j);
 			}
 		}
 
@@ -275,7 +275,7 @@ namespace ept {
 
 		page_table->dynamic_pages_count = 0;
 		page_table->dynamic_pages = const_cast<ept_entry**>(dynamic_pages);
-		(*_ept_state)->guest_address_width_value = max_ept_walk_length - 1;
+		_ept_state->guest_address_width_value = max_ept_walk_length - 1;
 
 		return true;
 	}
