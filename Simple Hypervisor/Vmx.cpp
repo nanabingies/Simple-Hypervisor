@@ -337,7 +337,7 @@ namespace vmx {
 
 		default:
 			__debugbreak();
-			vmcall_status = STATUS_UNSUCCESSFUL;
+			vmcall_status = static_cast<unsigned __int64>(STATUS_UNSUCCESSFUL);
 		}
 
 		return vmcall_status;

@@ -48,6 +48,12 @@ using mtrr_entry = struct _mtrr_entry {
 	unsigned __int64	physical_address_end;
 };
 
+using mtrr_range_descriptor = struct _mtrr_range_descriptor {
+	uint64_t	physical_base_address;
+	uint64_t	physical_end_address;
+	unsigned char mtrr_memory_type;
+};
+
 using ept_split_page = struct _ept_split_page {
 	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pte ept_pte[512];
 	ept_pde_2mb* ept_pde;
@@ -63,9 +69,12 @@ using ept_page_table = struct _ept_page_table {
 };
 
 using ept_state = struct _ept_state {
-	unsigned __int64		guest_address_width_value;
-	ept_pointer* ept_ptr;
-	ept_page_table* ept_page_table;
+	unsigned __int64	guest_address_width_value;
+	ept_pointer*		ept_ptr;
+	ept_page_table*		ept_page_table;
+
+	mtrr_range_descriptor	mtrr_ranges[9];
+	unsigned __int64		num_enabled_memory_ranges;
 };
 
 using vmx_non_root_memory = struct vmx_non_root_memory {
