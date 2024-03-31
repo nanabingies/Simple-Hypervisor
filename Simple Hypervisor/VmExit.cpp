@@ -125,6 +125,9 @@ namespace vmexit {
 
 		case VMX_EXIT_REASON_EXECUTE_VMCALL: {
 			LOG("[*][%ws] execute vmcall\n", __FUNCTIONW__);
+			// TODO: handle vmcall
+			// We might use it to execute vmxoff and exit from hypervisor
+			guest_regs->rax = vmx::vmx_handle_vmcall(guest_regs->rcx, guest_regs->rdx, guest_regs->r8, guest_regs->r9);
 		}
 										   break;
 
