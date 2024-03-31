@@ -84,7 +84,7 @@ namespace ept {
 
 	auto ept_build_mtrr_map() -> bool;
 
-	auto create_ept_state(ept_state**) -> bool;
+	auto create_ept_state(ept_state*) -> bool;
 
 	//auto handle_ept_violation(unsigned __int64, unsigned __int64) -> void;
 
