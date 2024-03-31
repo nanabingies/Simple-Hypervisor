@@ -41,8 +41,8 @@ enum inv_ept_type {
 };
 
 using mtrr_entry = struct _mtrr_entry {
-	bool		mtrr_enabled;
-	bool		mtrr_fixed;
+	unsigned __int64	mtrr_enabled;
+	unsigned __int64	mtrr_fixed;
 	unsigned __int64	memory_type;
 	unsigned __int64	physical_address_start;
 	unsigned __int64	physical_address_end;
