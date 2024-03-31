@@ -10,6 +10,8 @@ public	asm_get_gdt_limit
 public	asm_get_idt_base
 public	asm_get_gdt_base
 
+public  asm_vmx_vmcall
+
 extern	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z:proc
 extern  ?vmexit_handler@vmexit@@YAFPEAX@Z:proc
 extern  ret_val:dword
@@ -231,5 +233,12 @@ error_without_code:
 	ret
 
 asm_inv_ept_global endp
+
+;----------------------------------------------------------------------------------------------------
+
+asm_vmx_vmcall proc
+    vmcall
+    ret
+asm_vmx_vmcall endp
 
 end
