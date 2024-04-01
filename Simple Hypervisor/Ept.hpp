@@ -105,6 +105,8 @@ namespace ept {
 
 	auto is_valid_for_large_page(unsigned __int64) -> bool;
 
+	auto split_pml2_entry(ept_state*, void*, unsigned __int64) -> bool;
+
 	auto get_pte_entry(ept_page_table*, unsigned __int64) -> ept_pte*;
 
 	auto get_pde_entry(ept_page_table*, unsigned __int64) -> ept_pde_2mb*;
