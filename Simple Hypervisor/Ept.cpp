@@ -298,16 +298,16 @@ namespace ept {
 
 		pde_entry->page_frame_number = pfn;
 
-		/*uint64_t addr_of_page = pfn * PAGE2MB;
+		uint64_t addr_of_page = pfn * PAGE2MB;
 		if (pfn == 0) {
 			pde_entry->memory_type = Uncacheable;
-			return;
+			return true;
 		}
 		
 		uint64_t memory_type = WriteBack;
 		for (unsigned idx = 0; idx < g_mtrr_num; idx++) {
 			if (addr_of_page <= g_mtrr_entries[idx].physical_address_end) {
-				LOG("[*] physical address start -> end : %llx -> %llx\n", g_mtrr_entries[idx].physical_address_start, g_mtrr_entries[idx].physical_address_end);
+				//LOG("[*] physical address start -> end : %llx -> %llx\n", g_mtrr_entries[idx].physical_address_start, g_mtrr_entries[idx].physical_address_end);
 				if ((addr_of_page + PAGE2MB - 1) >= g_mtrr_entries[idx].physical_address_start) {
 					memory_type = g_mtrr_entries[idx].memory_type;
 					if (memory_type == Uncacheable) {
@@ -317,9 +317,10 @@ namespace ept {
 			}
 		}
 
-		pde_entry->memory_type = memory_type;*/
+		pde_entry->memory_type = memory_type;
+		return true;
 
-		if (is_valid_for_large_page(pfn) == true) {
+		/*if (is_valid_for_large_page(pfn) == true) {
 			pde_entry->memory_type = ept_get_memory_type(pfn, true);
 			return true;
 		} 
@@ -332,7 +333,7 @@ namespace ept {
 			}
 
 			return split_pml2_entry(_ept_state, split_buffer, pfn * LARGE_PAGE_SIZE);
-		}
+		}*/
 	}
 
 	auto is_valid_for_large_page(unsigned __int64 pfn) -> bool {
@@ -359,14 +360,13 @@ namespace ept {
 		uint64_t page_end = large_page == true ? (pfn * PAGE2MB) + (PAGE2MB - 1) : (pfn * PAGE_SIZE) + (PAGE_SIZE - 1);
 		uint64_t memory_type = g_default_memory_type;
 
-		__debugbreak();
-		mtrr_entry* temp = reinterpret_cast<mtrr_entry*>(g_mtrr_entries);
+		//mtrr_entry* temp = reinterpret_cast<mtrr_entry*>(g_mtrr_entries);
 
 		for (unsigned idx = 0; idx < g_mtrr_num; idx++) {
-			if (page_start >= temp[idx].physical_address_start && page_end <= temp[idx].physical_address_end) {
-				memory_type = temp[idx].memory_type;
+			if (page_start >= g_mtrr_entries[idx].physical_address_start && page_end <= g_mtrr_entries[idx].physical_address_end) {
+				memory_type = g_mtrr_entries[idx].memory_type;
 
-				if (static_cast<bool>(temp[idx].mtrr_fixed) == true)
+				if (static_cast<bool>(g_mtrr_entries[idx].mtrr_fixed) == true)
 					break;
 
 				if (memory_type == Uncacheable)
@@ -385,36 +385,35 @@ namespace ept {
 			return false;
 		}
 
-		__ept_dynamic_split* new_split = (__ept_dynamic_split*)pre_allocated_buffer;
-		RtlSecureZeroMemory(new_split, sizeof(__ept_dynamic_split));
+		struct _ept_split_page* new_split = (struct _ept_split_page*)buffer;
+		RtlSecureZeroMemory(new_split, sizeof(struct _ept_split_page));
 
 		//
 		// Set all pages as rwx to prevent unwanted ept violation
 		//
-		new_split->entry = entry;
+		new_split->ept_pde = entry;
 
-		__ept_pte entry_template = { 0 };
-		entry_template.read = 1;
-		entry_template.write = 1;
-		entry_template.execute = 1;
-		entry_template.ept_memory_type = entry->page_directory_entry.memory_type;
-		entry_template.ignore_pat = entry->page_directory_entry.ignore_pat;
-		entry_template.suppress_ve = entry->page_directory_entry.suppressve;
+		ept_pte entry_template = { 0 };
+		entry_template.read_access = 1;
+		entry_template.write_access = 1;
+		entry_template.execute_access = 1;
+		entry_template.memory_type = entry->memory_type;
+		entry_template.ignore_pat = entry->ignore_pat;
+		entry_template.suppress_ve = entry->suppress_ve;
 
-		__stosq((unsigned __int64*)&new_split->pml1[0], entry_template.all, 512);
-		for (int i = 0; i < 512; i++)
-		{
-			unsigned __int64 pfn = ((entry->page_directory_entry.physical_address * LARGE_PAGE_SIZE) >> PAGE_SHIFT) + i;
-			new_split->pml1[i].physical_address = pfn;
-			new_split->pml1[i].ept_memory_type = get_memory_type(pfn, false);
+		__stosq((unsigned __int64*)&new_split->ept_pte[0], entry_template.flags, 512);
+		for (int i = 0; i < 512; i++) {
+			unsigned __int64 pfn = ((entry->page_frame_number * LARGE_PAGE_SIZE) >> PAGE_SHIFT) + i;
+			new_split->ept_pte[i].page_frame_number = pfn;
+			new_split->ept_pte[i].memory_type = ept_get_memory_type(pfn, false);
 		}
 
-		__ept_pde new_entry = { 0 };
-		new_entry.large_page.read = 1;
-		new_entry.large_page.write = 1;
-		new_entry.large_page.execute = 1;
+		ept_pde_2mb new_entry = { 0 };
+		new_entry.read_access = 1;
+		new_entry.write_access = 1;
+		new_entry.execute_access = 1;
 
-		new_entry.large_page.physical_address = MmGetPhysicalAddress(&new_split->pml1[0]).QuadPart >> PAGE_SHIFT;
+		new_entry.page_frame_number = MmGetPhysicalAddress(&new_split->ept_pte[0]).QuadPart >> PAGE_SHIFT;
 
 		RtlCopyMemory(entry, &new_entry, sizeof(new_entry));
 
