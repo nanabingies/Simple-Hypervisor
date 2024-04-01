@@ -11,6 +11,8 @@
 #define	DYNAMICPAGESCOUNT	1
 #define PAGE2MB				512 * PAGE_SIZE
 
+#define LARGE_PAGE_SIZE		0x200000
+
 #define MASK_EPT_PML1_INDEX(_VAR_) ((_VAR_ & 0x1FF000ULL) >> 12)
 #define MASK_EPT_PML2_INDEX(_VAR_) ((_VAR_ & 0x3FE00000ULL) >> 21)
 #define MASK_EPT_PML3_INDEX(_VAR_) ((_VAR_ & 0x7FC0000000ULL) >> 30)
@@ -97,7 +99,7 @@ namespace ept {
 
 	//auto handle_ept_violation(unsigned __int64, unsigned __int64) -> void;
 
-	auto setup_pml2_entries(ept_state*, ept_pde_2mb*, unsigned __int64) -> void;
+	auto setup_pml2_entries(ept_state*, ept_pde_2mb*, unsigned __int64) -> bool;
 
 	auto is_in_range(unsigned __int64, unsigned __int64, unsigned __int64) -> bool;
 
