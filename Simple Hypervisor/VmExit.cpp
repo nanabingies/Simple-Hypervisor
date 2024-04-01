@@ -19,6 +19,12 @@ namespace vmexit {
 			__vmx_vmread(VMCS_GUEST_RSP, reinterpret_cast<size_t*>(&vmm_context[current_processor].vmexit_guest_rsp));
 			__vmx_vmread(VMCS_VMEXIT_INSTRUCTION_LENGTH, reinterpret_cast<size_t*>(&vmm_context[current_processor].vmexit_instruction_length));
 			__vmx_vmread(VMCS_VMEXIT_INSTRUCTION_INFO, reinterpret_cast<size_t*>(&vmm_context[current_processor].vmexit_instruction_information));
+			/*current_vmm_context.guest_regs->rax = guest_regs->rax;
+			current_vmm_context.guest_regs->rbx = guest_regs->rbx;
+			current_vmm_context.guest_regs->rcx = guest_regs->rcx;
+			current_vmm_context.guest_regs->rdx = guest_regs->rdx;
+			current_vmm_context.guest_regs->rbp = guest_regs->rbp;
+			current_vmm_context.guest_regs->rsp = guest_regs->rsp;*/
 		}
 
 
