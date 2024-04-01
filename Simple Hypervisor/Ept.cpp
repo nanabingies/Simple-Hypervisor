@@ -300,7 +300,7 @@ namespace ept {
 
 		pde_entry->page_frame_number = pfn;
 
-		/*uint64_t addr_of_page = pfn * PAGE2MB;
+		uint64_t addr_of_page = pfn * PAGE2MB;
 		if (pfn == 0) {
 			pde_entry->memory_type = Uncacheable;
 			return true;
@@ -309,7 +309,6 @@ namespace ept {
 		uint64_t memory_type = WriteBack;
 		for (unsigned idx = 0; idx < g_mtrr_num; idx++) {
 			if (addr_of_page <= g_mtrr_entries[idx].physical_address_end) {
-				//LOG("[*] physical address start -> end : %llx -> %llx\n", g_mtrr_entries[idx].physical_address_start, g_mtrr_entries[idx].physical_address_end);
 				if ((addr_of_page + PAGE2MB - 1) >= g_mtrr_entries[idx].physical_address_start) {
 					memory_type = g_mtrr_entries[idx].memory_type;
 					if (memory_type == Uncacheable) {
@@ -320,9 +319,9 @@ namespace ept {
 		}
 
 		pde_entry->memory_type = memory_type;
-		return true;*/
+		return true;
 
-		if (is_valid_for_large_page(pfn) == true) {
+		/*if (is_valid_for_large_page(pfn) == true) {
 			pde_entry->memory_type = ept_get_memory_type(pfn, true);
 			return true;
 		} 
@@ -335,7 +334,7 @@ namespace ept {
 			}
 
 			return split_pml2_entry(_ept_state, split_buffer, pfn * LARGE_PAGE_SIZE);
-		}
+		}*/
 	}
 
 	auto is_valid_for_large_page(unsigned __int64 pfn) -> bool {
