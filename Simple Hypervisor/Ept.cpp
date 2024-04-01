@@ -2,7 +2,7 @@
 #pragma warning(disable: 4996)
 
 namespace ept {
-	static mtrr_entry g_mtrr_entries[num_mtrr_entries];
+	static struct _mtrr_entry g_mtrr_entries[num_mtrr_entries];
 
 	auto check_ept_support() -> bool {
 		PAGED_CODE();
@@ -47,9 +47,9 @@ namespace ept {
 	auto ept_build_mtrr_map() -> bool {
 		PAGED_CODE();
 
-		__debugbreak();
-		mtrr_entry* _mtrr_entry = g_mtrr_entries;
-		RtlSecureZeroMemory(_mtrr_entry, num_mtrr_entries * sizeof(mtrr_entry));
+		//mtrr_entry* _mtrr_entry = g_mtrr_entries;
+		//RtlSecureZeroMemory(_mtrr_entry, num_mtrr_entries * sizeof(mtrr_entry));
+		RtlSecureZeroMemory(&g_mtrr_entries, sizeof(g_mtrr_entries));
 
 		ia32_mtrr_capabilities_register mtrr_cap;
 		ia32_mtrr_def_type_register mtrr_def;
@@ -77,7 +77,7 @@ namespace ept {
 
 		uint64_t offset = 0x0;
 
-		// Let's first set Fix64K MTRR
+		// Let's first read Fix64K MTRR
 		ia32_mtrr_fixed_range_msr msr64k;
 		msr64k.all = __readmsr(IA32_MTRR_FIX64K_00000);
 		for (unsigned idx = 0; idx < 8; idx++) {
@@ -85,18 +85,18 @@ namespace ept {
 			offset += k64k_managed_size;
 
 			// Save the MTRR
-			_mtrr_entry->mtrr_enabled = true;
-			_mtrr_entry->memory_type = msr64k.fields.types[idx];
-			_mtrr_entry->mtrr_fixed = true;
-			_mtrr_entry->physical_address_start = base;
-			_mtrr_entry->physical_address_end = base + k64k_managed_size - 1;
+			g_mtrr_entries[g_mtrr_num].mtrr_enabled = true;
+			g_mtrr_entries[g_mtrr_num].memory_type = msr64k.fields.types[idx];
+			g_mtrr_entries[g_mtrr_num].mtrr_fixed = true;
+			g_mtrr_entries[g_mtrr_num].physical_address_start = base;
+			g_mtrr_entries[g_mtrr_num].physical_address_end = base + k64k_managed_size - 1;
 
 			g_mtrr_num += 1;
-			_mtrr_entry++;
+			//_mtrr_entry++;
 		}
 
 
-		// let's set Fix16k MTRR
+		// let's read Fix16k MTRR
 		ia32_mtrr_fixed_range_msr msr16k;
 		// start -- IA32_MTRR_FIX16K_80000	
 		// end   -- IA32_MTRR_FIX16K_A0000
@@ -104,24 +104,24 @@ namespace ept {
 
 		for (unsigned start = IA32_MTRR_FIX16K_80000; start <= IA32_MTRR_FIX16K_A0000; start++) {
 			msr16k.all = __readmsr(start);
-			for (unsigned idx = 0; idx < 8; idx++) {
+			for (unsigned idx = 0; idx < 8; idx++, g_mtrr_num) {
 				uint64_t base = k16k_base + offset;
 				offset += k16k_managed_size;
 
 				// Save the MTRR
-				_mtrr_entry->memory_type = msr16k.fields.types[idx];
-				_mtrr_entry->mtrr_enabled = true;
-				_mtrr_entry->mtrr_fixed = true;
-				_mtrr_entry->physical_address_start = base;
-				_mtrr_entry->physical_address_end = base + k16k_managed_size - 1;
+				g_mtrr_entries[g_mtrr_num].memory_type = msr16k.fields.types[idx];
+				g_mtrr_entries[g_mtrr_num].mtrr_enabled = true;
+				g_mtrr_entries[g_mtrr_num].mtrr_fixed = true;
+				g_mtrr_entries[g_mtrr_num].physical_address_start = base;
+				g_mtrr_entries[g_mtrr_num].physical_address_end = base + k16k_managed_size - 1;
 
 				g_mtrr_num += 1;
-				_mtrr_entry++;
+				//_mtrr_entry++;
 			}
 		}
 
 
-		// let's set Fix4k MTRR
+		// let's read Fix4k MTRR
 		ia32_mtrr_fixed_range_msr msr4k;
 		// start -- IA32_MTRR_FIX4K_C0000	
 		// end   -- IA32_MTRR_FIX4K_F8000
@@ -134,13 +134,14 @@ namespace ept {
 				offset += k4k_managed_size;
 
 				// Save the MTRR
-				_mtrr_entry->memory_type = msr4k.fields.types[idx];
-				_mtrr_entry->mtrr_enabled = true;
-				_mtrr_entry->mtrr_fixed = true;
-				_mtrr_entry->physical_address_start = base;
-				_mtrr_entry->physical_address_end = base + k4k_managed_size - 1;
+				g_mtrr_entries[g_mtrr_num].memory_type = msr4k.fields.types[idx];
+				g_mtrr_entries[g_mtrr_num].mtrr_enabled = true;
+				g_mtrr_entries[g_mtrr_num].mtrr_fixed = true;
+				g_mtrr_entries[g_mtrr_num].physical_address_start = base;
+				g_mtrr_entries[g_mtrr_num].physical_address_end = base + k4k_managed_size - 1;
 
-				_mtrr_entry++;
+				g_mtrr_num += 1;
+				//_mtrr_entry++;
 			}
 		}
 
@@ -163,16 +164,16 @@ namespace ept {
 			physical_base_start = mtrr_phys_base.page_frame_number * PAGE_SIZE;
 			physical_base_end = physical_base_start + ((1ull << length) - 1ull);
 
-			_mtrr_entry->mtrr_enabled = true;
-			_mtrr_entry->mtrr_fixed = false;
-			_mtrr_entry->memory_type = mtrr_phys_base.type;
-			_mtrr_entry->physical_address_start = physical_base_start;
-			_mtrr_entry->physical_address_end = physical_base_end;
+			g_mtrr_entries[g_mtrr_num].mtrr_enabled = true;
+			g_mtrr_entries[g_mtrr_num].mtrr_fixed = false;
+			g_mtrr_entries[g_mtrr_num].memory_type = mtrr_phys_base.type;
+			g_mtrr_entries[g_mtrr_num].physical_address_start = physical_base_start;
+			g_mtrr_entries[g_mtrr_num].physical_address_end = physical_base_end;
 			g_mtrr_num++;
-			_mtrr_entry++;
+			//_mtrr_entry++;
 		}
 
-		LOG("[*] _mtrr_entry : %p\n", reinterpret_cast<void*>(_mtrr_entry));
+		LOG("[*] g_mtrr_entries : %p\n", reinterpret_cast<void*>(g_mtrr_entries));
 		LOG("[*] g_mtrr_num : %llx\n", g_mtrr_num);
 		return true;
 	}
@@ -202,7 +203,7 @@ namespace ept {
 		// 
 		// Build MTRR Map for that processor before setting up EPT
 		//
-		ept_build_mtrr_map();
+		if (!ept_build_mtrr_map())	return false;
 
 
 		if (create_ept_state(_ept_state) == false) {
@@ -262,7 +263,8 @@ namespace ept {
 		__stosq((SIZE_T*)&page_table->ept_pde[0], pde_template.flags, EPTPDEENTRIES);
 		for (unsigned i = 0; i < EPTPML4ENTRIES; i++) {
 			for (unsigned j = 0; j < EPTPDPTEENTRIES; j++) {
-				setup_pml2_entries(_ept_state, &page_table->ept_pde[i][j], (i * 512) + j);
+				if (setup_pml2_entries(_ept_state, &page_table->ept_pde[i][j], (i * 512) + j) == false)
+					return false;
 			}
 		}
 
@@ -272,7 +274,7 @@ namespace ept {
 			(ExAllocatePoolWithTag(NonPagedPool, preallocated_entries_size, VMM_POOL_TAG));
 		if (!dynamic_pages) {
 			ExFreePoolWithTag(page_table, VMM_POOL_TAG);
-			return FALSE;
+			return false;
 		}
 		RtlSecureZeroMemory(dynamic_pages, preallocated_entries_size);
 
@@ -280,7 +282,7 @@ namespace ept {
 		if (!_ept_entry) {
 			ExFreePoolWithTag(dynamic_pages, VMM_POOL_TAG);
 			ExFreePoolWithTag(page_table, VMM_POOL_TAG);
-			return FALSE;
+			return false;
 		}
 		dynamic_pages[0] = _ept_entry;
 
@@ -291,26 +293,23 @@ namespace ept {
 		return true;
 	}
 
-	auto setup_pml2_entries(ept_state* _ept_state, ept_pde_2mb* pde_entry, unsigned __int64 pfn) -> void {
+	auto setup_pml2_entries(ept_state* _ept_state, ept_pde_2mb* pde_entry, unsigned __int64 pfn) -> bool {
 		UNREFERENCED_PARAMETER(_ept_state);
 
 		pde_entry->page_frame_number = pfn;
 
-		uint64_t addrOfPage = pfn * PAGE2MB;
+		/*uint64_t addr_of_page = pfn * PAGE2MB;
 		if (pfn == 0) {
 			pde_entry->memory_type = Uncacheable;
 			return;
 		}
-
-		__debugbreak();
 		
 		uint64_t memory_type = WriteBack;
-		mtrr_entry* temp = reinterpret_cast<mtrr_entry*>(g_mtrr_entries);
-		LOG("[*] g_mtrr_entries : %p\n", reinterpret_cast<void*>(temp));
 		for (unsigned idx = 0; idx < g_mtrr_num; idx++) {
-			if (addrOfPage <= temp[idx].physical_address_end) {
-				if ((addrOfPage + PAGE2MB - 1) >= temp[idx].physical_address_start) {
-					memory_type = temp[idx].memory_type;
+			if (addr_of_page <= g_mtrr_entries[idx].physical_address_end) {
+				LOG("[*] physical address start -> end : %llx -> %llx\n", g_mtrr_entries[idx].physical_address_start, g_mtrr_entries[idx].physical_address_end);
+				if ((addr_of_page + PAGE2MB - 1) >= g_mtrr_entries[idx].physical_address_start) {
+					memory_type = g_mtrr_entries[idx].memory_type;
 					if (memory_type == Uncacheable) {
 						break;
 					}
@@ -318,9 +317,22 @@ namespace ept {
 			}
 		}
 
-		pde_entry->memory_type = memory_type;
+		pde_entry->memory_type = memory_type;*/
 
-		return;
+		if (is_valid_for_large_page(pfn) == true) {
+			pde_entry->memory_type = ept_get_memory_type(pfn, true);
+			return true;
+		} 
+		else {
+			void* split_buffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(struct _ept_split_page), VMM_POOL_TAG);
+			if (split_buffer == nullptr) {
+				LOG("Failed to allocate split buffer");
+				LOG_ERROR();
+				return false;
+			}
+
+			return split_pml2_entry(_ept_state, split_buffer, pfn * LARGE_PAGE_SIZE);
+		}
 	}
 
 	auto is_valid_for_large_page(unsigned __int64 pfn) -> bool {
@@ -329,14 +341,13 @@ namespace ept {
 		uint64_t page_start = pfn * PAGE2MB;
 		uint64_t page_end = (pfn * PAGE2MB) + (PAGE2MB - 1);
 
-		__debugbreak();
-		mtrr_entry* temp = reinterpret_cast<mtrr_entry*>(g_mtrr_entries);
+		//mtrr_entry* temp = reinterpret_cast<mtrr_entry*>(g_mtrr_entries);
 
 		for (unsigned idx = 0; idx < g_mtrr_num; idx++) {
-			if (page_start <= temp[idx].physical_address_end && page_end > temp[idx].physical_address_end)
+			if (page_start <= g_mtrr_entries[idx].physical_address_end && page_end > g_mtrr_entries[idx].physical_address_end)
 				return false;
 
-			else if (page_start < temp[idx].physical_address_start && page_end >= temp[idx].physical_address_start)
+			else if (page_start < g_mtrr_entries[idx].physical_address_start && page_end >= g_mtrr_entries[idx].physical_address_start)
 				return false;
 		}
 
@@ -355,7 +366,7 @@ namespace ept {
 			if (page_start >= temp[idx].physical_address_start && page_end <= temp[idx].physical_address_end) {
 				memory_type = temp[idx].memory_type;
 
-				if (temp[idx].mtrr_fixed == true)
+				if (static_cast<bool>(temp[idx].mtrr_fixed) == true)
 					break;
 
 				if (memory_type == Uncacheable)
@@ -364,6 +375,50 @@ namespace ept {
 		}
 
 		return memory_type;
+	}
+
+	auto split_pml2_entry(ept_state* _ept_state, void* buffer, unsigned __int64 physical_address) -> bool {
+		ept_pde_2mb* entry = get_pde_entry(_ept_state->ept_page_table, physical_address);
+		if (entry == NULL) {
+			LOG("[-] Invalid address passed");
+			LOG_ERROR();
+			return false;
+		}
+
+		__ept_dynamic_split* new_split = (__ept_dynamic_split*)pre_allocated_buffer;
+		RtlSecureZeroMemory(new_split, sizeof(__ept_dynamic_split));
+
+		//
+		// Set all pages as rwx to prevent unwanted ept violation
+		//
+		new_split->entry = entry;
+
+		__ept_pte entry_template = { 0 };
+		entry_template.read = 1;
+		entry_template.write = 1;
+		entry_template.execute = 1;
+		entry_template.ept_memory_type = entry->page_directory_entry.memory_type;
+		entry_template.ignore_pat = entry->page_directory_entry.ignore_pat;
+		entry_template.suppress_ve = entry->page_directory_entry.suppressve;
+
+		__stosq((unsigned __int64*)&new_split->pml1[0], entry_template.all, 512);
+		for (int i = 0; i < 512; i++)
+		{
+			unsigned __int64 pfn = ((entry->page_directory_entry.physical_address * LARGE_PAGE_SIZE) >> PAGE_SHIFT) + i;
+			new_split->pml1[i].physical_address = pfn;
+			new_split->pml1[i].ept_memory_type = get_memory_type(pfn, false);
+		}
+
+		__ept_pde new_entry = { 0 };
+		new_entry.large_page.read = 1;
+		new_entry.large_page.write = 1;
+		new_entry.large_page.execute = 1;
+
+		new_entry.large_page.physical_address = MmGetPhysicalAddress(&new_split->pml1[0]).QuadPart >> PAGE_SHIFT;
+
+		RtlCopyMemory(entry, &new_entry, sizeof(new_entry));
+
+		return true;
 	}
 
 	auto get_pde_entry(ept_page_table* page_table, unsigned __int64 pfn) -> ept_pde_2mb* {
