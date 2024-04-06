@@ -181,7 +181,6 @@ namespace vmx {
 	}
 
 	auto vmx_allocate_vmcs_region(uchar processor_number) -> bool {
-		PAGED_CODE();
 
 		if (!vmm_context) {
 			LOG("[-] Unspecified VMM context for processor %x\n", processor_number);
@@ -225,7 +224,6 @@ namespace vmx {
 	}
 
 	auto vmx_allocate_vmexit_stack(uchar processor_number) -> bool {
-		PAGED_CODE();
 
 		PHYSICAL_ADDRESS phys_addr;
 		phys_addr.QuadPart = static_cast<uint64_t>(~0);
@@ -245,8 +243,6 @@ namespace vmx {
 	}
 
 	auto vmx_allocate_io_bitmap_stack(uchar processor_number) -> bool {
-		PAGED_CODE();
-
 		PHYSICAL_ADDRESS phys_addr;
 		phys_addr.QuadPart = static_cast<ULONGLONG>(~0);
 
@@ -285,8 +281,6 @@ namespace vmx {
 	}
 
 	auto vmx_allocate_msr_bitmap(uchar processor_number) -> bool {
-		PAGED_CODE();
-
 		PHYSICAL_ADDRESS phys_addr;
 		phys_addr.QuadPart = static_cast<ULONGLONG>(~0);
 
@@ -309,7 +303,7 @@ namespace vmx {
 		UNREFERENCED_PARAMETER(param2);
 		UNREFERENCED_PARAMETER(param3);
 		
-		LOG("[*] Executing vmcall with number : %x\n", vmcall_number);
+		//LOG("[*] Executing vmcall with number : %x\n", vmcall_number);
 		unsigned __int64 vmcall_status = STATUS_SUCCESS;
 
 		switch (vmcall_number) {
