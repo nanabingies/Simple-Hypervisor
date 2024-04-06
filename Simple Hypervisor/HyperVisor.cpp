@@ -10,8 +10,6 @@ namespace hv {
 		using vmx::vmx_allocate_msr_bitmap;
 		using ept::initialize_ept;
 
-		PAGED_CODE();
-
 		//
 		// This was more of an educational project so only one Logical Processor was chosen and virtualized
 		// TODO : Add support for multiple processors

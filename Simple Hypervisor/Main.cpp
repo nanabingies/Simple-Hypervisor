@@ -42,6 +42,7 @@ extern "C" {
 		using hv::launch_all_vmms;
 		using vmx::vmx_is_vmx_available;
 
+		UNREFERENCED_PARAMETER(registry_path);
 		//LOG("[*] Loading file %wZ\n", registry_path);
 
 		vm_off = false;
