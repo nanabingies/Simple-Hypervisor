@@ -14,6 +14,7 @@ public  asm_vmx_vmcall
 
 extern	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z:proc
 extern  ?vmexit_handler@vmexit@@YAFPEAX@Z:proc
+;extern
 extern  ret_val:dword
 extern  cr3_val:qword
 
@@ -93,6 +94,13 @@ asm_host_continue_execution proc
     jnz      exit
 
 	RESTORE_GP
+
+    ;mov     edi, 681Eh
+    ;vmread  rdx, rdi
+    ;mov     ecx, 440Ch
+    ;vmread  rcx, rcx
+    ;add     rdx, rcx
+    ;vmwrite rdi, rdx
     vmresume
 
 exit:
