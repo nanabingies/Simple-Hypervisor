@@ -7,7 +7,7 @@ extern "C" {
 	auto DriverUnload(_In_ PDRIVER_OBJECT driver_object) -> void {
 		using hv::devirtualize_all_processors;
 
-		LOG("[*] Terminating VMs on processors...");
+		//LOG("[*] Terminating VMs on processors...");
 
 		// Uninstall vmx on all processors
 		if (!vm_off) {
@@ -19,12 +19,12 @@ extern "C" {
 			IoDeleteDevice(driver_object->DeviceObject);
 		}
 
-		LOG("[*] Unloading Device Driver...");
+		//LOG("[*] Unloading Device Driver...");
 		return;
 	}
 
 	auto DefaultDispatch(_In_ PDEVICE_OBJECT, _In_ PIRP irp) -> NTSTATUS {
-		LOG("[*] Default Dispatch");
+		//LOG("[*] Default Dispatch");
 
 		irp->IoStatus.Status = STATUS_SUCCESS;
 		irp->IoStatus.Information = 0;
@@ -42,7 +42,7 @@ extern "C" {
 		using hv::launch_all_vmms;
 		using vmx::vmx_is_vmx_available;
 
-		LOG("[*] Loading file %wZ", registry_path);
+		//LOG("[*] Loading file %wZ", registry_path);
 
 		vm_off = false;
 
@@ -51,7 +51,7 @@ extern "C" {
 		ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
 
 		g_num_processors = KeQueryActiveProcessorCount(NULL);
-		LOG("[*] Current active processors : %x\n", g_num_processors);
+		//LOG("[*] Current active processors : %x\n", g_num_processors);
 
 		//LOG("[*] Num processors : %x\n", KeNumberProcessors);
 
@@ -65,7 +65,7 @@ extern "C" {
 			FALSE, reinterpret_cast<PDEVICE_OBJECT*>(&device_object));
 		if (!NT_SUCCESS(status))	return STATUS_FAILED_DRIVER_ENTRY;
 
-		LOG("[*] Successfully created device object.\n");
+		//LOG("[*] Successfully created device object.\n");
 
 		for (unsigned idx = 0; idx < IRP_MJ_MAXIMUM_FUNCTION; ++idx) {
 			driver_object->MajorFunction[idx] = DefaultDispatch;
@@ -79,7 +79,7 @@ extern "C" {
 		//KeIpiGenericCall(static_cast<PKIPI_BROADCAST_WORKER>(launch_vm), 0);
 		launch_all_vmms();
 
-		LOG("[*] The hypervisor has been installed.\n");
+		//LOG("[*] The hypervisor has been installed.\n");
 
 		return STATUS_SUCCESS;
 	}
