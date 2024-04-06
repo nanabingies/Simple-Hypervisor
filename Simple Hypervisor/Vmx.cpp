@@ -3,7 +3,6 @@ _vmm_context* vmm_context;
 
 namespace vmx {
 	auto vmx_is_vmx_available() -> bool {
-		PAGED_CODE();
 
 		//
 		// Check VMX Support for all Logical Processors
@@ -39,7 +38,6 @@ namespace vmx {
 	}
 
 	auto vmx_is_vmx_support() -> bool {
-		PAGED_CODE();
 
 		PROCESSOR_NUMBER processor_number;
 		GROUP_AFFINITY affinity, old_affinity;
@@ -72,7 +70,6 @@ namespace vmx {
 	}
 
 	auto vmx_check_bios_lock() -> bool {
-		PAGED_CODE();
 
 		PROCESSOR_NUMBER processor_number;
 		GROUP_AFFINITY affinity, old_affinity;
@@ -112,7 +109,6 @@ namespace vmx {
 	}
 
 	auto vmx_enable_cr4() -> void {
-		PAGED_CODE();
 
 		PROCESSOR_NUMBER processor_number;
 		GROUP_AFFINITY affinity, old_affinity;
@@ -126,8 +122,6 @@ namespace vmx {
 			KeSetSystemGroupAffinityThread(&affinity, &old_affinity);
 
 			auto irql = KeRaiseIrqlToDpcLevel();
-
-			PAGED_CODE();
 
 			cr4 _cr4;
 
@@ -144,7 +138,6 @@ namespace vmx {
 	}
 
 	auto vmx_allocate_vmxon_region(uchar processor_number) -> bool {
-		PAGED_CODE();
 
 		if (!vmm_context) {
 			LOG("[-] Unspecified VMM context for processor %x\n", processor_number);
