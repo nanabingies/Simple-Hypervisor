@@ -3,7 +3,6 @@ _vmm_context* vmm_context;
 
 namespace vmx {
 	auto vmx_is_vmx_available() -> bool {
-
 		//
 		// Check VMX Support for all Logical Processors
 		//
@@ -38,7 +37,6 @@ namespace vmx {
 	}
 
 	auto vmx_is_vmx_support() -> bool {
-
 		PROCESSOR_NUMBER processor_number;
 		GROUP_AFFINITY affinity, old_affinity;
 
@@ -70,7 +68,6 @@ namespace vmx {
 	}
 
 	auto vmx_check_bios_lock() -> bool {
-
 		PROCESSOR_NUMBER processor_number;
 		GROUP_AFFINITY affinity, old_affinity;
 
@@ -109,7 +106,6 @@ namespace vmx {
 	}
 
 	auto vmx_enable_cr4() -> void {
-
 		PROCESSOR_NUMBER processor_number;
 		GROUP_AFFINITY affinity, old_affinity;
 
@@ -138,7 +134,6 @@ namespace vmx {
 	}
 
 	auto vmx_allocate_vmxon_region(uchar processor_number) -> bool {
-
 		if (!vmm_context) {
 			LOG("[-] Unspecified VMM context for processor %x\n", processor_number);
 			LOG_ERROR();
@@ -181,7 +176,6 @@ namespace vmx {
 	}
 
 	auto vmx_allocate_vmcs_region(uchar processor_number) -> bool {
-
 		if (!vmm_context) {
 			LOG("[-] Unspecified VMM context for processor %x\n", processor_number);
 			LOG_ERROR();
@@ -224,7 +218,6 @@ namespace vmx {
 	}
 
 	auto vmx_allocate_vmexit_stack(uchar processor_number) -> bool {
-
 		PHYSICAL_ADDRESS phys_addr;
 		phys_addr.QuadPart = static_cast<uint64_t>(~0);
 
