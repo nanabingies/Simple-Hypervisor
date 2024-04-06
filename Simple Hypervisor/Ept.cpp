@@ -173,8 +173,6 @@ namespace ept {
 			//_mtrr_entry++;
 		}
 
-		LOG("[*] g_mtrr_entries : %p\n", reinterpret_cast<void*>(g_mtrr_entries));
-		LOG("[*] g_mtrr_num : %llx\n", g_mtrr_num);
 		return true;
 	}
 
