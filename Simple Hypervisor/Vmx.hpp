@@ -32,7 +32,7 @@ namespace hv {
 
 	auto launch_vm(ULONG_PTR) -> ULONG_PTR;
 	auto terminate_vm(uchar) -> void;
-	auto resume_vm(uchar) -> void;
+	auto resume_vm() -> void;
 
 	auto launch_all_vmms() -> void;
 
