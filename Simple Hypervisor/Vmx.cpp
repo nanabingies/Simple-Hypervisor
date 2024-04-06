@@ -27,13 +27,13 @@ namespace vmx {
 		if (!check_ept_support())	return false;
 
 
-		LOG("[*] Initial checks completed.\n");
+		//LOG("[*] Initial checks completed.\n");
 
 		//
 		// Build MTRR Map
 		//
 		//if (EptBuildMTRRMap() == FALSE)	return FALSE;
-		LOG("[*] MTRR built successfully\n");
+		//LOG("[*] MTRR built successfully\n");
 
 		return TRUE;
 	}
@@ -166,7 +166,7 @@ namespace vmx {
 		}
 
 		RtlSecureZeroMemory(vmxon, vmx_basic.vmcs_size_in_bytes);
-		LOG("[*] Allocated vmxon for processor (%x) at %llx with size %llx\n", processor_number, reinterpret_cast<uint64_t>(vmxon), vmx_basic.vmcs_size_in_bytes);
+		//LOG("[*] Allocated vmxon for processor (%x) at %llx with size %llx\n", processor_number, reinterpret_cast<uint64_t>(vmxon), vmx_basic.vmcs_size_in_bytes);
 
 		*reinterpret_cast<uint64_t*>(vmxon) = vmx_basic.vmcs_revision_id;
 
@@ -183,7 +183,7 @@ namespace vmx {
 			return false;
 		}
 
-		LOG("[*] vmxon initialized on logical processor (%x)\n", processor_number);
+		//LOG("[*] vmxon initialized on logical processor (%x)\n", processor_number);
 		return true;
 	}
 
@@ -210,7 +210,7 @@ namespace vmx {
 		}
 
 		RtlSecureZeroMemory(vmcs, vmx_basic.vmcs_size_in_bytes);
-		LOG("[*] Allocated vmcs for processor (%x) at %llx with size %llx\n", processor_number, reinterpret_cast<uint64_t>(vmcs), vmx_basic.vmcs_size_in_bytes);
+		//LOG("[*] Allocated vmcs for processor (%x) at %llx with size %llx\n", processor_number, reinterpret_cast<uint64_t>(vmcs), vmx_basic.vmcs_size_in_bytes);
 
 		*reinterpret_cast<uint64_t*>(vmcs) = vmx_basic.vmcs_revision_id;
 
@@ -227,7 +227,7 @@ namespace vmx {
 			return FALSE;
 		}
 
-		LOG("[*] vmcs loaded on logical processor (%x)\n", processor_number);
+		//LOG("[*] vmcs loaded on logical processor (%x)\n", processor_number);
 		return true;
 	}
 
@@ -246,7 +246,7 @@ namespace vmx {
 		RtlSecureZeroMemory(vmexitStack, HOST_STACK_SIZE);
 
 		vmm_context[processor_number].host_stack = reinterpret_cast<UINT64>(vmexitStack);
-		LOG("[*] vmm_context[%x].HostStack : %llx\n", processor_number, vmm_context[processor_number].host_stack);
+		//LOG("[*] vmm_context[%x].HostStack : %llx\n", processor_number, vmm_context[processor_number].host_stack);
 
 		return true;
 	}
@@ -280,8 +280,8 @@ namespace vmx {
 		vmm_context[processor_number].io_bitmap_b_virt_addr = reinterpret_cast<uint64_t>(bitmap);
 		vmm_context[processor_number].io_bitmap_b_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(bitmap));
 
-		LOG("[*] vmm_context[%x].io_bitmap_a_virt_addr : %llx\n", processor_number, vmm_context[processor_number].io_bitmap_a_virt_addr);
-		LOG("[*] vmm_context[%x].io_bitmap_b_virt_addr : %llx\n", processor_number, vmm_context[processor_number].io_bitmap_b_virt_addr);
+		//LOG("[*] vmm_context[%x].io_bitmap_a_virt_addr : %llx\n", processor_number, vmm_context[processor_number].io_bitmap_a_virt_addr);
+		//LOG("[*] vmm_context[%x].io_bitmap_b_virt_addr : %llx\n", processor_number, vmm_context[processor_number].io_bitmap_b_virt_addr);
 
 		//
 		// We want to vmexit on every io and msr access
