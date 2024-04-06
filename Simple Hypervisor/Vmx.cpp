@@ -27,12 +27,6 @@ namespace vmx {
 
 		//LOG("[*] Initial checks completed.\n");
 
-		//
-		// Build MTRR Map
-		//
-		//if (EptBuildMTRRMap() == FALSE)	return FALSE;
-		//LOG("[*] MTRR built successfully\n");
-
 		return TRUE;
 	}
 
