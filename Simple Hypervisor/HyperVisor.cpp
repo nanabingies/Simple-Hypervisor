@@ -66,12 +66,12 @@ namespace hv {
 			//
 			// Setup EPT support for that processor
 			//
-			if (!initialize_ept(processor_number.Number))				return false;
+			//if (!initialize_ept(processor_number.Number))				return false;
 
 			KeLowerIrql(irql);
 			KeRevertToUserGroupAffinityThread(&old_affinity);
 		}
-
+		
 		return true;
 	}
 
@@ -168,7 +168,7 @@ namespace hv {
 			LOG("[-] Exiting with error code : %llx\n", error_code);
 			return arg;
 		}
-		LOG("[*] VMCS setup on processor %x done\n", processor_number);
+		//LOG("[*] VMCS setup on processor %x done\n", processor_number);
 
 		//
 		// Launch VM into Outer Space :)
@@ -217,8 +217,8 @@ namespace hv {
 		return;
 	}
 
-	auto resume_vm(uchar processor_number) -> void {
-		UNREFERENCED_PARAMETER(processor_number);
+	auto resume_vm() -> void {
+		//UNREFERENCED_PARAMETER(processor_number);
 
 		size_t Rip, InstLen;
 		__vmx_vmread(VMCS_GUEST_RIP, &Rip);
