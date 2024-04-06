@@ -44,7 +44,7 @@ namespace vmx {
 
 			auto irql = KeRaiseIrqlToDpcLevel();
 
-			LOG("[*] Checking processor (%x) VMX support.....\n", processor_number.Number);
+			//LOG("[*] Checking processor (%x) VMX support.....\n", processor_number.Number);
 			cpuid_eax_01 args{};
 			__cpuid(reinterpret_cast<int32_t*>(&args), 1);
 
