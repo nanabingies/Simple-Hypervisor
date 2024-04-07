@@ -136,7 +136,7 @@ typedef struct _ept_error {
 
 extern unsigned g_num_processors;
 extern _vmm_context* vmm_context;
-inline vmx_ctx g_vmx_ctx;
+inline struct _vmx_ctx g_vmx_ctx;
 
 inline uint64_t physical_to_virtual_address(uint64_t physical_address) {
 	PHYSICAL_ADDRESS physAddr;
