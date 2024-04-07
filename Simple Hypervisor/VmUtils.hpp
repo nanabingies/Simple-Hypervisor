@@ -28,6 +28,29 @@ using guest_registers = struct guest_registers {
 	unsigned __int64 rax;
 };
 
+using vmxon_region_ctx = struct _vmxon_region_ctx {
+	union {
+		unsigned int all;
+		struct {
+			unsigned int revision_identifier : 31;
+		} bits;
+	} header;
+	char data[0x1000 - 1 * sizeof(unsigned)];
+};
+
+using vmcs_region_ctx = struct _vmcs_region_ctx {
+	union {
+		unsigned int all;
+		struct {
+			unsigned int revision_identifier : 31;
+			unsigned int shadow_vmcs_indicator : 1;
+		} bits;
+	} header;
+
+	unsigned int abort_indicator;
+	char data[0x1000 - 2 * sizeof(unsigned)];
+};
+
 using vcpu_ctx = struct _vcpu_ctx {
 	__declspec(align(PAGE_SIZE)) vmxon_region_ctx vmxon;
 	__declspec(align(PAGE_SIZE)) vmcs_region_ctx  vmcs;
@@ -97,9 +120,9 @@ typedef struct _ept_error {
 	void*	param_2;
 } ept_error;
 
-extern bool vm_off;
 extern unsigned g_num_processors;
 extern _vmm_context* vmm_context;
+inline vmx_ctx g_vmx_ctx;
 
 inline uint64_t physical_to_virtual_address(uint64_t physical_address) {
 	PHYSICAL_ADDRESS physAddr;
