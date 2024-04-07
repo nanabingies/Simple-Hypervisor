@@ -42,8 +42,8 @@ namespace hv {
 			//
 			// Allocate Memory for VMXON & VMCS regions and initialize
 			//
-			if (!vmx_allocate_vmxon_region(processor_number.Number))		return false;
-			if (!vmx_allocate_vmcs_region(processor_number.Number))		return false;
+			if (!vmx_allocate_vmxon_region(nullptr))		return false;
+			if (!vmx_allocate_vmcs_region(nullptr))		return false;
 
 			//
 			// Allocate space for VM EXIT Handler
@@ -182,6 +182,35 @@ namespace hv {
 		LOG("[-] Exiting with error code : %llx\n", error_code);
 
 		return arg;
+	}
+
+	auto init_vmcs(ULONG_PTR argument) -> ULONG_PTR {
+		unsigned current_processor = KeGetCurrentProcessorNumber();
+
+		//
+		// Set VMCS state to inactive
+		//
+		unsigned ret = __vmx_vmclear(&g_vmx_ctx.vcpus[current_processor].vmcs_phys);
+		if (ret != 0) {		// Failure
+			LOG("[!] __vmx_vmclear failed on processor %x\n", current_processor);
+			LOG_ERROR();
+			return argument;
+		}
+
+		//
+		//  Make VMCS the current and active on that processor
+		//
+		ret = __vmx_vmptrld(&g_vmx_ctx.vcpus[current_processor].vmcs_phys);
+		if (ret != 0) {		// Failure
+			LOG("[!] __vmx_vmptrld failed on processor %x\n", current_processor);
+			LOG_ERROR();
+			return argument;
+		}
+
+		// save host cr3
+		cr3_val = __readcr3();
+		LOG("[*] vmcs initialized on processor %x\n", current_processor);
+		return argument;
 	}
 
 	auto dpc_broadcast_initialize_guest(KDPC* Dpc, void* DeferredContext, void* SystemArgument1, void* SystemArgument2) -> void {
