@@ -444,7 +444,6 @@ namespace hv_vmcs {
 
 		// There is no field in the host - state area for the LDTR selector.
 
-
 		ShvUtilConvertGdtEntry(reinterpret_cast<void*>(gdtBase), asm_get_tr(), &vmxGdtEntry);
 
 		__vmx_vmwrite(VMCS_GUEST_TR_SELECTOR, vmxGdtEntry.Selector);
@@ -459,13 +458,13 @@ namespace hv_vmcs {
 		// GDTR and IDTR 
 		//
 
-		if (__vmx_vmwrite(VMCS_GUEST_GDTR_BASE, asm_get_gdt_base()) != 0)	return VM_ERROR_ERR_INFO_ERR;
-		if (__vmx_vmwrite(VMCS_GUEST_GDTR_LIMIT, asm_get_gdt_limit()) != 0)	return VM_ERROR_ERR_INFO_ERR;
-		if (__vmx_vmwrite(VMCS_HOST_GDTR_BASE, asm_get_gdt_base()) != 0)	return VM_ERROR_ERR_INFO_ERR;
+		__vmx_vmwrite(VMCS_GUEST_GDTR_BASE, asm_get_gdt_base());
+		__vmx_vmwrite(VMCS_GUEST_GDTR_LIMIT, asm_get_gdt_limit());
+		__vmx_vmwrite(VMCS_HOST_GDTR_BASE, asm_get_gdt_base());
 
-		if (__vmx_vmwrite(VMCS_GUEST_IDTR_BASE, asm_get_idt_base()) != 0)	return VM_ERROR_ERR_INFO_ERR;
-		if (__vmx_vmwrite(VMCS_GUEST_IDTR_LIMIT, asm_get_idt_limit()) != 0)	return VM_ERROR_ERR_INFO_ERR;
-		if (__vmx_vmwrite(VMCS_HOST_IDTR_BASE, asm_get_idt_base()) != 0)	return VM_ERROR_ERR_INFO_ERR;
+		__vmx_vmwrite(VMCS_GUEST_IDTR_BASE, asm_get_idt_base());
+		__vmx_vmwrite(VMCS_GUEST_IDTR_LIMIT, asm_get_idt_limit());
+		__vmx_vmwrite(VMCS_HOST_IDTR_BASE, asm_get_idt_base());
 
 		//
 		// The various MSRs as documented in the Intel SDM - Guest & Host
