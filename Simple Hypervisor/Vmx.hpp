@@ -39,6 +39,7 @@ namespace hv {
 	auto launch_all_vmms() -> void;
 
 	auto init_vmcs(ULONG_PTR) -> ULONG_PTR;
+	auto launch_all_vm(ULONG_PTR) -> ULONG_PTR;
 
 }
 
