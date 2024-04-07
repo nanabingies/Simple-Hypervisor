@@ -16,10 +16,10 @@ namespace vmx {
 	auto vmx_check_bios_lock() -> bool;
 	auto vmx_enable_cr4() -> void;
 
-	auto create_vcpus(pvmx_ctx) -> bool;
+	auto create_vcpus() -> bool;
 
-	auto vmx_allocate_vmxon_region(pvcpu_ctx) -> bool;
-	auto vmx_allocate_vmcs_region(pvcpu_ctx) -> bool;
+	auto vmx_allocate_vmxon_region(struct _vcpu_ctx*) -> bool;
+	auto vmx_allocate_vmcs_region(struct _vcpu_ctx*) -> bool;
 	auto vmx_allocate_vmexit_stack(uchar) -> bool;
 	auto vmx_allocate_io_bitmap_stack(uchar) -> bool;
 	auto vmx_allocate_msr_bitmap(uchar) -> bool;
@@ -37,6 +37,8 @@ namespace hv {
 	auto resume_vm() -> void;
 
 	auto launch_all_vmms() -> void;
+
+	auto init_vmcs(ULONG_PTR) -> ULONG_PTR;
 
 }
 
