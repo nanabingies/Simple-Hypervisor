@@ -156,7 +156,6 @@ asm_setup_vmcs proc
     mov     r8,  0
 	sub		rsp, 020h
     call	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z
-    mov     ret_val, eax
     add		rsp, 020h
 
 	movdqa  xmm0, xmmword ptr [rsp]
@@ -169,7 +168,6 @@ asm_setup_vmcs proc
 
 	RESTORE_GP
 	popfq
-    mov     eax, ret_val
 	ret
 
 asm_setup_vmcs endp
