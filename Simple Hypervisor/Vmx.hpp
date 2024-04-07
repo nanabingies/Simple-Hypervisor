@@ -32,7 +32,7 @@ namespace hv {
 
 	auto devirtualize_all_processors() -> void;
 
-	auto launch_vm(ULONG_PTR) -> ULONG_PTR;
+	//auto launch_vm(ULONG_PTR) -> ULONG_PTR;
 	auto terminate_vm(uchar) -> void;
 	auto resume_vm() -> void;
 
@@ -51,4 +51,6 @@ extern "C" {
 	//inline EVmErrors AsmInveptContext();
 
 	auto inline asm_vmx_vmcall(unsigned __int64, unsigned __int64, unsigned __int64, unsigned __int64) -> void;
+
+	auto inline asm_hv_launch() -> unsigned;
 }
