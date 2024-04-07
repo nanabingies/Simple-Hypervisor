@@ -35,7 +35,7 @@ extern "C" {
 	unsigned g_num_processors;
 
 	auto DriverEntry(_In_ PDRIVER_OBJECT, _In_ PUNICODE_STRING) -> NTSTATUS {
-		using hv::init_vmcs;
+		using hv_vmcs::init_vmcs;
 		using hv::launch_vm;
 		using vmx::create_vcpus;
 		using vmx::vmx_is_vmx_available;
@@ -47,8 +47,9 @@ extern "C" {
 		if (!vmx_is_vmx_available())	return STATUS_FAILED_DRIVER_ENTRY;
 		if (!create_vcpus())	return STATUS_FAILED_DRIVER_ENTRY;
 
-		KeIpiGenericCall(static_cast<PKIPI_BROADCAST_WORKER>(init_vmcs), 0);
-		KeIpiGenericCall(static_cast<PKIPI_BROADCAST_WORKER>(launch_vm), 0);
+		auto cr3_val = __readcr3();
+		KeIpiGenericCall(PKIPI_BROADCAST_WORKER(&init_vmcs) , cr3_val);
+		//KeIpiGenericCall(static_cast<PKIPI_BROADCAST_WORKER>(launch_vm), 0);
 
 		return STATUS_SUCCESS;
 	}
