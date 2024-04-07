@@ -325,3 +325,9 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp, uint64_t cr3) -
 	return VM_ERROR_OK;
 
 }
+
+namespace hv_vmcs {
+	auto init_vmcs() -> void {
+
+	}
+}
