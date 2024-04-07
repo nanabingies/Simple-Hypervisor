@@ -330,8 +330,10 @@ namespace hv_vmcs {
 	auto init_vmcs(unsigned __int64 cr3) -> void {
 		unsigned current_processor = KeGetCurrentProcessorNumber();
 
-		__vmx_vmclear(&g_vmx_ctx.vcpus[current_processor].vmcs_phys);
-		__vmx_vmptrld(&g_vmx_ctx.vcpus[current_processor].vmcs_phys);
+		auto curr_vcpu = &g_vmx_ctx.vcpus[current_processor];
+
+		__vmx_vmclear((unsigned long long*)curr_vcpu->vmcs_phys);
+		__vmx_vmptrld((unsigned long long*)curr_vcpu->vmcs_phys);
 
 		// Control Registers - Guest & Host
 		__vmx_vmwrite(VMCS_GUEST_CR0, __readcr0());
@@ -351,7 +353,7 @@ namespace hv_vmcs {
 		__vmx_vmwrite(VMCS_GUEST_DR7, __readdr(7));
 
 		// RSP, RIP, RFLAGS - Guest & Host
-		//vmm_context[processor_number].guest_rip = reinterpret_cast<size_t>(guest_rsp); //AsmGuestContinueExecution;
+		//g_vmx_ctx.vcpus[current_processor].guest_rip = reinterpret_cast<size_t>(guest_rsp); //AsmGuestContinueExecution;
 		//vmm_context[processor_number].guest_rsp = reinterpret_cast<size_t>(guest_rsp);
 
 		//vmm_context[processor_number].host_rip = (unsigned __int64)asm_host_continue_execution;
@@ -359,13 +361,13 @@ namespace hv_vmcs {
 		//	(static_cast<size_t>(vmm_context[processor_number].host_stack) +
 		//		HOST_STACK_SIZE - sizeof(void*) - sizeof(struct guest_registers));
 
-		//if (__vmx_vmwrite(VMCS_GUEST_RSP, static_cast<size_t>(vmm_context[processor_number].guest_rsp)) != 0)	return VM_ERROR_ERR_INFO_ERR;
-		//if (__vmx_vmwrite(VMCS_GUEST_RIP, static_cast<size_t>(vmm_context[processor_number].guest_rip) != 0))	return VM_ERROR_ERR_INFO_ERR;
-		//if (__vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags()) != 0)	return VM_ERROR_ERR_INFO_ERR;
+		//__vmx_vmwrite(VMCS_GUEST_RSP, static_cast<size_t>(vmm_context[processor_number].guest_rsp));
+		//__vmx_vmwrite(VMCS_GUEST_RIP, static_cast<size_t>(vmm_context[processor_number].guest_rip));
+		__vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags());
 
-		//if (__vmx_vmwrite(VMCS_HOST_RSP, static_cast<size_t>(vmm_context[processor_number].host_rsp)) != 0)		return VM_ERROR_ERR_INFO_ERR;
+		__vmx_vmwrite(VMCS_HOST_RSP, size_t((unsigned long long*)curr_vcpu->host_stack + HOST_STACK_SIZE));
 		// Address host should point to, to kick things off when vmexit occurs
-		//if (__vmx_vmwrite(VMCS_HOST_RIP, static_cast<size_t>(vmm_context[processor_number].host_rip)) != 0)		return VM_ERROR_ERR_INFO_ERR;
+		__vmx_vmwrite(VMCS_HOST_RIP, size_t(asm_host_continue_execution));
 
 
 		// CS, SS, DS, ES, FS, GS, LDTR, and TR -- Guest & Host
