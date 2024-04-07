@@ -193,21 +193,6 @@ namespace hv {
 		return arg;
 	}
 
-	auto init_vmcs(unsigned __int64 cr3_val) -> void {
-		unsigned current_processor = KeGetCurrentProcessorNumber();
-
-		//
-		// Set VMCS state to inactive
-		//
-		__vmx_vmclear(&g_vmx_ctx.vcpus[current_processor].vmcs_phys);
-		__vmx_vmptrld(&g_vmx_ctx.vcpus[current_processor].vmcs_phys);
-		
-		
-		
-		LOG("[*] vmcs initialized on processor %x\n", current_processor);
-		return;
-	}
-
 	auto dpc_broadcast_initialize_guest(KDPC* Dpc, void* DeferredContext, void* SystemArgument1, void* SystemArgument2) -> void {
 		UNREFERENCED_PARAMETER(DeferredContext);
 		UNREFERENCED_PARAMETER(Dpc);
