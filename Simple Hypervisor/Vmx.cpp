@@ -127,9 +127,19 @@ namespace vmx {
 		return;
 	}
 
-	auto vmx_allocate_vmxon_region(uchar processor_number) -> bool {
-		if (!vmm_context) {
-			LOG("[-] Unspecified VMM context for processor %x\n", processor_number);
+	auto create_vcpu(pvmx_ctx vmx_ctx) -> void {
+		vmx_ctx->vcpu_count = KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
+		LOG("[*] vcpu count : %x\n", vmx_ctx->vcpu_count);
+
+		for (unsigned iter = 0; iter < vmx_ctx->vcpu_count; iter++) {
+			vmx_allocate_vmxon_region(&vmx_ctx->vcpus[iter]);
+			vmx_allocate_vmcs_region(&vmx_ctx->vcpus[iter]);
+		}
+	}
+
+	auto vmx_allocate_vmxon_region(pvcpu_ctx vcpu_ctx) -> bool {
+		if (!vcpu_ctx) {
+			LOG("[-] Unspecified VMM context for processor %x\n", KeGetCurrentProcessorNumber());
 			LOG_ERROR();
 			return false;
 		}
@@ -140,38 +150,28 @@ namespace vmx {
 		ia32_vmx_basic_register vmx_basic{};
 		vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
 
-		void* vmxon = MmAllocateContiguousMemory(vmx_basic.vmcs_size_in_bytes, phys_addr);
-		if (!vmxon) {
-			LOG("[-] Allocating vmxon failed for processor (%x).\n", processor_number);
-			LOG_ERROR();
-			return FALSE;
-		}
-
-		RtlSecureZeroMemory(vmxon, vmx_basic.vmcs_size_in_bytes);
-		//LOG("[*] Allocated vmxon for processor (%x) at %llx with size %llx\n", processor_number, reinterpret_cast<uint64_t>(vmxon), vmx_basic.vmcs_size_in_bytes);
-
-		*reinterpret_cast<uint64_t*>(vmxon) = vmx_basic.vmcs_revision_id;
-
-		vmm_context[processor_number].vmxon_region_virt_addr = reinterpret_cast<uint64_t>(vmxon);
-		vmm_context[processor_number].vmxon_region_phys_addr = virtual_to_physical_address(vmxon);
+		vcpu_ctx->vmxon_phys = virtual_to_physical_address(static_cast<void*>(&vcpu_ctx->vmxon));
+		vcpu_ctx->vmxon.header.bits.revision_identifier = vmx_basic.vmcs_revision_id;
+		
+		IA32_VMX_CR0_FIXED0 cr0_fixed0;
 
 		//
 		// Execute VMXON
 		//
-		auto ret = __vmx_on(&vmm_context[processor_number].vmxon_region_phys_addr);
+		/*auto ret = __vmx_on(&vmm_context[processor_number].vmxon_region_phys_addr);
 		if (ret > 0) {
 			LOG("[-] Failed vmxon with error code %x\n", ret);
 			LOG_ERROR();
 			return false;
-		}
+		}*/
 
 		//LOG("[*] vmxon initialized on logical processor (%x)\n", processor_number);
 		return true;
 	}
 
-	auto vmx_allocate_vmcs_region(uchar processor_number) -> bool {
+	auto vmx_allocate_vmcs_region(pvcpu_ctx vcpu_ctx) -> bool {
 		if (!vmm_context) {
-			LOG("[-] Unspecified VMM context for processor %x\n", processor_number);
+			LOG("[-] Unspecified VMM context for processor %x\n", KeGetCurrentProcessorNumber());
 			LOG_ERROR();
 			return false;
 		}
@@ -184,7 +184,7 @@ namespace vmx {
 
 		void* vmcs = MmAllocateContiguousMemory(vmx_basic.vmcs_size_in_bytes, phys_addr);
 		if (!vmcs) {
-			LOG("[-] Allocating vmcs failed for processor (%x).\n", processor_number);
+			LOG("[-] Allocating vmcs failed for processor (%x).\n", KeGetCurrentProcessorNumber());
 			LOG_ERROR();
 			return false;
 		}
@@ -194,18 +194,18 @@ namespace vmx {
 
 		*reinterpret_cast<uint64_t*>(vmcs) = vmx_basic.vmcs_revision_id;
 
-		vmm_context[processor_number].vmcs_region_virt_addr = reinterpret_cast<UINT64>(vmcs);
-		vmm_context[processor_number].vmcs_region_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(vmcs));
+		//vmm_context[processor_number].vmcs_region_virt_addr = reinterpret_cast<UINT64>(vmcs);
+		//vmm_context[processor_number].vmcs_region_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(vmcs));
 
 		//
 		// Load current VMCS and make it active
 		//
-		auto ret = __vmx_vmptrld(&vmm_context[processor_number].vmcs_region_phys_addr);
+		/*auto ret = __vmx_vmptrld(&vmm_context[processor_number].vmcs_region_phys_addr);
 		if (ret > 0) {
 			LOG("[-] Failed vmcs with error code %x\n", ret);
 			LOG_ERROR();
 			return FALSE;
-		}
+		}*/
 
 		//LOG("[*] vmcs loaded on logical processor (%x)\n", processor_number);
 		return true;
