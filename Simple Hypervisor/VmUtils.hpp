@@ -5,7 +5,8 @@
 #define DOS_NAME		L"\\DosDevices\\Hypervisor"
 #define VMM_POOL_TAG	'tesT'
 
-#define HOST_STACK_SIZE  (20 * PAGE_SIZE)
+#define HOST_STACK_PAGES 6
+#define HOST_STACK_SIZE  (HOST_STACK_PAGES * PAGE_SIZE)
 
 using guest_registers = struct guest_registers {
 	__m128 xmm[6];
@@ -25,7 +26,21 @@ using guest_registers = struct guest_registers {
 	unsigned __int64 rdx;
 	unsigned __int64 rcx;
 	unsigned __int64 rax;
-} ;
+};
+
+using vcpu_ctx = struct _vcpu_ctx {
+	__declspec(align(PAGE_SIZE)) vmxon_region_ctx vmxon;
+	__declspec(align(PAGE_SIZE)) vmcs_region_ctx  vmcs;
+	__declspec(align(16))		 uint8_t host_stack[HOST_STACK_PAGES];
+
+	uint64_t vmxon_phys;
+	uint64_t vmcs_phys;
+};
+
+using vmx_ctx = struct _vmx_ctx {
+	uint32_t vcpu_count;
+	vcpu_ctx vcpus;
+};
 
 struct _vmm_context {
 	uint64_t	vmxon_region_virt_addr;				// Virtual address of VMXON Region
