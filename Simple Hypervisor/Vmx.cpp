@@ -127,21 +127,21 @@ namespace vmx {
 		return;
 	}
 
-	auto create_vcpus(pvmx_ctx vmx_ctx) -> bool {
-		vmx_ctx->vcpu_count = KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
-		LOG("[*] vcpu count : %x\n", vmx_ctx->vcpu_count);
+	auto create_vcpus() -> bool {
+		g_vmx_ctx.vcpu_count = KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
+		LOG("[*] vcpu count : %x\n", g_vmx_ctx.vcpu_count);
 
-		for (unsigned iter = 0; iter < vmx_ctx->vcpu_count; iter++) {
-			if (!vmx_allocate_vmxon_region(&vmx_ctx->vcpus[iter]))	return false;
-			if (!vmx_allocate_vmcs_region(&vmx_ctx->vcpus[iter]))	return false;
+		for (unsigned iter = 0; iter < g_vmx_ctx.vcpu_count; iter++) {
+			if (!vmx_allocate_vmxon_region(&g_vmx_ctx.vcpus[iter]))	return false;
+			if (!vmx_allocate_vmcs_region(&g_vmx_ctx.vcpus[iter]))	return false;
 		}
 
 		return true;
 	}
 
-	auto vmx_allocate_vmxon_region(pvcpu_ctx vcpu_ctx) -> bool {
+	auto vmx_allocate_vmxon_region(struct _vcpu_ctx* vcpu_ctx) -> bool {
 		if (!vcpu_ctx) {
-			LOG("[-] Unspecified VMM context for processor %x\n", KeGetCurrentProcessorNumber());
+			LOG("[!] Unspecified VMM context for processor %x\n", KeGetCurrentProcessorNumber());
 			LOG_ERROR();
 			return false;
 		}
@@ -175,15 +175,19 @@ namespace vmx {
 		//
 		// Execute VMXON
 		//
-		auto ret_val = __vmx_on(static_cast<unsigned long long*>(&vcpu_ctx->vmxon_phys));
+		auto rets = __vmx_on(static_cast<unsigned long long*>(&vcpu_ctx->vmxon_phys));
+		if (rets != 0) {	// Failure
+			LOG("[!] Failed to activate virtual machine extensions (VMX) operation on processor (%x)\n", KeGetCurrentProcessorNumber());
+			LOG_ERROR();
+			return false;
+		}
 
-		LOG("[*] vmxon initialized on logical processor (%x)\n", KeGetCurrentProcessorNumber());
 		return true;
 	}
 
-	auto vmx_allocate_vmcs_region(pvcpu_ctx vcpu_ctx) -> bool {
-		if (!vmm_context) {
-			LOG("[-] Unspecified VMM context for processor %x\n", KeGetCurrentProcessorNumber());
+	auto vmx_allocate_vmcs_region(struct _vcpu_ctx* vcpu_ctx) -> bool {
+		if (!vcpu_ctx) {
+			LOG("[!] Unspecified VMM context for processor %x\n", KeGetCurrentProcessorNumber());
 			LOG_ERROR();
 			return false;
 		}
