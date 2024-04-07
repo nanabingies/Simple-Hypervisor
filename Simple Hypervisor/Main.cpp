@@ -7,6 +7,8 @@ extern "C" {
 	auto DriverUnload(_In_ PDRIVER_OBJECT driver_object) -> void {
 		using hv::devirtualize_all_processors;
 
+		UNREFERENCED_PARAMETER(driver_object);
+
 		//LOG("[*] Terminating VMs on processors...");
 
 		// Uninstall vmx on all processors
@@ -15,9 +17,9 @@ extern "C" {
 			vm_off = true;
 		}
 
-		if (driver_object->DeviceObject != nullptr) {
-			IoDeleteDevice(driver_object->DeviceObject);
-		}
+		//if (driver_object->DeviceObject != nullptr) {
+		//	IoDeleteDevice(driver_object->DeviceObject);
+		//}
 
 		//LOG("[*] Unloading Device Driver...");
 		return;
@@ -36,14 +38,11 @@ extern "C" {
 	bool vm_off;
 	unsigned g_num_processors;
 
-	auto DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING registry_path) -> NTSTATUS {
+	auto DriverEntry(_In_ PDRIVER_OBJECT, _In_ PUNICODE_STRING) -> NTSTATUS {
 		using hv::virtualize_all_processors;
 		using hv::launch_vm;
 		using hv::launch_all_vmms;
 		using vmx::vmx_is_vmx_available;
-
-		UNREFERENCED_PARAMETER(registry_path);
-		//LOG("[*] Loading file %wZ\n", registry_path);
 
 		vm_off = false;
 
@@ -56,7 +55,7 @@ extern "C" {
 
 		//LOG("[*] Num processors : %x\n", KeNumberProcessors);
 
-		NTSTATUS status;
+		/*NTSTATUS status;
 		UNICODE_STRING drv_name;
 		PDEVICE_OBJECT device_object;
 
@@ -71,7 +70,7 @@ extern "C" {
 		for (unsigned idx = 0; idx < IRP_MJ_MAXIMUM_FUNCTION; ++idx) {
 			driver_object->MajorFunction[idx] = DefaultDispatch;
 		}
-		driver_object->DriverUnload = DriverUnload;
+		driver_object->DriverUnload = DriverUnload;*/
 
 		if (!vmx_is_vmx_available())	return STATUS_FAILED_DRIVER_ENTRY;
 
