@@ -128,12 +128,12 @@ namespace hv {
 	}
 
 	auto launch_vm() -> void {
-		auto ret = asm_hv_launch();
-		if (ret != 0) {		// Failure
-			LOG("[!] Failed to lauch vm on processor (%x)\n", KeGetCurrentProcessorNumber());
-			LOG_ERROR();
-			return;
-		}
+		//auto ret = asm_hv_launch();
+		//if (ret != 0) {		// Failure
+		//	LOG("[!] Failed to lauch vm on processor (%x)\n", KeGetCurrentProcessorNumber());
+		//	LOG_ERROR();
+		//	return;
+		//}
 	}
 
 	auto launch_vm(ULONG_PTR arg) -> ULONG_PTR {
@@ -162,7 +162,7 @@ namespace hv {
 		//
 		//	read cr3 and save for guest
 		//
-		cr3_val = __readcr3();
+		//cr3_val = __readcr3();
 
 		//
 		// Setup VMCS structure fields for that logical processor
@@ -193,33 +193,19 @@ namespace hv {
 		return arg;
 	}
 
-	auto init_vmcs(ULONG_PTR argument) -> ULONG_PTR {
+	auto init_vmcs(unsigned __int64 cr3_val) -> void {
 		unsigned current_processor = KeGetCurrentProcessorNumber();
 
 		//
 		// Set VMCS state to inactive
 		//
-		unsigned ret = __vmx_vmclear(&g_vmx_ctx.vcpus[current_processor].vmcs_phys);
-		if (ret != 0) {		// Failure
-			LOG("[!] __vmx_vmclear failed on processor %x\n", current_processor);
-			LOG_ERROR();
-			return argument;
-		}
-
-		//
-		//  Make VMCS the current and active on that processor
-		//
-		ret = __vmx_vmptrld(&g_vmx_ctx.vcpus[current_processor].vmcs_phys);
-		if (ret != 0) {		// Failure
-			LOG("[!] __vmx_vmptrld failed on processor %x\n", current_processor);
-			LOG_ERROR();
-			return argument;
-		}
-
-		// save host cr3
-		cr3_val = __readcr3();
+		__vmx_vmclear(&g_vmx_ctx.vcpus[current_processor].vmcs_phys);
+		__vmx_vmptrld(&g_vmx_ctx.vcpus[current_processor].vmcs_phys);
+		
+		
+		
 		LOG("[*] vmcs initialized on processor %x\n", current_processor);
-		return argument;
+		return;
 	}
 
 	auto dpc_broadcast_initialize_guest(KDPC* Dpc, void* DeferredContext, void* SystemArgument1, void* SystemArgument2) -> void {
