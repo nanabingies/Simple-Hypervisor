@@ -128,15 +128,15 @@ namespace hv {
 	}
 
 	auto launch_vm() -> void {
-		//auto ret = asm_hv_launch();
-		//if (ret != 0) {		// Failure
-		//	LOG("[!] Failed to lauch vm on processor (%x)\n", KeGetCurrentProcessorNumber());
-		//	LOG_ERROR();
-		//	return;
-		//}
+		auto ret = asm_hv_launch();
+		if (ret != 0) {		// Failure
+			LOG("[!] Failed to lauch vm on processor (%x)\n", KeGetCurrentProcessorNumber());
+			LOG_ERROR();
+			return;
+		}
 	}
 
-	auto launch_vm(ULONG_PTR arg) -> ULONG_PTR {
+	/*auto launch_vm(ULONG_PTR arg) -> ULONG_PTR {
 		ulong processor_number = KeGetCurrentProcessorNumber();
 
 		//
@@ -191,7 +191,7 @@ namespace hv {
 		LOG("[-] Exiting with error code : %llx\n", error_code);
 
 		return arg;
-	}
+	}*/
 
 	auto dpc_broadcast_initialize_guest(KDPC* Dpc, void* DeferredContext, void* SystemArgument1, void* SystemArgument2) -> void {
 		UNREFERENCED_PARAMETER(DeferredContext);
