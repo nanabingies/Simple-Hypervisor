@@ -454,10 +454,7 @@ namespace hv_vmcs {
 		__vmx_vmwrite(VMCS_HOST_TR_SELECTOR, (asm_get_tr() & 0xF8));
 		__vmx_vmwrite(VMCS_HOST_TR_BASE, vmxGdtEntry.Base);
 
-		//
 		// GDTR and IDTR 
-		//
-
 		__vmx_vmwrite(VMCS_GUEST_GDTR_BASE, asm_get_gdt_base());
 		__vmx_vmwrite(VMCS_GUEST_GDTR_LIMIT, asm_get_gdt_limit());
 		__vmx_vmwrite(VMCS_HOST_GDTR_BASE, asm_get_gdt_base());
@@ -466,9 +463,7 @@ namespace hv_vmcs {
 		__vmx_vmwrite(VMCS_GUEST_IDTR_LIMIT, asm_get_idt_limit());
 		__vmx_vmwrite(VMCS_HOST_IDTR_BASE, asm_get_idt_base());
 
-		//
 		// The various MSRs as documented in the Intel SDM - Guest & Host
-		//
 		__vmx_vmwrite(VMCS_GUEST_DEBUGCTL, __readmsr(MSR_IA32_DEBUGCTL) & 0xffffffff);
 		__vmx_vmwrite(VMCS_GUEST_DEBUGCTL_HIGH, __readmsr(MSR_IA32_DEBUGCTL) >> 32); // I don't think this is specifically needed
 
@@ -480,35 +475,29 @@ namespace hv_vmcs {
 		__vmx_vmwrite(VMCS_HOST_SYSENTER_ESP, __readmsr(MSR_IA32_SYSENTER_ESP));
 		__vmx_vmwrite(VMCS_HOST_SYSENTER_EIP, __readmsr(MSR_IA32_SYSENTER_EIP));
 
-		//
 		// SMBASE (32 bits)
 		// This register contains the base address of the logical processor's SMRAM image.
-		// 
 		//__vmx_vmwrite(VMCS_GUEST_SMBASE, );
 
-		//
 		// VMCS link pointer
-		//
-		if (__vmx_vmwrite(VMCS_GUEST_VMCS_LINK_POINTER, static_cast<size_t>(~0)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+		__vmx_vmwrite(VMCS_GUEST_VMCS_LINK_POINTER, static_cast<size_t>(~0));
 
-		//
 		// VM Execution Control Fields
 		// These fields control processor behavior in VMX non-root operation.
 		// They determine in part the causes of VM exits.
-		//
-		if (__vmx_vmwrite(VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS, AdjustControls(0, IA32_VMX_PINBASED_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+		__vmx_vmwrite(VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS, AdjustControls(0, IA32_VMX_PINBASED_CTLS));
 
-		if (__vmx_vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
-			AdjustControls(IA32_VMX_PROCBASED_CTLS_HLT_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_USE_MSR_BITMAPS_FLAG |
+		__vmx_vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
+			AdjustControls(IA32_VMX_PROCBASED_CTLS_HLT_EXITING_FLAG | //IA32_VMX_PROCBASED_CTLS_USE_MSR_BITMAPS_FLAG |
 				IA32_VMX_PROCBASED_CTLS_CR3_LOAD_EXITING_FLAG | /*IA32_VMX_PROCBASED_CTLS_CR3_STORE_EXITING_FLAG |*/
-				IA32_VMX_PROCBASED_CTLS_USE_IO_BITMAPS_FLAG |
-				IA32_VMX_PROCBASED_CTLS_ACTIVATE_SECONDARY_CONTROLS_FLAG, IA32_VMX_PROCBASED_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+				//IA32_VMX_PROCBASED_CTLS_USE_IO_BITMAPS_FLAG |
+				IA32_VMX_PROCBASED_CTLS_ACTIVATE_SECONDARY_CONTROLS_FLAG, IA32_VMX_PROCBASED_CTLS));
 
-		if (__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
+		__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
 			AdjustControls(IA32_VMX_PROCBASED_CTLS2_ENABLE_XSAVES_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_RDTSCP_FLAG |
 				/*IA32_VMX_PROCBASED_CTLS2_ENABLE_EPT_FLAG |*/ IA32_VMX_PROCBASED_CTLS2_DESCRIPTOR_TABLE_EXITING_FLAG //|
 				/*IA32_VMX_PROCBASED_CTLS2_ENABLE_VPID_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_INVPCID_FLAG*/,
-				IA32_VMX_PROCBASED_CTLS2)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+				IA32_VMX_PROCBASED_CTLS2));
 
 
 		//
