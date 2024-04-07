@@ -127,7 +127,7 @@ namespace hv {
 		return;
 	}
 
-	auto launch_vm(ULONG_PTR arg) -> ULONG_PTR {
+	/*auto launch_vm(ULONG_PTR arg) -> ULONG_PTR {
 		ulong processor_number = KeGetCurrentProcessorNumber();
 
 		//
@@ -182,7 +182,7 @@ namespace hv {
 		LOG("[-] Exiting with error code : %llx\n", error_code);
 
 		return arg;
-	}
+	}*/
 
 	auto init_vmcs(ULONG_PTR argument) -> ULONG_PTR {
 		unsigned current_processor = KeGetCurrentProcessorNumber();
