@@ -16,7 +16,7 @@ namespace vmx {
 	auto vmx_check_bios_lock() -> bool;
 	auto vmx_enable_cr4() -> void;
 
-	auto create_vcpu(pvmx_ctx) -> void;
+	auto create_vcpus(pvmx_ctx) -> bool;
 
 	auto vmx_allocate_vmxon_region(pvcpu_ctx) -> bool;
 	auto vmx_allocate_vmcs_region(pvcpu_ctx) -> bool;
