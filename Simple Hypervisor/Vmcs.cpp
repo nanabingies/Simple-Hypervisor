@@ -332,8 +332,8 @@ namespace hv_vmcs {
 
 		auto curr_vcpu = &g_vmx_ctx.vcpus[current_processor];
 
-		__vmx_vmclear((unsigned long long*)curr_vcpu->vmcs_phys);
-		__vmx_vmptrld((unsigned long long*)curr_vcpu->vmcs_phys);
+		__vmx_vmclear(&curr_vcpu->vmcs_phys);
+		__vmx_vmptrld(&curr_vcpu->vmcs_phys);
 
 		// Control Registers - Guest & Host
 		__vmx_vmwrite(VMCS_GUEST_CR0, __readcr0());
