@@ -8,6 +8,8 @@
 #define HOST_STACK_PAGES 6
 #define HOST_STACK_SIZE  (HOST_STACK_PAGES * PAGE_SIZE)
 
+#define MAX_CORE_COUNT	64
+
 using guest_registers = struct guest_registers {
 	__m128 xmm[6];
 	unsigned __int64 r15;
@@ -51,19 +53,19 @@ using vmcs_region_ctx = struct _vmcs_region_ctx {
 	char data[0x1000 - 2 * sizeof(unsigned)];
 };
 
-using vcpu_ctx = struct _vcpu_ctx {
+typedef struct _vcpu_ctx {
 	__declspec(align(PAGE_SIZE)) vmxon_region_ctx vmxon;
 	__declspec(align(PAGE_SIZE)) vmcs_region_ctx  vmcs;
 	__declspec(align(16))		 uint8_t host_stack[HOST_STACK_PAGES];
 
 	uint64_t vmxon_phys;
 	uint64_t vmcs_phys;
-};
+}vcpu_ctx, *pvcpu_ctx;
 
-using vmx_ctx = struct _vmx_ctx {
+typedef struct _vmx_ctx {
 	uint32_t vcpu_count;
-	vcpu_ctx vcpus;
-};
+	vcpu_ctx vcpus[MAX_CORE_COUNT];
+}vmx_ctx, *pvmx_ctx;
 
 struct _vmm_context {
 	uint64_t	vmxon_region_virt_addr;				// Virtual address of VMXON Region
