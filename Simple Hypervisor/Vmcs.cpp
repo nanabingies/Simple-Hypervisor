@@ -535,7 +535,7 @@ namespace hv_vmcs {
 		ia32_vmx_misc_register misc;
 		misc.flags = __readmsr(IA32_VMX_MISC);
 
-		if (__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, misc.cr3_target_count));
+		__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, misc.cr3_target_count);
 
 		for (unsigned iter = 0; iter < misc.cr3_target_count; iter++) {
 			__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_0 + (iter * 2), 0);
