@@ -469,16 +469,16 @@ namespace hv_vmcs {
 		//
 		// The various MSRs as documented in the Intel SDM - Guest & Host
 		//
-		if (__vmx_vmwrite(VMCS_GUEST_DEBUGCTL, __readmsr(MSR_IA32_DEBUGCTL) & 0xffffffff) != 0)	return VM_ERROR_ERR_INFO_ERR;
-		if (__vmx_vmwrite(VMCS_GUEST_DEBUGCTL_HIGH, __readmsr(MSR_IA32_DEBUGCTL) >> 32) != 0)	return VM_ERROR_ERR_INFO_ERR;	// I don't think this is specifically needed
+		__vmx_vmwrite(VMCS_GUEST_DEBUGCTL, __readmsr(MSR_IA32_DEBUGCTL) & 0xffffffff);
+		__vmx_vmwrite(VMCS_GUEST_DEBUGCTL_HIGH, __readmsr(MSR_IA32_DEBUGCTL) >> 32); // I don't think this is specifically needed
 
-		if (__vmx_vmwrite(VMCS_GUEST_SYSENTER_CS, __readmsr(MSR_IA32_SYSENTER_CS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
-		if (__vmx_vmwrite(VMCS_GUEST_SYSENTER_ESP, __readmsr(MSR_IA32_SYSENTER_ESP)) != 0)	return VM_ERROR_ERR_INFO_ERR;
-		if (__vmx_vmwrite(VMCS_GUEST_SYSENTER_EIP, __readmsr(MSR_IA32_SYSENTER_EIP)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+		__vmx_vmwrite(VMCS_GUEST_SYSENTER_CS, __readmsr(MSR_IA32_SYSENTER_CS));
+		__vmx_vmwrite(VMCS_GUEST_SYSENTER_ESP, __readmsr(MSR_IA32_SYSENTER_ESP));
+		__vmx_vmwrite(VMCS_GUEST_SYSENTER_EIP, __readmsr(MSR_IA32_SYSENTER_EIP));
 
-		if (__vmx_vmwrite(VMCS_HOST_SYSENTER_CS, __readmsr(MSR_IA32_SYSENTER_CS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
-		if (__vmx_vmwrite(VMCS_HOST_SYSENTER_ESP, __readmsr(MSR_IA32_SYSENTER_ESP)) != 0)	return VM_ERROR_ERR_INFO_ERR;
-		if (__vmx_vmwrite(VMCS_HOST_SYSENTER_EIP, __readmsr(MSR_IA32_SYSENTER_EIP)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+		__vmx_vmwrite(VMCS_HOST_SYSENTER_CS, __readmsr(MSR_IA32_SYSENTER_CS));
+		__vmx_vmwrite(VMCS_HOST_SYSENTER_ESP, __readmsr(MSR_IA32_SYSENTER_ESP));
+		__vmx_vmwrite(VMCS_HOST_SYSENTER_EIP, __readmsr(MSR_IA32_SYSENTER_EIP));
 
 		//
 		// SMBASE (32 bits)
