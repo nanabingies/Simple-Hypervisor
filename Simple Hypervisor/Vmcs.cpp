@@ -353,14 +353,6 @@ namespace hv_vmcs {
 		__vmx_vmwrite(VMCS_GUEST_DR7, __readdr(7));
 
 		// RSP, RIP, RFLAGS - Guest & Host
-		//g_vmx_ctx.vcpus[current_processor].guest_rip = reinterpret_cast<size_t>(guest_rsp); //AsmGuestContinueExecution;
-		//vmm_context[processor_number].guest_rsp = reinterpret_cast<size_t>(guest_rsp);
-
-		//vmm_context[processor_number].host_rip = (unsigned __int64)asm_host_continue_execution;
-		//vmm_context[processor_number].host_rsp = //vmm_context[processor_number].host_stack;
-		//	(static_cast<size_t>(vmm_context[processor_number].host_stack) +
-		//		HOST_STACK_SIZE - sizeof(void*) - sizeof(struct guest_registers));
-
 		//__vmx_vmwrite(VMCS_GUEST_RSP, static_cast<size_t>(vmm_context[processor_number].guest_rsp));
 		//__vmx_vmwrite(VMCS_GUEST_RIP, static_cast<size_t>(vmm_context[processor_number].guest_rip));
 		__vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags());
