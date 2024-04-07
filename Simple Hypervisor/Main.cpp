@@ -35,10 +35,8 @@ extern "C" {
 	unsigned g_num_processors;
 
 	auto DriverEntry(_In_ PDRIVER_OBJECT, _In_ PUNICODE_STRING) -> NTSTATUS {
-		using hv::virtualize_all_processors;
 		using hv::init_vmcs;
 		using hv::launch_vm;
-		using hv::launch_all_vmms;
 		using vmx::create_vcpus;
 		using vmx::vmx_is_vmx_available;
 
@@ -48,15 +46,9 @@ extern "C" {
 
 		if (!vmx_is_vmx_available())	return STATUS_FAILED_DRIVER_ENTRY;
 		if (!create_vcpus())	return STATUS_FAILED_DRIVER_ENTRY;
-		LOG("Done vmx initializations.\n");
 
-		//if (!virtualize_all_processors())	return STATUS_FAILED_DRIVER_ENTRY;
-
-		//KeIpiGenericCall(static_cast<PKIPI_BROADCAST_WORKER>(launch_vm), 0);
-		//launch_all_vmms();
 		KeIpiGenericCall(static_cast<PKIPI_BROADCAST_WORKER>(init_vmcs), 0);
-
-		//LOG("[*] The hypervisor has been installed.\n");
+		KeIpiGenericCall(static_cast<PKIPI_BROADCAST_WORKER>(launch_vm), 0);
 
 		return STATUS_SUCCESS;
 	}
