@@ -127,14 +127,16 @@ namespace vmx {
 		return;
 	}
 
-	auto create_vcpu(pvmx_ctx vmx_ctx) -> void {
+	auto create_vcpus(pvmx_ctx vmx_ctx) -> bool {
 		vmx_ctx->vcpu_count = KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
 		LOG("[*] vcpu count : %x\n", vmx_ctx->vcpu_count);
 
 		for (unsigned iter = 0; iter < vmx_ctx->vcpu_count; iter++) {
-			vmx_allocate_vmxon_region(&vmx_ctx->vcpus[iter]);
-			vmx_allocate_vmcs_region(&vmx_ctx->vcpus[iter]);
+			if (!vmx_allocate_vmxon_region(&vmx_ctx->vcpus[iter]))	return false;
+			if (!vmx_allocate_vmcs_region(&vmx_ctx->vcpus[iter]))	return false;
 		}
+
+		return true;
 	}
 
 	auto vmx_allocate_vmxon_region(pvcpu_ctx vcpu_ctx) -> bool {
@@ -150,22 +152,32 @@ namespace vmx {
 		ia32_vmx_basic_register vmx_basic{};
 		vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
 
-		vcpu_ctx->vmxon_phys = virtual_to_physical_address(static_cast<void*>(&vcpu_ctx->vmxon));
+		vcpu_ctx->vmxon_phys = virtual_to_physical_address(&vcpu_ctx->vmxon);
 		vcpu_ctx->vmxon.header.bits.revision_identifier = vmx_basic.vmcs_revision_id;
 		
-		IA32_VMX_CR0_FIXED0 cr0_fixed0;
+		cr_fixed_t cr_fixed{};
+		cr0 _cr0{};
+		cr4 _cr4{};
+		cr_fixed.all = __readmsr(IA32_VMX_CR0_FIXED0);
+		_cr0.flags = __readcr0();
+		_cr0.flags |= cr_fixed.split.low;
+		cr_fixed.all = __readmsr(IA32_VMX_CR0_FIXED1);
+		_cr0.flags &= cr_fixed.split.low;
+		__writecr0(_cr0.flags);
+
+		cr_fixed.all = __readmsr(IA32_VMX_CR4_FIXED0);
+		_cr4.flags = __readcr4();
+		_cr4.flags |= cr_fixed.split.low;
+		cr_fixed.all = __readmsr(IA32_VMX_CR4_FIXED1);
+		_cr4.flags &= cr_fixed.split.low;
+		__writecr4(_cr4.flags);
 
 		//
 		// Execute VMXON
 		//
-		/*auto ret = __vmx_on(&vmm_context[processor_number].vmxon_region_phys_addr);
-		if (ret > 0) {
-			LOG("[-] Failed vmxon with error code %x\n", ret);
-			LOG_ERROR();
-			return false;
-		}*/
+		auto ret_val = __vmx_on(static_cast<unsigned long long*>(&vcpu_ctx->vmxon_phys));
 
-		//LOG("[*] vmxon initialized on logical processor (%x)\n", processor_number);
+		LOG("[*] vmxon initialized on logical processor (%x)\n", KeGetCurrentProcessorNumber());
 		return true;
 	}
 
@@ -182,32 +194,9 @@ namespace vmx {
 		ia32_vmx_basic_register vmx_basic{};
 		vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
 
-		void* vmcs = MmAllocateContiguousMemory(vmx_basic.vmcs_size_in_bytes, phys_addr);
-		if (!vmcs) {
-			LOG("[-] Allocating vmcs failed for processor (%x).\n", KeGetCurrentProcessorNumber());
-			LOG_ERROR();
-			return false;
-		}
-
-		RtlSecureZeroMemory(vmcs, vmx_basic.vmcs_size_in_bytes);
-		//LOG("[*] Allocated vmcs for processor (%x) at %llx with size %llx\n", processor_number, reinterpret_cast<uint64_t>(vmcs), vmx_basic.vmcs_size_in_bytes);
-
-		*reinterpret_cast<uint64_t*>(vmcs) = vmx_basic.vmcs_revision_id;
-
-		//vmm_context[processor_number].vmcs_region_virt_addr = reinterpret_cast<UINT64>(vmcs);
-		//vmm_context[processor_number].vmcs_region_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(vmcs));
-
-		//
-		// Load current VMCS and make it active
-		//
-		/*auto ret = __vmx_vmptrld(&vmm_context[processor_number].vmcs_region_phys_addr);
-		if (ret > 0) {
-			LOG("[-] Failed vmcs with error code %x\n", ret);
-			LOG_ERROR();
-			return FALSE;
-		}*/
-
-		//LOG("[*] vmcs loaded on logical processor (%x)\n", processor_number);
+		vcpu_ctx->vmcs_phys = virtual_to_physical_address(&vcpu_ctx->vmcs);
+		vcpu_ctx->vmcs.header.bits.revision_identifier = vmx_basic.vmcs_revision_id;
+		
 		return true;
 	}
 
