@@ -10,6 +10,18 @@
 
 #define MAX_CORE_COUNT	64
 
+union cr_fixed_t {
+	struct {
+		unsigned long low;
+		long high;
+	} split;
+	struct {
+		unsigned long low;
+		long high;
+	} u;
+	long long all;
+};
+
 using guest_registers = struct guest_registers {
 	__m128 xmm[6];
 	unsigned __int64 r15;
