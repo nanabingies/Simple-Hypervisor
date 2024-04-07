@@ -499,26 +499,19 @@ namespace hv_vmcs {
 				/*IA32_VMX_PROCBASED_CTLS2_ENABLE_VPID_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_INVPCID_FLAG*/,
 				IA32_VMX_PROCBASED_CTLS2));
 
-
-		//
 		// VM-exit control fields. 
 		// These fields control VM exits
-		//
-		if (__vmx_vmwrite(VMCS_CTRL_PRIMARY_VMEXIT_CONTROLS,
+		__vmx_vmwrite(VMCS_CTRL_PRIMARY_VMEXIT_CONTROLS,
 			AdjustControls(IA32_VMX_EXIT_CTLS_HOST_ADDRESS_SPACE_SIZE_FLAG | IA32_VMX_EXIT_CTLS_ACKNOWLEDGE_INTERRUPT_ON_EXIT_FLAG,
-				IA32_VMX_EXIT_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+				IA32_VMX_EXIT_CTLS));
 
-		//
 		// VM-entry control fields. 
 		// These fields control VM entries.
-		//
-		if (__vmx_vmwrite(VMCS_CTRL_VMENTRY_CONTROLS,
-			AdjustControls(IA32_VMX_ENTRY_CTLS_IA32E_MODE_GUEST_FLAG, IA32_VMX_ENTRY_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+		__vmx_vmwrite(VMCS_CTRL_VMENTRY_CONTROLS,
+			AdjustControls(IA32_VMX_ENTRY_CTLS_IA32E_MODE_GUEST_FLAG, IA32_VMX_ENTRY_CTLS));
 
-		//
 		// VM-exit information fields. 
 		// These fields receive information on VM exits and describe the cause and the nature of VM exits.
-		//
 		//if (__vmx_vmwrite(VMCS_VMEXIT_INSTRUCTION_INFO,
 		//	AdjustControls(IA32_VMX_EXIT_CTLS_HOST_ADDRESS_SPACE_SIZE_FLAG, IA32_VMX_EXIT_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
 
@@ -527,7 +520,7 @@ namespace hv_vmcs {
 		//
 		// Misc
 		//
-		if (__vmx_vmwrite(VMCS_GUEST_ACTIVITY_STATE, 0) != 0)	return VM_ERROR_ERR_INFO_ERR;	// Active State
+		__vmx_vmwrite(VMCS_GUEST_ACTIVITY_STATE, 0);	// Active State
 		if (__vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY_STATE, 0) != 0)	return VM_ERROR_ERR_INFO_ERR;
 		if (__vmx_vmwrite(VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS, 0) != 0)	return VM_ERROR_ERR_INFO_ERR;
 
