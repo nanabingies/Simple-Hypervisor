@@ -521,28 +521,25 @@ namespace hv_vmcs {
 		// Misc
 		//
 		__vmx_vmwrite(VMCS_GUEST_ACTIVITY_STATE, 0);	// Active State
-		if (__vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY_STATE, 0) != 0)	return VM_ERROR_ERR_INFO_ERR;
-		if (__vmx_vmwrite(VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS, 0) != 0)	return VM_ERROR_ERR_INFO_ERR;
+		__vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY_STATE, 0);
+		__vmx_vmwrite(VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS, 0);
 
-		if (__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_A_ADDRESS, (size_t)vmm_context[processor_number].io_bitmap_a_phys_addr) != 0) return VM_ERROR_ERR_INFO_ERR;
-		if (__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_B_ADDRESS, (size_t)vmm_context[processor_number].io_bitmap_b_phys_addr) != 0)	return VM_ERROR_ERR_INFO_ERR;
+		//__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_A_ADDRESS, (size_t)vmm_context[processor_number].io_bitmap_a_phys_addr);
+		//__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_B_ADDRESS, (size_t)vmm_context[processor_number].io_bitmap_b_phys_addr);
 
-		if (__vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, vmm_context[processor_number].msr_bitmap_phys_addr) != 0)	return VM_ERROR_ERR_INFO_ERR;
+		//__vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, vmm_context[processor_number].msr_bitmap_phys_addr);
 
-		if (__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vmm_context[processor_number].ept_ptr) != 0)	return VM_ERROR_ERR_INFO_ERR;
-		if (__vmx_vmwrite(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, KeGetCurrentProcessorNumberEx(NULL) + 1) != 0)	return VM_ERROR_ERR_INFO_ERR;
+		//__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vmm_context[processor_number].ept_ptr) != 0)	return VM_ERROR_ERR_INFO_ERR;
+		__vmx_vmwrite(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, KeGetCurrentProcessorNumberEx(NULL) + 1);
 
 		ia32_vmx_misc_register misc;
 		misc.flags = __readmsr(IA32_VMX_MISC);
 
-		if (__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, misc.cr3_target_count) != 0)	return VM_ERROR_ERR_INFO_ERR;
+		if (__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, misc.cr3_target_count));
 
 		for (unsigned iter = 0; iter < misc.cr3_target_count; iter++) {
-			if (__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_0 + (iter * 2), 0) != 0)	return VM_ERROR_ERR_INFO_ERR;
-
+			__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_0 + (iter * 2), 0);
 		}
-
-		return VM_ERROR_OK;
 
 		LOG("[*] vmcs initialized on processor %x\n", current_processor);
 		return;
