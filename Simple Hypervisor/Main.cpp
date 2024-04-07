@@ -49,7 +49,7 @@ extern "C" {
 
 		auto cr3_val = __readcr3();
 		KeIpiGenericCall(PKIPI_BROADCAST_WORKER(&init_vmcs) , cr3_val);
-		//KeIpiGenericCall(static_cast<PKIPI_BROADCAST_WORKER>(launch_vm), 0);
+		KeIpiGenericCall(PKIPI_BROADCAST_WORKER(launch_vm), 0);
 
 		return STATUS_SUCCESS;
 	}
