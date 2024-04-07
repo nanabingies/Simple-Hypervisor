@@ -404,7 +404,7 @@ namespace hv_vmcs {
 
 		ShvUtilConvertGdtEntry(reinterpret_cast<void*>(gdtBase), ctx.SegEs, &vmxGdtEntry);
 
-		__vmx_vmwrite(VMCS_GUEST_ES_SELECTOR, vmxGdtEntry.Selector);	// GETES() & 0xF8
+		__vmx_vmwrite(VMCS_GUEST_ES_SELECTOR, vmxGdtEntry.Selector);
 		__vmx_vmwrite(VMCS_GUEST_ES_BASE, vmxGdtEntry.Base);
 		__vmx_vmwrite(VMCS_GUEST_ES_LIMIT, vmxGdtEntry.Limit);
 		__vmx_vmwrite(VMCS_GUEST_ES_ACCESS_RIGHTS, vmxGdtEntry.AccessRights);
@@ -447,13 +447,13 @@ namespace hv_vmcs {
 
 		ShvUtilConvertGdtEntry(reinterpret_cast<void*>(gdtBase), asm_get_tr(), &vmxGdtEntry);
 
-		if (__vmx_vmwrite(VMCS_GUEST_TR_SELECTOR, vmxGdtEntry.Selector) != 0)	return VM_ERROR_ERR_INFO_ERR;	// GETTR() & 0xF8
-		if (__vmx_vmwrite(VMCS_GUEST_TR_BASE, vmxGdtEntry.Base) != 0)	return VM_ERROR_ERR_INFO_ERR;
-		if (__vmx_vmwrite(VMCS_GUEST_TR_LIMIT, vmxGdtEntry.Limit) != 0)	return VM_ERROR_ERR_INFO_ERR;
-		if (__vmx_vmwrite(VMCS_GUEST_TR_ACCESS_RIGHTS, vmxGdtEntry.AccessRights) != 0)	return VM_ERROR_ERR_INFO_ERR;
+		__vmx_vmwrite(VMCS_GUEST_TR_SELECTOR, vmxGdtEntry.Selector);
+		__vmx_vmwrite(VMCS_GUEST_TR_BASE, vmxGdtEntry.Base);
+		__vmx_vmwrite(VMCS_GUEST_TR_LIMIT, vmxGdtEntry.Limit);
+		__vmx_vmwrite(VMCS_GUEST_TR_ACCESS_RIGHTS, vmxGdtEntry.AccessRights);
 
-		if (__vmx_vmwrite(VMCS_HOST_TR_SELECTOR, (asm_get_tr() & 0xF8)) != 0)	return VM_ERROR_ERR_INFO_ERR;
-		if (__vmx_vmwrite(VMCS_HOST_TR_BASE, vmxGdtEntry.Base) != 0)	return VM_ERROR_ERR_INFO_ERR;
+		__vmx_vmwrite(VMCS_HOST_TR_SELECTOR, (asm_get_tr() & 0xF8));
+		__vmx_vmwrite(VMCS_HOST_TR_BASE, vmxGdtEntry.Base);
 
 		//
 		// GDTR and IDTR 
