@@ -11,6 +11,7 @@ public	asm_get_idt_base
 public	asm_get_gdt_base
 
 public  asm_vmx_vmcall
+public  asm_hv_launch
 
 extern	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z:proc
 extern  ?vmexit_handler@vmexit@@YAFPEAX@Z:proc
@@ -173,6 +174,10 @@ asm_setup_vmcs proc
 asm_setup_vmcs endp
 
 ;----------------------------------------------------------------------------------------------------
+
+asm_hv_launch proc
+
+asm_hv_launch endp
 
 ;----------------------------------------------------------------------------------------------------
 
