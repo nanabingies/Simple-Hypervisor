@@ -14,9 +14,6 @@ public  asm_vmx_vmcall
 
 extern	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z:proc
 extern  ?vmexit_handler@vmexit@@YAFPEAX@Z:proc
-;extern
-extern  ret_val:dword
-extern  cr3_val:qword
 
 .CONST
 VM_ERROR_OK				equ		00h
@@ -156,7 +153,7 @@ asm_setup_vmcs proc
     movdqa  xmmword ptr [rsp + 50h], xmm5
 
 	mov		rdx, rsp
-    mov     r8,  cr3_val
+    mov     r8,  0
 	sub		rsp, 020h
     call	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z
     mov     ret_val, eax
