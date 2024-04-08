@@ -23,23 +23,40 @@ union cr_fixed_t {
 };
 
 using guest_registers = struct guest_registers {
-	__m128 xmm[6];
-	unsigned __int64 r15;
-	unsigned __int64 r14;
-	unsigned __int64 r13;
-	unsigned __int64 r12;
-	unsigned __int64 r11;
-	unsigned __int64 r10;
-	unsigned __int64 r9;
-	unsigned __int64 r8;
-	unsigned __int64 rdi;
-	unsigned __int64 rsi;
-	unsigned __int64 rbp;
-	unsigned __int64 rsp;
-	unsigned __int64 rbx;
-	unsigned __int64 rdx;
-	unsigned __int64 rcx;
-	unsigned __int64 rax;
+	__m128 xmm0;
+	__m128 xmm1;
+	__m128 xmm2;
+	__m128 xmm3;
+	__m128 xmm4;
+	__m128 xmm5;
+	__m128 xmm6;
+	__m128 xmm7;
+	__m128 xmm8;
+	__m128 xmm9;
+	__m128 xmm10;
+	__m128 xmm11;
+	__m128 xmm12;
+	__m128 xmm13;
+	__m128 xmm14;
+	__m128 xmm15;
+
+	uint64_t padding;
+
+	uint64_t r15;
+	uint64_t r14;
+	uint64_t r13;
+	uint64_t r12;
+	uint64_t r11;
+	uint64_t r10;
+	uint64_t r9;
+	uint64_t r8;
+	uint64_t rbp;
+	uint64_t rdi;
+	uint64_t rsi;
+	uint64_t rdx;
+	uint64_t rcx;
+	uint64_t rbx;
+	uint64_t rax;
 };
 
 using vmxon_region_ctx = struct _vmxon_region_ctx {
