@@ -193,19 +193,6 @@ namespace hv {
 		return arg;
 	}*/
 
-	auto dpc_broadcast_initialize_guest(KDPC* Dpc, void* DeferredContext, void* SystemArgument1, void* SystemArgument2) -> void {
-		UNREFERENCED_PARAMETER(DeferredContext);
-		UNREFERENCED_PARAMETER(Dpc);
-
-		launch_vm(0);
-
-		// Wait for all DPCs to synchronize at this point
-		KeSignalCallDpcSynchronize(SystemArgument2);
-
-		// Mark the DPC as being complete
-		KeSignalCallDpcDone(SystemArgument1);
-	}
-
 	auto inline terminate_vm(uchar processor_number) -> void {
 
 		//
