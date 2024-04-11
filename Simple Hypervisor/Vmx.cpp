@@ -172,9 +172,6 @@ namespace vmx {
 		_cr4.flags &= cr_fixed.split.low;
 		__writecr4(_cr4.flags);
 
-		//
-		// Execute VMXON
-		//
 		auto rets = __vmx_on(static_cast<unsigned long long*>(&vcpu_ctx->vmxon_phys));
 		if (rets != 0) {	// Failure
 			LOG("[!] Failed to activate virtual machine extensions (VMX) operation on processor (%x)\n", KeGetCurrentProcessorNumber());
@@ -200,6 +197,13 @@ namespace vmx {
 
 		vcpu_ctx->vmcs_phys = virtual_to_physical_address(&vcpu_ctx->vmcs);
 		vcpu_ctx->vmcs.header.bits.revision_identifier = vmx_basic.vmcs_revision_id;
+
+		auto rets = __vmx_vmptrld(static_cast<unsigned long long*>(&vcpu_ctx->vmcs_phys));
+		if (rets != 0) {	// Failure
+			LOG("[!] Failed to activate virtual machine extensions (VMX) operation on processor (%x)\n", KeGetCurrentProcessorNumber());
+			LOG_ERROR();
+			return false;
+		}
 		
 		return true;
 	}
