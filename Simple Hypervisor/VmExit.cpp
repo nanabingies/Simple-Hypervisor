@@ -397,49 +397,49 @@ namespace vmexit {
 
 		case VMX_EXIT_REASON_VMX_PREEMPTION_TIMER_EXPIRED: {
 			//LOG("[*][%ws] timer expired\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-														 break;
 
 		case VMX_EXIT_REASON_EXECUTE_INVVPID: {
 			//LOG("[*][%ws] invvpid\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_invalidate exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			goto move_rip;
 		}
-											break;
 
 		case VMX_EXIT_REASON_EXECUTE_WBINVD: {
 			//LOG("[*][%ws] wbinvd\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_XSETBV: {
 			//LOG("[*][%ws] xsetvb\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_APIC_WRITE: {
 			//LOG("[*][%ws] apic write\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-									   break;
 
 		case VMX_EXIT_REASON_EXECUTE_RDRAND: {
 			//LOG("[*][%ws] rdrand\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_rdrand_rdseed exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			goto move_rip;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_INVPCID: {
 			//LOG("[*][%ws] invpcid\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_invalidate exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			goto move_rip;
 		}
-											break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMFUNC: {
 			//LOG("[*][%ws] vmfunc\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_ENCLS: {
 			//LOG("[*][%ws] execute encls\n", __FUNCTIONW__);
