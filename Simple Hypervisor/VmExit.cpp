@@ -14,35 +14,29 @@ namespace vmexit {
 			//LOG("[*][%ws] exception or nmi\n", __FUNCTIONW__);
 			break;
 
-		case VMX_EXIT_REASON_EXTERNAL_INTERRUPT: {
+		case VMX_EXIT_REASON_EXTERNAL_INTERRUPT:
 			//LOG("[*][%ws] external interrupt\n", __FUNCTIONW__);
-		}
-											   break;
+			break;
 
-		case VMX_EXIT_REASON_TRIPLE_FAULT: {
+		case VMX_EXIT_REASON_TRIPLE_FAULT:
 			//LOG("[*][%ws] triple fault\n", __FUNCTIONW__);
-		}
-										 break;
+			break;
 
-		case VMX_EXIT_REASON_INIT_SIGNAL: {
+		case VMX_EXIT_REASON_INIT_SIGNAL:
 			//LOG("[*][%ws] init signal\n", __FUNCTIONW__);
-		}
-										break;
+			break;
 
-		case VMX_EXIT_REASON_STARTUP_IPI: {
+		case VMX_EXIT_REASON_STARTUP_IPI:
 			//LOG("[*][%ws] startup ipi\n", __FUNCTIONW__);
-		}
-										break;
+			break;
 
-		case VMX_EXIT_REASON_IO_SMI: {
+		case VMX_EXIT_REASON_IO_SMI:
 			//LOG("[*][%ws] io smi\n", __FUNCTIONW__);
-		}
-								   break;
+			break;
 
-		case VMX_EXIT_REASON_SMI: {
+		case VMX_EXIT_REASON_SMI:
 			//LOG("[*][%ws] smi\n", __FUNCTIONW__);
-		}
-								break;
+			break;
 
 		case VMX_EXIT_REASON_INTERRUPT_WINDOW: {
 			//LOG("[*][%ws] interrupt window\n", __FUNCTIONW__);
