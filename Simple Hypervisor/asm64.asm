@@ -1,6 +1,5 @@
 
 public	asm_host_continue_execution
-public  asm_setup_vmcs
 public  asm_inv_ept_global
 
 public	asm_get_tr
@@ -13,7 +12,6 @@ public	asm_get_gdt_base
 public  asm_vmx_vmcall
 public  asm_hv_launch
 
-extern	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z:proc
 extern  ?vmexit_handler@vmexit@@YAFPEAX@Z:proc
 
 .CONST
@@ -141,41 +139,6 @@ asm_host_continue_execution proc
 
 	int 3	; vmresume failed
 asm_host_continue_execution ENDP
-
-;----------------------------------------------------------------------------------------------------
-
-asm_setup_vmcs proc
-	
-	pushfq
-	SAVE_GP
-
-	sub     rsp, 060h
-	movdqa  xmmword ptr [rsp], xmm0
-    movdqa  xmmword ptr [rsp + 10h], xmm1
-    movdqa  xmmword ptr [rsp + 20h], xmm2
-    movdqa  xmmword ptr [rsp + 30h], xmm3
-    movdqa  xmmword ptr [rsp + 40h], xmm4
-    movdqa  xmmword ptr [rsp + 50h], xmm5
-
-	mov		rdx, rsp
-    mov     r8,  0
-	sub		rsp, 020h
-    call	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z
-    add		rsp, 020h
-
-	movdqa  xmm0, xmmword ptr [rsp]
-    movdqa  xmm1, xmmword ptr [rsp + 10h]
-    movdqa  xmm2, xmmword ptr [rsp + 20h]
-    movdqa  xmm3, xmmword ptr [rsp + 30h]
-    movdqa  xmm4, xmmword ptr [rsp + 40h]
-    movdqa  xmm5, xmmword ptr [rsp + 50h]
-	add     rsp,  060h
-
-	RESTORE_GP
-	popfq
-	ret
-
-asm_setup_vmcs endp
 
 ;----------------------------------------------------------------------------------------------------
 
