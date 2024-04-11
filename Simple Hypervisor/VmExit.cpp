@@ -155,15 +155,15 @@ namespace vmexit {
 
 		case VMX_EXIT_REASON_EXECUTE_VMXOFF: {
 			//LOG("[*][%ws] execute vmxoff\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMXON: {
 			//LOG("[*][%ws] execute vmxon\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			goto move_rip;
 		}
-										  break;
 
 		case VMX_EXIT_REASON_MOV_CR: {
 			//LOG("[*][%ws] mov cr\n", __FUNCTIONW__);
@@ -179,22 +179,22 @@ namespace vmexit {
 				case 0: {	// CR0
 					__vmx_vmwrite(VMCS_GUEST_CR0, __readcr0());
 					__vmx_vmwrite(VMCS_CTRL_CR0_READ_SHADOW, __readcr0());
+					goto move_rip;
 				}
-					  break;
 
 				case 3: {	// CR3
 					__vmx_vmwrite(VMCS_GUEST_CR3, __readcr3());
+					goto move_rip;
 				}
-					  break;
 
 				case 4: {	// CR4
 					__vmx_vmwrite(VMCS_GUEST_CR4, __readcr4());
 					__vmx_vmwrite(VMCS_CTRL_CR4_READ_SHADOW, __readcr4());
+					goto move_rip;
 				}
-					  break;
 
 				default:
-					break;
+					goto exit;
 				}
 			}
 				  break;
@@ -203,45 +203,41 @@ namespace vmexit {
 				switch (exitQualification.control_register) {
 				case 0: {		// CR0
 					__vmx_vmread(VMCS_GUEST_CR0, &guest_regs->rcx);
+					goto move_rip;
 				}
-					  break;
 
 				case 3: {		// CR3
 					__vmx_vmread(VMCS_GUEST_CR3, &guest_regs->rcx);
+					goto move_rip;
 				}
-					  break;
 
 				case 4: {		// CR4
 					__vmx_vmread(VMCS_GUEST_CR4, &guest_regs->rcx);
+					goto move_rip;
 				}
-					  break;
 				}
 			}
-				  break;
+				  goto move_rip;
 
 			case 2: {	// 2 = CLTS
-
+				goto move_rip;
 			}
-				  break;
 
 			case 3: {	// 3 = LMSW
-
+				goto move_rip;
 			}
-				  break;
 
 			default:
-				break;
+				goto exit;
 			}
-
 		}
-								   break;
 
 		case VMX_EXIT_REASON_MOV_DR: {
 			//LOG("[*][%ws] mov dr\n", __FUNCTIONW__);
 			vmx_exit_qualification_mov_dr exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			goto move_rip;
 		}
-								   break;
 
 		case VMX_EXIT_REASON_EXECUTE_IO_INSTRUCTION: {
 			//LOG("[*][%ws] execute io\n", __FUNCTIONW__);
