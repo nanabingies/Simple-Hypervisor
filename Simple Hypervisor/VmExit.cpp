@@ -30,42 +30,45 @@ namespace vmexit {
 			//LOG("[*][%ws] startup ipi\n", __FUNCTIONW__);
 			break;
 
-		case VMX_EXIT_REASON_IO_SMI:
+		case VMX_EXIT_REASON_IO_SMI: {
 			//LOG("[*][%ws] io smi\n", __FUNCTIONW__);
+		}
+			
 			break;
 
-		case VMX_EXIT_REASON_SMI:
+		case VMX_EXIT_REASON_SMI: {
 			//LOG("[*][%ws] smi\n", __FUNCTIONW__);
-			break;
+			goto move_rip;
+		}
 
 		case VMX_EXIT_REASON_INTERRUPT_WINDOW: {
 			//LOG("[*][%ws] interrupt window\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-											 break;
 
 		case VMX_EXIT_REASON_NMI_WINDOW: {
 			//LOG("[*][%ws] nmi window\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-									   break;
 
 		case VMX_EXIT_REASON_TASK_SWITCH: {
 			//LOG("[*][%ws] task switch\n", __FUNCTIONW__);
 			vmx_exit_qualification_task_switch exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			goto move_rip;
 		}
-										break;
 
 		case VMX_EXIT_REASON_EXECUTE_CPUID: {
 			//LOG("[*][%ws] execute cpuid\n", __FUNCTIONW__);
 			int cpuInfo[4] = { 0 };
 			__cpuidex(reinterpret_cast<int*>(&cpuInfo), static_cast<int>(guest_regs->rax), static_cast<int>(guest_regs->rcx));
+			goto move_rip;
 		}
-										  break;
 
 		case VMX_EXIT_REASON_EXECUTE_GETSEC: {
 			//LOG("[*][%ws] execute getsec\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_HLT: {
 			//LOG("[*][%ws] execute hlt\n", __FUNCTIONW__);
@@ -74,84 +77,84 @@ namespace vmexit {
 			// Terminate HyperVisor
 			//
 			//HostTerminateHypervisor();
+			goto move_rip;
 		}
-										break;
 
 		case VMX_EXIT_REASON_EXECUTE_INVD: {
 			//LOG("[*][%ws] execute invd\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-										 break;
 
 		case VMX_EXIT_REASON_EXECUTE_INVLPG: {
 			//LOG("[*][%ws] execute invlpg\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_RDPMC: {
 			//LOG("[*][%ws] execute rdpmc\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-										  break;
 
 		case VMX_EXIT_REASON_EXECUTE_RDTSC: {
 			//LOG("[*][%ws] execute rdtsc\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-										  break;
 
 		case VMX_EXIT_REASON_EXECUTE_RSM_IN_SMM: {
 			//LOG("[*][%ws] execute rsm in smm\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-											   break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMCALL: {
 			//LOG("[*][%ws] execute vmcall\n", __FUNCTIONW__);
 			// TODO: handle vmcall
 			// We might use it to execute vmxoff and exit from hypervisor
 			guest_regs->rax = vmx::vmx_handle_vmcall(guest_regs->rcx, guest_regs->rdx, guest_regs->r8, guest_regs->r9);
+			goto move_rip;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMCLEAR: {
 			//LOG("[*][%ws] execute vmclear\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-											break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMLAUNCH: {
 			//LOG("[*][%ws] execute vmlaunch\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-											 break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMPTRLD: {
 			//LOG("[*][%ws] execute vmptrld\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			goto move_rip;
 		}
-											break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMPTRST: {
 			//LOG("[*][%ws] execute vmptrst\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			goto move_rip;
 		}
-											break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMREAD: {
 			//LOG("[*][%ws] execute vmread\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_vmread_vmwrite exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			goto move_rip;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMRESUME: {
 			//LOG("[*][%ws] execute vmresume\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-											 break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMWRITE: {
 			//LOG("[*][%ws] execute vmwrite\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_vmread_vmwrite exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			goto move_rip;
 		}
-											break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMXOFF: {
 			//LOG("[*][%ws] execute vmxoff\n", __FUNCTIONW__);
