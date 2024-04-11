@@ -86,11 +86,6 @@ namespace hv_vmcs {
 		unsigned current_processor = KeGetCurrentProcessorNumber();
 
 		auto curr_vcpu = &g_vmx_ctx.vcpus[current_processor];
-		LOG("[*] curr vcpu : %llx\n", curr_vcpu);
-		LOG("[*] vmcs phys : %llx\n", curr_vcpu->vmcs_phys);
-		LOG("[*] vmcs virt : %llx\n", curr_vcpu->vmcs);
-
-		__debugbreak(); // do we break here?
 
 		__vmx_vmclear(&curr_vcpu->vmcs_phys);
 		__vmx_vmptrld(&curr_vcpu->vmcs_phys);
