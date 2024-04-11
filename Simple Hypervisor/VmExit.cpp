@@ -443,37 +443,38 @@ namespace vmexit {
 
 		case VMX_EXIT_REASON_EXECUTE_ENCLS: {
 			//LOG("[*][%ws] execute encls\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-										  break;
 
 		case VMX_EXIT_REASON_EXECUTE_RDSEED: {
 			//LOG("[*][%ws] execute rdseed\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_PAGE_MODIFICATION_LOG_FULL: {
 			//LOG("[*][%ws] modification log full\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-													   break;
 
 		case VMX_EXIT_REASON_EXECUTE_XSAVES: {
 			//LOG("[*][%ws] execute xsaves\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			goto move_rip;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_XRSTORS: {
 			//LOG("[*][%ws] execute xstors\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			goto move_rip;
 		}
-											break;
 
 		default:
 			break;
 		}
 
+	move_rip:
 		size_t rip, inst_len;
 		__vmx_vmread(VMCS_GUEST_RIP, &rip);
 		__vmx_vmread(VMCS_VMEXIT_INSTRUCTION_LENGTH, &inst_len);
