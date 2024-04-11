@@ -247,8 +247,8 @@ namespace vmexit {
 			//LOG("[*][%ws] execute io\n", __FUNCTIONW__);
 			vmx_exit_qualification_io_instruction exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			goto move_rip;
 		}
-												   break;
 
 		case VMX_EXIT_REASON_EXECUTE_RDMSR: {
 			//LOG("[*][%ws] execute rdmsr\n", __FUNCTIONW__);
@@ -260,8 +260,8 @@ namespace vmexit {
 				guest_regs->rdx = msr.HighPart;
 				guest_regs->rax = msr.LowPart;
 			}
+			goto move_rip;
 		}
-										  break;
 
 		case VMX_EXIT_REASON_EXECUTE_WRMSR: {
 			//LOG("[*][%ws] execute wrmsr\n", __FUNCTIONW__);
@@ -274,45 +274,43 @@ namespace vmexit {
 				__writemsr(static_cast<ulong>(guest_regs->rcx), msr.QuadPart);
 			}
 
+			goto move_rip;
 		}
-										  break;
 
 		case VMX_EXIT_REASON_ERROR_INVALID_GUEST_STATE: {
 			//LOG("[*][%ws] invalid guest state\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-													  break;
 
 		case VMX_EXIT_REASON_ERROR_MSR_LOAD: {
 			//LOG("[*][%ws] error msr load\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_MWAIT: {
 			//LOG("[*][%ws] execute mwait\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-										  break;
 
 		case VMX_EXIT_REASON_MONITOR_TRAP_FLAG: {
 			//LOG("[*][%ws] monitor trap flag\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-											  break;
 
 		case VMX_EXIT_REASON_EXECUTE_MONITOR: {
 			//LOG("[*][%ws] execute monitor\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-											break;
 
 		case VMX_EXIT_REASON_EXECUTE_PAUSE: {
 			//LOG("[*][%ws] execute pause\n", __FUNCTIONW__);
 			goto move_rip;
 		}
-										  break;
 
 		case VMX_EXIT_REASON_ERROR_MACHINE_CHECK: {
 			//LOG("[*][%ws] error machine check\n", __FUNCTIONW__);
 			goto move_rip;
 		}
-												break;
 
 		case VMX_EXIT_REASON_TPR_BELOW_THRESHOLD: {
 			//LOG("[*][%ws] below threshold\n", __FUNCTIONW__);
