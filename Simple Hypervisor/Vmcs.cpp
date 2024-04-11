@@ -85,11 +85,12 @@ namespace hv_vmcs {
 	auto init_vmcs(unsigned __int64 cr3) -> void {
 		unsigned current_processor = KeGetCurrentProcessorNumber();
 
-		__debugbreak(); // do we break here?
-
 		auto curr_vcpu = &g_vmx_ctx.vcpus[current_processor];
-		LOG("[*] curr vcpu : %x\n", curr_vcpu);
-		LOG("[*] vmcs phys : %x\n", curr_vcpu->vmcs_phys);
+		LOG("[*] curr vcpu : %llx\n", curr_vcpu);
+		LOG("[*] vmcs phys : %llx\n", curr_vcpu->vmcs_phys);
+		LOG("[*] vmcs virt : %llx\n", curr_vcpu->vmcs);
+
+		__debugbreak(); // do we break here?
 
 		__vmx_vmclear(&curr_vcpu->vmcs_phys);
 		__vmx_vmptrld(&curr_vcpu->vmcs_phys);
@@ -241,14 +242,14 @@ namespace hv_vmcs {
 		__vmx_vmwrite(VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS, AdjustControls(0, IA32_VMX_PINBASED_CTLS));
 
 		__vmx_vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
-			AdjustControls(IA32_VMX_PROCBASED_CTLS_HLT_EXITING_FLAG | //IA32_VMX_PROCBASED_CTLS_USE_MSR_BITMAPS_FLAG |
-				IA32_VMX_PROCBASED_CTLS_CR3_LOAD_EXITING_FLAG | /*IA32_VMX_PROCBASED_CTLS_CR3_STORE_EXITING_FLAG |*/
+			AdjustControls(//IA32_VMX_PROCBASED_CTLS_HLT_EXITING_FLAG | //IA32_VMX_PROCBASED_CTLS_USE_MSR_BITMAPS_FLAG |
+				/*IA32_VMX_PROCBASED_CTLS_CR3_LOAD_EXITING_FLAG |*/ /*IA32_VMX_PROCBASED_CTLS_CR3_STORE_EXITING_FLAG |*/
 				//IA32_VMX_PROCBASED_CTLS_USE_IO_BITMAPS_FLAG |
 				IA32_VMX_PROCBASED_CTLS_ACTIVATE_SECONDARY_CONTROLS_FLAG, IA32_VMX_PROCBASED_CTLS));
 
 		__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
-			AdjustControls(IA32_VMX_PROCBASED_CTLS2_ENABLE_XSAVES_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_RDTSCP_FLAG |
-				/*IA32_VMX_PROCBASED_CTLS2_ENABLE_EPT_FLAG |*/ IA32_VMX_PROCBASED_CTLS2_DESCRIPTOR_TABLE_EXITING_FLAG //|
+			AdjustControls(IA32_VMX_PROCBASED_CTLS2_ENABLE_XSAVES_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_RDTSCP_FLAG
+				/*IA32_VMX_PROCBASED_CTLS2_ENABLE_EPT_FLAG |*/ //IA32_VMX_PROCBASED_CTLS2_DESCRIPTOR_TABLE_EXITING_FLAG //|
 				/*IA32_VMX_PROCBASED_CTLS2_ENABLE_VPID_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_INVPCID_FLAG*/,
 				IA32_VMX_PROCBASED_CTLS2));
 
@@ -273,9 +274,9 @@ namespace hv_vmcs {
 		//
 		// Misc
 		//
-		//__vmx_vmwrite(VMCS_GUEST_ACTIVITY_STATE, 0);	// Active State
-		//__vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY_STATE, 0);
-		//__vmx_vmwrite(VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS, 0);
+		__vmx_vmwrite(VMCS_GUEST_ACTIVITY_STATE, 0);	// Active State
+		__vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY_STATE, 0);
+		__vmx_vmwrite(VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS, 0);
 
 		//__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_A_ADDRESS, (size_t)vmm_context[processor_number].io_bitmap_a_phys_addr);
 		//__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_B_ADDRESS, (size_t)vmm_context[processor_number].io_bitmap_b_phys_addr);
@@ -283,16 +284,16 @@ namespace hv_vmcs {
 		//__vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, vmm_context[processor_number].msr_bitmap_phys_addr);
 
 		//__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vmm_context[processor_number].ept_ptr) != 0)	return VM_ERROR_ERR_INFO_ERR;
-		//__vmx_vmwrite(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, KeGetCurrentProcessorNumberEx(NULL) + 1);
+		__vmx_vmwrite(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, KeGetCurrentProcessorNumberEx(NULL) + 1);
 
 		ia32_vmx_misc_register misc;
 		misc.flags = __readmsr(IA32_VMX_MISC);
 
-		//__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, misc.cr3_target_count);
+		__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, misc.cr3_target_count);
 
-		//for (unsigned iter = 0; iter < misc.cr3_target_count; iter++) {
-		//	__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_0 + (iter * 2), 0);
-		//}
+		for (unsigned iter = 0; iter < misc.cr3_target_count; iter++) {
+			__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_0 + (iter * 2), 0);
+		}
 
 		return;
 	}
