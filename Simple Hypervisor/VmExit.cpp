@@ -304,44 +304,46 @@ namespace vmexit {
 
 		case VMX_EXIT_REASON_EXECUTE_PAUSE: {
 			//LOG("[*][%ws] execute pause\n", __FUNCTIONW__);
+			goto move_rip;
 		}
 										  break;
 
 		case VMX_EXIT_REASON_ERROR_MACHINE_CHECK: {
 			//LOG("[*][%ws] error machine check\n", __FUNCTIONW__);
+			goto move_rip;
 		}
 												break;
 
 		case VMX_EXIT_REASON_TPR_BELOW_THRESHOLD: {
 			//LOG("[*][%ws] below threshold\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-												break;
 
 		case VMX_EXIT_REASON_APIC_ACCESS: {
 			LOG("[*][%ws] apic access\n", __FUNCTIONW__);
 			vmx_exit_qualification_apic_access exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			goto move_rip;
 		}
-										break;
 
 		case VMX_EXIT_REASON_VIRTUALIZED_EOI: {
 			//LOG("[*][%ws] virtualized eoi\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-											break;
 
 		case VMX_EXIT_REASON_GDTR_IDTR_ACCESS: {
 			//LOG("[*][%ws] gdtr idtr access\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_gdtr_idtr_access exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			goto move_rip;
 		}
-											 break;
 
 		case VMX_EXIT_REASON_LDTR_TR_ACCESS: {
 			//LOG("[*][%ws] ldtr tr access\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_ldtr_tr_access exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			goto move_rip;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EPT_VIOLATION: {
 			using ept::handle_ept_violation;
@@ -368,8 +370,8 @@ namespace vmexit {
 			if (!handle_ept_violation(phys_addr, linear_addr)) {
 				LOG("[!][%ws] Error handling apt violation\n", __FUNCTIONW__);
 			}
+			goto move_rip;
 		}
-										  break;
 
 		case VMX_EXIT_REASON_EPT_MISCONFIGURATION: {
 			//LOG("[*][%ws] EPT Misconfiguration\n", __FUNCTIONW__);
@@ -380,20 +382,19 @@ namespace vmexit {
 			// Bugcheck and restart system
 			KeBugCheck(PFN_LIST_CORRUPT);	// Is this bug code even correct??
 		}
-												 break;
 
 		case VMX_EXIT_REASON_EXECUTE_INVEPT: {
 			//LOG("[*][%ws] invept\n", __FUNCTIONW__);
 			vmx_vmexit_instruction_info_invalidate exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 			__debugbreak();
+			goto exit;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_RDTSCP: {
 			//LOG("[*][%ws] rdtscp\n", __FUNCTIONW__);
+			goto move_rip;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_VMX_PREEMPTION_TIMER_EXPIRED: {
 			//LOG("[*][%ws] timer expired\n", __FUNCTIONW__);
@@ -481,7 +482,9 @@ namespace vmexit {
 
 		rip += inst_len;
 		__vmx_vmwrite(VMCS_GUEST_RIP, rip);
-
 		return VM_ERROR_OK;
+	
+	exit:
+		return VM_ERROR_ERR_INFO_OK;
 	}
 }
