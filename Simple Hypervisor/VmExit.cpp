@@ -8,32 +8,11 @@ namespace vmexit {
 		vmx_vmexit_reason vmexit_reason;
 		__vmx_vmread(VMCS_EXIT_REASON, reinterpret_cast<size_t*>(&vmexit_reason));
 
-		auto current_processor = KeGetCurrentNodeNumber();
-		auto current_vmm_context = vmm_context[current_processor];
-
-		// let's save vmexit info into our vmm context
-		{
-			//__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&vmm_context[current_processor].vmexit_qualification));
-			//vmm_context[current_processor].vmexit_reason = vmexit_reason.flags;
-			//__vmx_vmread(VMCS_GUEST_RIP, reinterpret_cast<size_t*>(&vmm_context[current_processor].vmexit_guest_rip));
-			//__vmx_vmread(VMCS_GUEST_RSP, reinterpret_cast<size_t*>(&vmm_context[current_processor].vmexit_guest_rsp));
-			//__vmx_vmread(VMCS_VMEXIT_INSTRUCTION_LENGTH, reinterpret_cast<size_t*>(&vmm_context[current_processor].vmexit_instruction_length));
-			//__vmx_vmread(VMCS_VMEXIT_INSTRUCTION_INFO, reinterpret_cast<size_t*>(&vmm_context[current_processor].vmexit_instruction_information));
-			//current_vmm_context.guest_regs->rax = guest_regs->rax;
-			//current_vmm_context.guest_regs->rbx = guest_regs->rbx;
-			//current_vmm_context.guest_regs->rcx = guest_regs->rcx;
-			//current_vmm_context.guest_regs->rdx = guest_regs->rdx;
-			//current_vmm_context.guest_regs->rbp = guest_regs->rbp;
-			//current_vmm_context.guest_regs->rsp = guest_regs->rsp;
-		}
-
-
 		switch (vmexit_reason.basic_exit_reason)
 		{
-		case VMX_EXIT_REASON_EXCEPTION_OR_NMI: {
+		case VMX_EXIT_REASON_EXCEPTION_OR_NMI:
 			//LOG("[*][%ws] exception or nmi\n", __FUNCTIONW__);
-		}
-											 break;
+			break;
 
 		case VMX_EXIT_REASON_EXTERNAL_INTERRUPT: {
 			//LOG("[*][%ws] external interrupt\n", __FUNCTIONW__);
