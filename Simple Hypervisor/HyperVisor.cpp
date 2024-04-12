@@ -26,7 +26,7 @@ namespace hv {
 			(ExAllocatePoolWithTag(NonPagedPool, sizeof(_vmm_context) * g_num_processors, VMM_POOL_TAG));
 		if (!vmm_context) {
 			LOG("[-] Failed to allocate memory for vmm_context\n");
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 
@@ -131,67 +131,10 @@ namespace hv {
 		auto ret = asm_hv_launch();
 		if (ret != 0) {		// Failure
 			LOG("[!] Failed to lauch vm on processor (%x)\n", KeGetCurrentProcessorNumber());
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return;
 		}
 	}
-
-	/*auto launch_vm(ULONG_PTR arg) -> ULONG_PTR {
-		ulong processor_number = KeGetCurrentProcessorNumber();
-
-		//
-		// Set VMCS state to inactive
-		//
-		unsigned char ret = __vmx_vmclear(&vmm_context[processor_number].vmcs_region_phys_addr);
-		if (ret > 0) {
-			LOG("[-] VMCLEAR operation failed.\n");
-			LOG_ERROR();
-			return arg;
-		}
-
-		//
-		//  Make VMCS the current and active on that processor
-		//
-		ret = __vmx_vmptrld(&vmm_context[processor_number].vmcs_region_phys_addr);
-		if (ret > 0) {
-			LOG("[-] VMPTRLD operation failed.\n");
-			LOG_ERROR();
-			return arg;
-		}
-
-		//
-		//	read cr3 and save for guest
-		//
-		//cr3_val = __readcr3();
-
-		//
-		// Setup VMCS structure fields for that logical processor
-		//
-		if (asm_setup_vmcs(processor_number) != VM_ERROR_OK) {
-			LOG("[-] Failure setting Virtual Machine VMCS for processor %x.\n", processor_number);
-
-			size_t error_code = 0;
-			__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &error_code);
-			LOG("[-] Exiting with error code : %llx\n", error_code);
-			return arg;
-		}
-		//LOG("[*] VMCS setup on processor %x done\n", processor_number);
-
-		//
-		// Launch VM into Outer Space :)
-		//
-		__vmx_vmlaunch();
-
-		// We should never get here
-		DbgBreakPoint();
-		LOG("[-] Failure launching Virtual Machine.\n");
-
-		size_t error_code = 0;
-		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &error_code);
-		LOG("[-] Exiting with error code : %llx\n", error_code);
-
-		return arg;
-	}*/
 
 	auto inline terminate_vm(uchar processor_number) -> void {
 
