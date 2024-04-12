@@ -121,8 +121,6 @@ extern "C" {
     auto inline asm_get_idt_base() -> unsigned __int64;
 }
 
-auto setup_vmcs(unsigned long, void*, uint64_t) -> EVmErrors;
-
 namespace hv_vmcs {
     auto init_vmcs(unsigned __int64) -> void;
 }
