@@ -50,7 +50,7 @@ namespace vmx {
 
 			if (args.cpuid_feature_information_ecx.virtual_machine_extensions == 0) {
 				LOG("[-] This processor does not support VMX Extensions.\n");
-				LOG_ERROR();
+				LOG_ERROR(__FILE__, __LINE__);
 				return false;
 			}
 
@@ -88,7 +88,7 @@ namespace vmx {
 
 			if (feature_control_msr.enable_vmx_outside_smx == 0) {
 				LOG("[-] EnableVmxOutsideSmx bit not set.\n");
-				LOG_ERROR();
+				LOG_ERROR(__FILE__, __LINE__);
 				return FALSE;
 			}
 
@@ -142,7 +142,7 @@ namespace vmx {
 	auto vmx_allocate_vmxon_region(struct _vcpu_ctx* vcpu_ctx) -> bool {
 		if (!vcpu_ctx) {
 			LOG("[!] Unspecified VMM context for processor %x\n", KeGetCurrentProcessorNumber());
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 
@@ -175,7 +175,7 @@ namespace vmx {
 		auto rets = __vmx_on(static_cast<unsigned long long*>(&vcpu_ctx->vmxon_phys));
 		if (rets != 0) {	// Failure
 			LOG("[!] Failed to activate virtual machine extensions (VMX) operation on processor (%x)\n", KeGetCurrentProcessorNumber());
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 
@@ -185,7 +185,7 @@ namespace vmx {
 	auto vmx_allocate_vmcs_region(struct _vcpu_ctx* vcpu_ctx) -> bool {
 		if (!vcpu_ctx) {
 			LOG("[!] Unspecified VMM context for processor %x\n", KeGetCurrentProcessorNumber());
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 
@@ -201,7 +201,7 @@ namespace vmx {
 		auto rets = __vmx_vmptrld(static_cast<unsigned long long*>(&vcpu_ctx->vmcs_phys));
 		if (rets != 0) {	// Failure
 			LOG("[!] Failed to activate virtual machine extensions (VMX) operation on processor (%x)\n", KeGetCurrentProcessorNumber());
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 		
@@ -215,7 +215,7 @@ namespace vmx {
 		void* vmexitStack = MmAllocateContiguousMemory(HOST_STACK_SIZE, phys_addr);
 		if (!vmexitStack) {
 			LOG("[-] Failure allocating memory for VM EXIT Handler for processor (%x).\n", processor_number);
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 		RtlSecureZeroMemory(vmexitStack, HOST_STACK_SIZE);
@@ -233,7 +233,7 @@ namespace vmx {
 		void* bitmap = MmAllocateContiguousMemory(PAGE_SIZE, phys_addr);
 		if (!bitmap) {
 			LOG("[-] Failure allocating memory for IO Bitmap A on processor (%x).\n", processor_number);
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 		RtlSecureZeroMemory(bitmap, PAGE_SIZE);
@@ -245,7 +245,7 @@ namespace vmx {
 		bitmap = MmAllocateContiguousMemory(PAGE_SIZE, phys_addr);
 		if (!bitmap) {
 			LOG("[-] Failure allocating memory for IO Bitmap B on processor (%x).\n", processor_number);
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 		RtlSecureZeroMemory(bitmap, PAGE_SIZE);
@@ -271,7 +271,7 @@ namespace vmx {
 		void* bitmap = MmAllocateContiguousMemory(PAGE_SIZE, phys_addr);
 		if (!bitmap) {
 			LOG("[-] Failure allocating memory for MSR Bitmap for processor (%x).\n", processor_number);
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 		RtlSecureZeroMemory(bitmap, PAGE_SIZE);
