@@ -133,6 +133,8 @@ namespace vmx {
 		for (unsigned iter = 0; iter < g_vmx_ctx.vcpu_count; iter++) {
 			if (!vmx_allocate_vmxon_region(&g_vmx_ctx.vcpus[iter]))	return false;
 			if (!vmx_allocate_vmcs_region(&g_vmx_ctx.vcpus[iter]))	return false;
+			if (!vmx_allocate_io_bitmap_stack(&g_vmx_ctx.vcpus[iter]))	return false;
+			if (!vmx_allocate_msr_bitmap(&g_vmx_ctx.vcpus[iter]))	return false;
 		}
 
 		return true;
