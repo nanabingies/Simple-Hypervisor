@@ -264,11 +264,7 @@ namespace hv_vmcs {
 		//if (__vmx_vmwrite(VMCS_VMEXIT_INSTRUCTION_INFO,
 		//	AdjustControls(IA32_VMX_EXIT_CTLS_HOST_ADDRESS_SPACE_SIZE_FLAG, IA32_VMX_EXIT_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
 
-		//__debugbreak();
-
-		//
 		// Misc
-		//
 		__vmx_vmwrite(VMCS_GUEST_ACTIVITY_STATE, 0);	// Active State
 		__vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY_STATE, 0);
 		__vmx_vmwrite(VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS, 0);
