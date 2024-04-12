@@ -89,12 +89,14 @@ typedef struct _vcpu_ctx {
 
 	uint64_t vmxon_phys;
 	uint64_t vmcs_phys;
-}vcpu_ctx, *pvcpu_ctx;
+}vcpu_ctx, * pvcpu_ctx;
 
 typedef struct _vmx_ctx {
 	uint32_t vcpu_count;
 	vcpu_ctx vcpus[MAX_CORE_COUNT];
-}vmx_ctx, *pvmx_ctx;
+}vmx_ctx, * pvmx_ctx;
+
+inline struct _vmx_ctx g_vmx_ctx;
 
 struct _vmm_context {
 	uint64_t	vmxon_region_virt_addr;				// Virtual address of VMXON Region
@@ -153,7 +155,6 @@ typedef struct _ept_error {
 
 extern unsigned g_num_processors;
 extern _vmm_context* vmm_context;
-inline struct _vmx_ctx g_vmx_ctx;
 
 inline uint64_t physical_to_virtual_address(uint64_t physical_address) {
 	PHYSICAL_ADDRESS physAddr;
