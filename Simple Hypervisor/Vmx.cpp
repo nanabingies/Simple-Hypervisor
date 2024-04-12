@@ -145,9 +145,6 @@ namespace vmx {
 			return false;
 		}
 
-		PHYSICAL_ADDRESS phys_addr;
-		phys_addr.QuadPart = static_cast<uint64_t>(~0);
-
 		ia32_vmx_basic_register vmx_basic{};
 		vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
 
@@ -188,9 +185,6 @@ namespace vmx {
 			return false;
 		}
 
-		PHYSICAL_ADDRESS phys_addr;
-		phys_addr.QuadPart = static_cast<uint64_t>(~0);
-
 		ia32_vmx_basic_register vmx_basic{};
 		vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
 
@@ -207,32 +201,15 @@ namespace vmx {
 		return true;
 	}
 
-	auto vmx_allocate_vmexit_stack(uchar processor_number) -> bool {
-		PHYSICAL_ADDRESS phys_addr;
-		phys_addr.QuadPart = static_cast<uint64_t>(~0);
-
-		void* vmexitStack = MmAllocateContiguousMemory(HOST_STACK_SIZE, phys_addr);
-		if (!vmexitStack) {
-			LOG("[-] Failure allocating memory for VM EXIT Handler for processor (%x).\n", processor_number);
+	auto vmx_allocate_io_bitmap_stack(struct _vcpu_ctx* vcpu_ctx) -> bool {
+		if (!vcpu_ctx) {
+			LOG("[!] Unspecified VMM context for processor %x\n", KeGetCurrentProcessorNumber());
 			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
-		RtlSecureZeroMemory(vmexitStack, HOST_STACK_SIZE);
 
-		return true;
-	}
-
-	auto vmx_allocate_io_bitmap_stack(uchar processor_number) -> bool {
-		PHYSICAL_ADDRESS phys_addr;
-		phys_addr.QuadPart = static_cast<ULONGLONG>(~0);
-
-		void* bitmap = MmAllocateContiguousMemory(PAGE_SIZE, phys_addr);
-		if (!bitmap) {
-			LOG("[-] Failure allocating memory for IO Bitmap A on processor (%x).\n", processor_number);
-			LOG_ERROR(__FILE__, __LINE__);
-			return false;
-		}
-		RtlSecureZeroMemory(bitmap, PAGE_SIZE);
+		vcpu_ctx->io_bitmap_a_phys = virtual_to_physical_address(&vcpu_ctx->io_bitmap_a);
+		vcpu_ctx->io_bitmap_b_phys = virtual_to_physical_address(&vcpu_ctx->io_bitmap_b);
 
 		//vmm_context[processor_number].io_bitmap_a_virt_addr = reinterpret_cast<uint64_t>(bitmap);
 		//vmm_context[processor_number].io_bitmap_a_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(bitmap));
