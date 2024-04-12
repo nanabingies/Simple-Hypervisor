@@ -273,10 +273,10 @@ namespace hv_vmcs {
 		__vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY_STATE, 0);
 		__vmx_vmwrite(VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS, 0);
 
-		//__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_A_ADDRESS, (size_t)vmm_context[processor_number].io_bitmap_a_phys_addr);
-		//__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_B_ADDRESS, (size_t)vmm_context[processor_number].io_bitmap_b_phys_addr);
+		__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_A_ADDRESS, size_t(curr_vcpu->io_bitmap_a_phys));
+		__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_B_ADDRESS, size_t(curr_vcpu->io_bitmap_b_phys));
 
-		//__vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, vmm_context[processor_number].msr_bitmap_phys_addr);
+		__vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, size_t(curr_vcpu->msr_bitmap_phys));
 
 		//__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vmm_context[processor_number].ept_ptr) != 0)	return VM_ERROR_ERR_INFO_ERR;
 		__vmx_vmwrite(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, KeGetCurrentProcessorNumberEx(NULL) + 1);
