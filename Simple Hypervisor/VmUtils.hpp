@@ -85,10 +85,16 @@ using vmcs_region_ctx = struct _vmcs_region_ctx {
 typedef struct _vcpu_ctx {
 	__declspec(align(PAGE_SIZE)) vmxon_region_ctx vmxon;
 	__declspec(align(PAGE_SIZE)) vmcs_region_ctx  vmcs;
+	__declspec(align(PAGE_SIZE)) vmcs_region_ctx  io_bitmap_a;
+	__declspec(align(PAGE_SIZE)) vmcs_region_ctx  io_bitmap_b;
+	__declspec(align(PAGE_SIZE)) vmcs_region_ctx  msr_bitmap;
 	__declspec(align(16))		 uint8_t host_stack[HOST_STACK_PAGES];
 
 	uint64_t vmxon_phys;
 	uint64_t vmcs_phys;
+	uint64_t io_bitmap_a;
+	uint64_t io_bitmap_b;
+	uint64_t msr_bitmap;
 }vcpu_ctx, * pvcpu_ctx;
 
 typedef struct _vmx_ctx {
@@ -98,63 +104,10 @@ typedef struct _vmx_ctx {
 
 inline struct _vmx_ctx g_vmx_ctx;
 
-struct _vmm_context {
-	uint64_t	vmxon_region_virt_addr;				// Virtual address of VMXON Region
-	uint64_t	vmxon_region_phys_addr;				// Physical address of VMXON Region
-
-	uint64_t	vmcs_region_virt_addr;				// virtual address of VMCS Region
-	uint64_t	vmcs_region_phys_addr;				// Physical address of VMCS Region
-
-	uint64_t	io_bitmap_a_virt_addr;              // Virtual address of I/O bitmap A
-	uint64_t	io_bitmap_a_phys_addr;              // Physical address
-
-	uint64_t	io_bitmap_b_virt_addr;				// Virtual address of I/O bitmap B
-	uint64_t	io_bitmap_b_phys_addr;				// Plysical address
-
-	uint64_t	msr_bitmap_virt_addr;				// Virtual address of MSR bitmap
-	uint64_t	msr_bitmap_phys_addr;				// Physical address
-
-	uint64_t	host_stack;							// Stack of the VM Exit Handler
-
-	uint64_t	guest_memory;						// Guest RSP
-
-	uint64_t	guest_rsp;
-	uint64_t	guest_rip;
-
-	uint64_t	host_rsp;
-	uint64_t	host_rip;
-
-	struct {
-		uint64_t	g_stack_pointer_for_returning;
-		uint64_t	g_base_pointer_for_returning;
-	};
-
-	struct {
-		// vm exit info
-		guest_registers* guest_regs;
-
-		uint64_t vmexit_guest_rip;
-		uint64_t vmexit_guest_rsp;
-
-		uint64_t vmexit_reason;
-		uint64_t vmexit_qualification;
-
-		uint64_t vmexit_instruction_information;
-		uint64_t vmexit_instruction_length;
-	};
-
-	uint64_t	ept_ptr;
-	uint64_t	ept_pml4;
-	struct _ept_state* ept_state;
-};
-
 typedef struct _ept_error {
 	void*	param_1;
 	void*	param_2;
 } ept_error;
-
-extern unsigned g_num_processors;
-extern _vmm_context* vmm_context;
 
 inline uint64_t physical_to_virtual_address(uint64_t physical_address) {
 	PHYSICAL_ADDRESS physAddr;
