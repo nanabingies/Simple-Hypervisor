@@ -5,18 +5,9 @@
 extern "C" {
 
 	auto DriverUnload(_In_ PDRIVER_OBJECT driver_object) -> void {
-		using hv::devirtualize_all_processors;
-
 		UNREFERENCED_PARAMETER(driver_object);
 
 		//LOG("[*] Terminating VMs on processors...");
-
-		// Uninstall vmx on all processors
-		devirtualize_all_processors();
-
-		//if (driver_object->DeviceObject != nullptr) {
-		//	IoDeleteDevice(driver_object->DeviceObject);
-		//}
 
 		//LOG("[*] Unloading Device Driver...");
 		return;
