@@ -92,9 +92,9 @@ typedef struct _vcpu_ctx {
 
 	uint64_t vmxon_phys;
 	uint64_t vmcs_phys;
-	uint64_t io_bitmap_a;
-	uint64_t io_bitmap_b;
-	uint64_t msr_bitmap;
+	uint64_t io_bitmap_a_phys;
+	uint64_t io_bitmap_b_phys;
+	uint64_t msr_bitmap_phys;
 }vcpu_ctx, * pvcpu_ctx;
 
 typedef struct _vmx_ctx {
