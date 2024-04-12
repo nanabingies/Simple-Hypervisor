@@ -87,6 +87,8 @@ namespace hv_vmcs {
 
 		auto curr_vcpu = &g_vmx_ctx.vcpus[current_processor];
 
+		__debugbreak();
+
 		__vmx_vmclear(&curr_vcpu->vmcs_phys);
 		__vmx_vmptrld(&curr_vcpu->vmcs_phys);
 
