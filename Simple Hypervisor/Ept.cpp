@@ -183,7 +183,7 @@ namespace ept {
 			(ExAllocatePoolWithTag(NonPagedPool, sizeof(ept_state), VMM_POOL_TAG));
 		if (!_ept_state) {
 			LOG("[-] Failed to allocate memory for Ept State.\n");
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 		RtlSecureZeroMemory(_ept_state, sizeof ept_state);
@@ -192,7 +192,7 @@ namespace ept {
 			(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL_TAG));
 		if (!ept_ptr) {
 			LOG("[-] Failed to allocate memory for pointer to Ept.\n");
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 		_ept_state->ept_ptr = ept_ptr;
@@ -206,7 +206,7 @@ namespace ept {
 
 		if (create_ept_state(_ept_state) == false) {
 			DbgPrint("[-] Failed to set Ept Page Table Entries.\n");
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			ExFreePoolWithTag(ept_ptr, VMM_POOL_TAG);
 			ExFreePoolWithTag(_ept_state, VMM_POOL_TAG);
 			return false;
@@ -378,7 +378,7 @@ namespace ept {
 		ept_pde_2mb* entry = get_pde_entry(_ept_state->ept_page_table, physical_address);
 		if (entry == NULL) {
 			LOG("[-] Invalid address passed");
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 
@@ -424,7 +424,7 @@ namespace ept {
 
 		if (pml4_index > 0) {
 			LOG("Address above 512GB is invalid\n");
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return nullptr;
 		}
 
@@ -435,7 +435,7 @@ namespace ept {
 		ept_pde_2mb* pde_entry = get_pde_entry(page_table, pfn);
 		if (!pde_entry) {
 			LOG("[-] Invalid pde address passed.\n");
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return nullptr;
 		}
 
@@ -458,7 +458,7 @@ namespace ept {
 		ept_pde_2mb* pde_entry = get_pde_entry(page_table, pfn);
 		if (!pde_entry) {
 			LOG("[-] Invalid pde address passed.\n");
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return;
 		}
 
@@ -555,7 +555,7 @@ namespace ept {
 		if (pte_entry && pte_entry->flags) {
 			__debugbreak();
 			LOG("[!][%ws] PteEntry: VA = %llx, PA = %llx", __FUNCTIONW__, linear_addr, phys_addr);
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 
