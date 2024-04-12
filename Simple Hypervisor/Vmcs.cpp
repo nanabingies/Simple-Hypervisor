@@ -108,8 +108,6 @@ namespace hv_vmcs {
 		__vmx_vmwrite(VMCS_GUEST_DR7, __readdr(7));
 
 		// RSP, RIP, RFLAGS - Guest & Host
-		//__vmx_vmwrite(VMCS_GUEST_RSP, static_cast<size_t>(vmm_context[processor_number].guest_rsp));
-		//__vmx_vmwrite(VMCS_GUEST_RIP, static_cast<size_t>(vmm_context[processor_number].guest_rip));
 		__vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags());
 
 		__vmx_vmwrite(VMCS_HOST_RSP, size_t((unsigned long long*)curr_vcpu->host_stack + HOST_STACK_SIZE));
@@ -229,7 +227,7 @@ namespace hv_vmcs {
 		//__vmx_vmwrite(VMCS_GUEST_SMBASE, );
 
 		// VMCS link pointer
-		__vmx_vmwrite(VMCS_GUEST_VMCS_LINK_POINTER, static_cast<size_t>(~0));
+		__vmx_vmwrite(VMCS_GUEST_VMCS_LINK_POINTER, size_t(~0));
 
 		// VM Execution Control Fields
 		// These fields control processor behavior in VMX non-root operation.
