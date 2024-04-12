@@ -1,5 +1,4 @@
 #include "stdafx.h"
-_vmm_context* vmm_context;
 
 namespace vmx {
 	auto vmx_is_vmx_available() -> bool {
@@ -34,7 +33,7 @@ namespace vmx {
 		PROCESSOR_NUMBER processor_number;
 		GROUP_AFFINITY affinity, old_affinity;
 
-		for (unsigned iter = 0; iter < g_num_processors; iter++) {
+		for (unsigned iter = 0; iter < 4 /*g_num_processors*/; iter++) {
 			KeGetProcessorNumberFromIndex(iter, &processor_number);
 
 			RtlSecureZeroMemory(&affinity, sizeof(GROUP_AFFINITY));
@@ -65,7 +64,7 @@ namespace vmx {
 		PROCESSOR_NUMBER processor_number;
 		GROUP_AFFINITY affinity, old_affinity;
 
-		for (unsigned iter = 0; iter < g_num_processors; iter++) {
+		for (unsigned iter = 0; iter < 4 /*g_num_processors*/; iter++) {
 			KeGetProcessorNumberFromIndex(iter, &processor_number);
 
 			RtlSecureZeroMemory(&affinity, sizeof(GROUP_AFFINITY));
@@ -103,7 +102,7 @@ namespace vmx {
 		PROCESSOR_NUMBER processor_number;
 		GROUP_AFFINITY affinity, old_affinity;
 
-		for (unsigned iter = 0; iter < g_num_processors; iter++) {
+		for (unsigned iter = 0; iter < 4 /*g_num_processors*/; iter++) {
 			KeGetProcessorNumberFromIndex(iter, &processor_number);
 
 			RtlSecureZeroMemory(&affinity, sizeof(GROUP_AFFINITY));
@@ -220,9 +219,6 @@ namespace vmx {
 		}
 		RtlSecureZeroMemory(vmexitStack, HOST_STACK_SIZE);
 
-		vmm_context[processor_number].host_stack = reinterpret_cast<UINT64>(vmexitStack);
-		//LOG("[*] vmm_context[%x].HostStack : %llx\n", processor_number, vmm_context[processor_number].host_stack);
-
 		return true;
 	}
 
@@ -238,8 +234,8 @@ namespace vmx {
 		}
 		RtlSecureZeroMemory(bitmap, PAGE_SIZE);
 
-		vmm_context[processor_number].io_bitmap_a_virt_addr = reinterpret_cast<uint64_t>(bitmap);
-		vmm_context[processor_number].io_bitmap_a_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(bitmap));
+		//vmm_context[processor_number].io_bitmap_a_virt_addr = reinterpret_cast<uint64_t>(bitmap);
+		//vmm_context[processor_number].io_bitmap_a_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(bitmap));
 
 		phys_addr.QuadPart = static_cast<ULONGLONG>(~0);
 		bitmap = MmAllocateContiguousMemory(PAGE_SIZE, phys_addr);
@@ -250,8 +246,8 @@ namespace vmx {
 		}
 		RtlSecureZeroMemory(bitmap, PAGE_SIZE);
 
-		vmm_context[processor_number].io_bitmap_b_virt_addr = reinterpret_cast<uint64_t>(bitmap);
-		vmm_context[processor_number].io_bitmap_b_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(bitmap));
+		//vmm_context[processor_number].io_bitmap_b_virt_addr = reinterpret_cast<uint64_t>(bitmap);
+		//vmm_context[processor_number].io_bitmap_b_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(bitmap));
 
 		//LOG("[*] vmm_context[%x].io_bitmap_a_virt_addr : %llx\n", processor_number, vmm_context[processor_number].io_bitmap_a_virt_addr);
 		//LOG("[*] vmm_context[%x].io_bitmap_b_virt_addr : %llx\n", processor_number, vmm_context[processor_number].io_bitmap_b_virt_addr);
@@ -276,8 +272,8 @@ namespace vmx {
 		}
 		RtlSecureZeroMemory(bitmap, PAGE_SIZE);
 
-		vmm_context[processor_number].msr_bitmap_virt_addr = reinterpret_cast<uint64_t>(bitmap);
-		vmm_context[processor_number].msr_bitmap_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(bitmap));
+		//vmm_context[processor_number].msr_bitmap_virt_addr = reinterpret_cast<uint64_t>(bitmap);
+		//vmm_context[processor_number].msr_bitmap_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(bitmap));
 
 		return true;
 	}
