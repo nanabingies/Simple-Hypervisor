@@ -211,28 +211,10 @@ namespace vmx {
 		vcpu_ctx->io_bitmap_a_phys = virtual_to_physical_address(&vcpu_ctx->io_bitmap_a);
 		vcpu_ctx->io_bitmap_b_phys = virtual_to_physical_address(&vcpu_ctx->io_bitmap_b);
 
-		//vmm_context[processor_number].io_bitmap_a_virt_addr = reinterpret_cast<uint64_t>(bitmap);
-		//vmm_context[processor_number].io_bitmap_a_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(bitmap));
-
-		phys_addr.QuadPart = static_cast<ULONGLONG>(~0);
-		bitmap = MmAllocateContiguousMemory(PAGE_SIZE, phys_addr);
-		if (!bitmap) {
-			LOG("[-] Failure allocating memory for IO Bitmap B on processor (%x).\n", processor_number);
-			LOG_ERROR(__FILE__, __LINE__);
-			return false;
-		}
-		RtlSecureZeroMemory(bitmap, PAGE_SIZE);
-
-		//vmm_context[processor_number].io_bitmap_b_virt_addr = reinterpret_cast<uint64_t>(bitmap);
-		//vmm_context[processor_number].io_bitmap_b_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(bitmap));
-
-		//LOG("[*] vmm_context[%x].io_bitmap_a_virt_addr : %llx\n", processor_number, vmm_context[processor_number].io_bitmap_a_virt_addr);
-		//LOG("[*] vmm_context[%x].io_bitmap_b_virt_addr : %llx\n", processor_number, vmm_context[processor_number].io_bitmap_b_virt_addr);
-
 		//
 		// We want to vmexit on every io and msr access
-		//memset(vmm_context[processor_number].io_bitmap_a_virt_addr, 0xff, PAGE_SIZE);
-		//memset(vmm_context[processor_number].io_bitmap_b_virt_addr, 0xff, PAGE_SIZE);
+		memset(vcpu_ctx->io_bitmap_a.data, 0xff, sizeof vcpu_ctx->io_bitmap_a.data);
+		memset(vcpu_ctx->io_bitmap_b.data, 0xff, sizeof vcpu_ctx->io_bitmap_b.data);
 
 		return true;
 	}
