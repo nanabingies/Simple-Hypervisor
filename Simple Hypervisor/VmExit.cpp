@@ -5,8 +5,6 @@ namespace vmexit {
 		auto guest_regs = reinterpret_cast<guest_registers*>(_guest_registers);
 		if (!guest_regs)	return VM_ERROR_ERR_INFO_ERR;
 
-		__debugbreak();
-
 		vmx_vmexit_reason vmexit_reason;
 		__vmx_vmread(VMCS_EXIT_REASON, reinterpret_cast<size_t*>(&vmexit_reason));
 
@@ -177,9 +175,7 @@ namespace vmexit {
 		case VMX_EXIT_REASON_MOV_CR: {
 			//LOG("[*][%ws] mov cr\n", __FUNCTIONW__);
 
-			//
 			// Check whether it was a mov to or mov from CR
-			//
 			vmx_exit_qualification_mov_cr exitQualification;
 			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 			switch (exitQualification.access_type) {
@@ -239,6 +235,7 @@ namespace vmexit {
 			default:
 				goto exit;
 			}
+			goto move_rip;
 		}
 
 		case VMX_EXIT_REASON_MOV_DR: {
