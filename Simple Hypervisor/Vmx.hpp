@@ -20,9 +20,8 @@ namespace vmx {
 
 	auto vmx_allocate_vmxon_region(struct _vcpu_ctx*) -> bool;
 	auto vmx_allocate_vmcs_region(struct _vcpu_ctx*) -> bool;
-	auto vmx_allocate_vmexit_stack(uchar) -> bool;
-	auto vmx_allocate_io_bitmap_stack(uchar) -> bool;
-	auto vmx_allocate_msr_bitmap(uchar) -> bool;
+	auto vmx_allocate_io_bitmap_stack(struct _vcpu_ctx*) -> bool;
+	auto vmx_allocate_msr_bitmap(struct _vcpu_ctx*) -> bool;
 
 	auto vmx_handle_vmcall(unsigned __int64, unsigned __int64, unsigned __int64, unsigned __int64) -> unsigned __int64;
 }
