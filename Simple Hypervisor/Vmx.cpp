@@ -219,20 +219,14 @@ namespace vmx {
 		return true;
 	}
 
-	auto vmx_allocate_msr_bitmap(uchar processor_number) -> bool {
-		PHYSICAL_ADDRESS phys_addr;
-		phys_addr.QuadPart = static_cast<ULONGLONG>(~0);
-
-		void* bitmap = MmAllocateContiguousMemory(PAGE_SIZE, phys_addr);
-		if (!bitmap) {
-			LOG("[-] Failure allocating memory for MSR Bitmap for processor (%x).\n", processor_number);
+	auto vmx_allocate_msr_bitmap(struct _vcpu_ctx* vcpu_ctx) -> bool {
+		if (!vcpu_ctx) {
+			LOG("[!] Unspecified VMM context for processor %x\n", KeGetCurrentProcessorNumber());
 			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
-		RtlSecureZeroMemory(bitmap, PAGE_SIZE);
 
-		//vmm_context[processor_number].msr_bitmap_virt_addr = reinterpret_cast<uint64_t>(bitmap);
-		//vmm_context[processor_number].msr_bitmap_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(bitmap));
+		vcpu_ctx->msr_bitmap_phys = virtual_to_physical_address(&vcpu_ctx->msr_bitmap);
 
 		return true;
 	}
