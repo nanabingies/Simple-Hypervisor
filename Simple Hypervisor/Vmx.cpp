@@ -21,8 +21,8 @@ namespace vmx {
 		//
 		// Check for EPT support for all processors
 		//
-		using ept::check_ept_support;
-		if (!check_ept_support())	return false;
+		//using ept::check_ept_support;
+		//if (!check_ept_support())	return false;
 
 
 		//LOG("[*] Initial checks completed.\n");
