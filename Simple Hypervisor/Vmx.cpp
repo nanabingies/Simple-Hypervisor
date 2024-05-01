@@ -129,6 +129,7 @@ namespace vmx {
 	auto create_vcpus() -> bool {
 		g_vmx_ctx.vcpu_count = KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
 		LOG("[*] vcpu count : %x\n", g_vmx_ctx.vcpu_count);
+		__debugbreak();
 
 		for (unsigned iter = 0; iter < g_vmx_ctx.vcpu_count; iter++) {
 			if (!vmx_allocate_vmxon_region(&g_vmx_ctx.vcpus[iter]))	return false;

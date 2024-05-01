@@ -30,9 +30,9 @@ extern "C" {
 
 		if (!create_vcpus())	return STATUS_FAILED_DRIVER_ENTRY;
 
-		auto cr3_val = __readcr3();
-		KeIpiGenericCall(PKIPI_BROADCAST_WORKER(&init_vmcs) , cr3_val);
-		KeIpiGenericCall(PKIPI_BROADCAST_WORKER(launch_vm), 0);
+		//auto cr3_val = __readcr3();
+		//KeIpiGenericCall(PKIPI_BROADCAST_WORKER(&init_vmcs) , cr3_val);
+		//KeIpiGenericCall(PKIPI_BROADCAST_WORKER(launch_vm), 0);
 
 		return STATUS_SUCCESS;
 	}
