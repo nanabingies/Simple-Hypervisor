@@ -2,6 +2,16 @@
 #pragma warning(disable: 4996)
 
 namespace hv {
+	auto vmm_init() -> bool {
+		using vmx::vmx_allocate_vmm_context;
+		if (!vmx_allocate_vmm_context) {
+			LOG("[!] Failed to allocate memory for vmm_context\n");
+			LOG_ERROR();
+			return false;
+		}
+
+	}
+
 	auto virtualize_all_processors() -> bool {
 		using vmx::vmx_allocate_vmxon_region;
 		using vmx::vmx_allocate_vmcs_region;
