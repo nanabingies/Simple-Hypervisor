@@ -15,10 +15,6 @@ extern "C" {
 			IoDeleteDevice(driver_object->DeviceObject);
 
 		// Uninstall vmx on all processors
-		//if (!vm_off) {
-		//	devirtualize_all_processors();
-		//	vm_off = true;
-		//}
 
 		return;
 	}
@@ -78,9 +74,7 @@ extern "C" {
 
 		if (!vmx_is_vmx_available())	return STATUS_FAILED_DRIVER_ENTRY;
 
-		if (!virtualize_all_processors())	return STATUS_FAILED_DRIVER_ENTRY;
-
-		launch_all_vmms();
+		if (!hv::vmm_init)	return STATUS_FAILED_DRIVER_ENTRY;
 
 		return STATUS_SUCCESS;
 	}
