@@ -31,11 +31,10 @@ extern "C" {
 
 	bool vm_off;
 	unsigned g_num_processors;
+	__vmm_context* g_vmm_context = nullptr;
 
 	auto DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING) -> NTSTATUS {
-		using hv::virtualize_all_processors;
-		using hv::launch_vm;
-		using hv::launch_all_vmms;
+		using hv::vmm_init;
 		using vmx::vmx_is_vmx_available;
 
 		vm_off = false;
@@ -74,7 +73,7 @@ extern "C" {
 
 		if (!vmx_is_vmx_available())	return STATUS_FAILED_DRIVER_ENTRY;
 
-		if (!hv::vmm_init)	return STATUS_FAILED_DRIVER_ENTRY;
+		if (!vmm_init)	return STATUS_FAILED_DRIVER_ENTRY;
 
 		return STATUS_SUCCESS;
 	}
