@@ -68,6 +68,12 @@ extern "C" {
 			return STATUS_FAILED_DRIVER_ENTRY;
 		}
 
+		for (unsigned iter = 0; iter < IRP_MJ_MAXIMUM_FUNCTION; iter++)
+			driver_object->MajorFunction[iter] = DefaultDispatch;
+
+		driver_object->DriverUnload = DriverUnload;
+		driver_object->Flags |= DO_BUFFERED_IO;
+
 		g_num_processors = KeQueryActiveProcessorCount(NULL);
 
 		if (!vmx_is_vmx_available())	return STATUS_FAILED_DRIVER_ENTRY;
