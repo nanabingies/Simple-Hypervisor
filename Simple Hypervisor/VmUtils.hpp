@@ -1,8 +1,8 @@
 #pragma once
 #pragma warning(disable : 4201)
 
-#define DRV_NAME		L"\\Device\\Hypervisor"
-#define DOS_NAME		L"\\DosDevices\\Hypervisor"
+#define DRV_NAME		L"\\Device\\SimpleHypervisor"
+#define DOS_NAME		L"\\DosDevices\\SimpleHypervisor"
 #define VMM_POOL_TAG	'tesT'
 
 #define HOST_STACK_SIZE  (20 * PAGE_SIZE)
