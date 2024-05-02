@@ -27,7 +27,7 @@ namespace vmx {
 
 		//LOG("[*] Initial checks completed.\n");
 
-		return TRUE;
+		return true;
 	}
 
 	auto vmx_is_vmx_support() -> bool {
@@ -89,7 +89,7 @@ namespace vmx {
 			if (feature_control_msr.enable_vmx_outside_smx == 0) {
 				LOG("[-] EnableVmxOutsideSmx bit not set.\n");
 				LOG_ERROR();
-				return FALSE;
+				return false;
 			}
 
 			KeLowerIrql(irql);
