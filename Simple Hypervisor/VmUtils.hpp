@@ -25,7 +25,80 @@ using guest_registers = struct guest_registers {
 	unsigned __int64 rdx;
 	unsigned __int64 rcx;
 	unsigned __int64 rax;
-} ;
+};
+
+struct __vmcs {
+	union {
+		unsigned int all;
+		struct {
+			unsigned int revision_identifier : 31;
+			unsigned int shadow_vmcs_indicator : 1;
+		};
+	} header;
+	unsigned int abort_indicator;
+	char data[0x1000 - 2 * sizeof(unsigned)];
+};
+
+struct __vcpu {
+	void* vmm_stack;
+
+	__vmcs* vmcs;
+	unsigned __int64 vmcs_physical;
+
+	__vmcs* vmxon;
+	unsigned __int64 vmxon_physical;
+
+	struct __vmexit_info {
+		//__vmexit_guest_registers* guest_registers;
+
+		unsigned __int64 guest_rip;
+
+		//__rflags guest_rflags;
+
+		unsigned __int64 instruction_length;
+
+		unsigned __int64 reason;
+
+		unsigned __int64 qualification;
+
+		unsigned __int64 instruction_information;
+
+	}vmexit_info;
+
+	struct __vcpu_status {
+		unsigned __int64 vmx_on;
+		unsigned __int64 vmm_launched;
+	}vcpu_status;
+
+	struct __vmx_off_state {
+		unsigned __int64  vmx_off_executed;
+		unsigned __int64  guest_rip;
+		unsigned __int64  guest_rsp;
+	}vmx_off_state;
+
+	struct __vcpu_bitmaps {
+		unsigned __int8* msr_bitmap;
+		unsigned __int64 msr_bitmap_physical;
+
+		unsigned __int8* io_bitmap_a;
+		unsigned __int64 io_bitmap_a_physical;
+
+		unsigned __int8* io_bitmap_b;
+		unsigned __int64 io_bitmap_b_physical;
+	}vcpu_bitmaps;
+
+	//__ept_state* ept_state;
+};
+
+struct __vmm_context {
+	__vcpu** vcpu_table;
+	//pool_manager::__pool_manager* pool_manager;
+	//__mtrr_info mtrr_info;
+	unsigned __int32 processor_count;
+	bool hv_present;
+};
+
+extern __vmm_context* g_vmm_context;
 
 struct _vmm_context {
 	uint64_t	vmxon_region_virt_addr;				// Virtual address of VMXON Region
