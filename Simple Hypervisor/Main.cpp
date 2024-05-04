@@ -5,8 +5,6 @@
 extern "C" {
 
 	auto DriverUnload(_In_ PDRIVER_OBJECT driver_object) -> void {
-		using hv::devirtualize_all_processors;
-
 		UNICODE_STRING us_string{};
 		RtlInitUnicodeString(PUNICODE_STRING(&us_string), DOS_NAME);
 		IoDeleteSymbolicLink(PUNICODE_STRING(&us_string));
@@ -67,7 +65,7 @@ extern "C" {
 
 		if (!vmx_is_vmx_available())	return STATUS_FAILED_DRIVER_ENTRY;
 
-		if (!vmm_init)	return STATUS_FAILED_DRIVER_ENTRY;
+		if (!vmm_init())	return STATUS_FAILED_DRIVER_ENTRY;
 
 		return STATUS_SUCCESS;
 	}
