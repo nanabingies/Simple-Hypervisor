@@ -29,15 +29,11 @@ extern "C" {
 		return STATUS_SUCCESS;
 	}
 
-	bool vm_off;
-	unsigned g_num_processors;
 	__vmm_context* g_vmm_context = nullptr;
 
 	auto DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING) -> NTSTATUS {
 		using hv::vmm_init;
 		using vmx::vmx_is_vmx_available;
-
-		vm_off = false;
 
 		// Opt-in to using non-executable pool memory on Windows 8 and later.
 		// https://msdn.microsoft.com/en-us/library/windows/hardware/hh920402(v=vs.85).aspx
@@ -50,7 +46,7 @@ extern "C" {
 		auto ntstatus = IoCreateDevice(driver_object, 0, PUNICODE_STRING(&us_drv_string), FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN, false, &dev_obj);
 		if (!NT_SUCCESS(ntstatus)) {
 			LOG("[!] Failure creating device object.\n");
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return STATUS_FAILED_DRIVER_ENTRY;
 		}
 
@@ -59,7 +55,7 @@ extern "C" {
 		ntstatus = IoCreateSymbolicLink(PUNICODE_STRING(&us_dos_string), PUNICODE_STRING(&us_drv_string));
 		if (!NT_SUCCESS(ntstatus)) {
 			LOG("[!] Failure creating dos devices.\n");
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return STATUS_FAILED_DRIVER_ENTRY;
 		}
 
@@ -68,8 +64,6 @@ extern "C" {
 
 		driver_object->DriverUnload = DriverUnload;
 		driver_object->Flags |= DO_BUFFERED_IO;
-
-		g_num_processors = KeQueryActiveProcessorCount(NULL);
 
 		if (!vmx_is_vmx_available())	return STATUS_FAILED_DRIVER_ENTRY;
 
