@@ -1,4 +1,6 @@
 #include "stdafx.h"
+#pragma warning(disable: 4996)
+
 _vmm_context* vmm_context;
 
 namespace vmx {
