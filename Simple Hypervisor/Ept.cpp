@@ -47,16 +47,13 @@ namespace ept {
 	}
 
 	auto ept_build_mtrr_map() -> bool {
-		PAGED_CODE();
-
-		//mtrr_entry* _mtrr_entry = g_mtrr_entries;
-		//RtlSecureZeroMemory(_mtrr_entry, num_mtrr_entries * sizeof(mtrr_entry));
 		RtlSecureZeroMemory(&g_mtrr_entries, sizeof(g_mtrr_entries));
 
-		ia32_mtrr_capabilities_register mtrr_cap;
-		ia32_mtrr_def_type_register mtrr_def;
-		ia32_mtrr_physbase_register mtrr_phys_base;
-		ia32_mtrr_physmask_register mtrr_phys_mask;
+		ia32_mtrr_capabilities_register mtrr_cap{};
+		ia32_mtrr_def_type_register mtrr_def{};
+		ia32_mtrr_physbase_register mtrr_phys_base{};
+		ia32_mtrr_physmask_register mtrr_phys_mask{};
+		__mtrr_range_descriptor* descriptor{};
 
 		mtrr_cap.flags = __readmsr(IA32_MTRR_CAPABILITIES);
 		mtrr_def.flags = __readmsr(IA32_MTRR_DEF_TYPE);
@@ -68,33 +65,28 @@ namespace ept {
 
 		if (!fix_range_enable && !fix_range_support)	return false;
 
+		g_vmm_context->mtrr_info.default_memory_type = Uncacheable;
+
 		// Handle Fix Ranged MTRR
 
 		static const uint64_t k64k_base = IA32_MTRR_FIX64K_BASE;
-		static const uint64_t k64k_managed_size = IA32_MTRR_FIX64K_SIZE;	// 64K
+		static const uint64_t k64k_size = IA32_MTRR_FIX64K_SIZE;	// 64K
 		static const uint64_t k16k_base = IA32_MTRR_FIX16K_BASE;
-		static const uint64_t k16k_managed_size = IA32_MTRR_FIX16K_SIZE;
+		static const uint64_t k16k_size = IA32_MTRR_FIX16K_SIZE;
 		static const uint64_t k4k_base = IA32_MTRR_FIX4K_BASE;
 		static const uint64_t k4k_managed_size = IA32_MTRR_FIX4K_SIZE;
-
-		uint64_t offset = 0x0;
 
 		// Let's first read Fix64K MTRR
 		ia32_mtrr_fixed_range_msr msr64k;
 		msr64k.all = __readmsr(IA32_MTRR_FIX64K_00000);
 		for (unsigned idx = 0; idx < 8; idx++) {
-			uint64_t base = k64k_base + offset;
-			offset += k64k_managed_size;
 
-			// Save the MTRR
-			g_mtrr_entries[g_mtrr_num].mtrr_enabled = true;
-			g_mtrr_entries[g_mtrr_num].memory_type = msr64k.fields.types[idx];
-			g_mtrr_entries[g_mtrr_num].mtrr_fixed = true;
-			g_mtrr_entries[g_mtrr_num].physical_address_start = base;
-			g_mtrr_entries[g_mtrr_num].physical_address_end = base + k64k_managed_size - 1;
-
-			g_mtrr_num += 1;
-			//_mtrr_entry++;
+			// Save the MTRR entries
+			descriptor = &g_vmm_context->mtrr_info.memory_range[g_vmm_context->mtrr_info.enabled_memory_ranges++];
+			descriptor->memory_type = msr64k.fields.types[idx];
+			descriptor->physcial_base_address = k64k_base + (k64k_size * idx);
+			descriptor->physcial_end_address = k64k_base + (k64k_size * idx) + (k64k_size - 1);
+			descriptor->fixed_range = true;
 		}
 
 
