@@ -148,6 +148,11 @@ namespace vmx {
 
 		RtlSecureZeroMemory(g_vmm_context->vcpu_table, sizeof(__vcpu*) * g_vmm_context->processor_count);
 		g_vmm_context->hv_present = true;
+
+		// Build MTRR map
+		ept::ept_build_mtrr_map();
+
+		return true;
 	}
 
 	auto vmx_allocate_vmxon_region(uchar processor_number) -> bool {
