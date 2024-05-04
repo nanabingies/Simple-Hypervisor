@@ -155,8 +155,6 @@ typedef struct _ept_error {
 	void*	param_2;
 } ept_error;
 
-extern bool vm_off;
-extern unsigned g_num_processors;
 extern _vmm_context* vmm_context;
 
 inline uint64_t physical_to_virtual_address(uint64_t physical_address) {
