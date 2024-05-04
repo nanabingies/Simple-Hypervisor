@@ -4,11 +4,39 @@
 namespace hv {
 	auto vmm_init() -> bool {
 		using vmx::vmx_allocate_vmm_context;
+
 		if (!vmx_allocate_vmm_context) {
 			LOG("[!] Failed to allocate memory for vmm_context\n");
 			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
+
+		// Initialize vcpu for each logical processor
+		for (unsigned iter = 0; iter < g_vmm_context->processor_count; iter++) {
+			if (init_vcpu(g_vmm_context->vcpu_table[iter]) == false)
+				return false;
+
+			if (init_vmxon(g_vmm_context->vcpu_table[iter]) == false)
+				return false;
+
+			//if (init_vmcs(g_vmm_context->vcpu_table[iter]) == false)
+			//	return false;
+		}
+
+		//KeGenericCallDpc(dpc_broadcast_initialize_guest, 0);
+		return true;
+	}
+
+	auto init_vcpu(__vcpu*& vcpu) -> bool {
+		vcpu = reinterpret_cast<__vcpu*>(ExAllocatePoolWithTag(NonPagedPool, sizeof(__vcpu), VMM_POOL_TAG));
+		if (vcpu == nullptr) {
+			LOG("[!] Failed to create vcpu for processor (%x)\n", KeGetCurrentProcessorNumber());
+			LOG_ERROR(__FILE__, __LINE__);
+			return false;
+		}
+	}
+
+	auto init_vmxon(__vcpu*& vcpu) -> bool {
 
 	}
 
