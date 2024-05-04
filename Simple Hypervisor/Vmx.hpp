@@ -28,10 +28,8 @@ namespace vmx {
 
 namespace hv {
 	auto vmm_init() -> bool;
-
-	auto virtualize_all_processors() -> bool;
-
-	auto devirtualize_all_processors() -> void;
+	auto init_vcpu(struct __vcpu*&) -> bool;
+	auto init_vmxon(struct __vcpu*&) -> bool;
 
 	auto launch_vm(ULONG_PTR) -> ULONG_PTR;
 	auto terminate_vm(uchar) -> void;
