@@ -42,12 +42,7 @@ enum inv_ept_type {
 	single_context_invalidation_except_global = 3,
 };
 
-using mtrr_range_descriptor = struct __mtrr_range_descriptor {
-	unsigned __int64 physcial_base_address;
-	unsigned __int64 physcial_end_address;
-	unsigned __int8 memory_type;
-	bool fixed_range;
-};
+
 
 using mtrr_entry = struct _mtrr_entry {
 	unsigned __int64	mtrr_enabled;
@@ -62,6 +57,8 @@ using mtrr_range_descriptor = struct _mtrr_range_descriptor {
 	uint64_t	physical_end_address;
 	unsigned char mtrr_memory_type;
 };
+
+
 
 using ept_split_page = struct _ept_split_page {
 	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pte ept_pte[512];
