@@ -90,10 +90,16 @@ struct __vcpu {
 	//__ept_state* ept_state;
 };
 
+struct __mtrr_info {
+	__mtrr_range_descriptor memory_range[100];
+	unsigned __int32 enabled_memory_ranges;
+	unsigned __int8 default_memory_type;
+};
+
 struct __vmm_context {
 	__vcpu** vcpu_table;
 	//pool_manager::__pool_manager* pool_manager;
-	//__mtrr_info mtrr_info;
+	__mtrr_info mtrr_info;
 	unsigned __int32 processor_count;
 	bool hv_present;
 };
