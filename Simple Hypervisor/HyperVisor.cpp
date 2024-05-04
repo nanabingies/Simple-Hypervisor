@@ -5,7 +5,7 @@ namespace hv {
 	auto vmm_init() -> bool {
 		using vmx::vmx_allocate_vmm_context;
 
-		if (!vmx_allocate_vmm_context) {
+		if (!vmx_allocate_vmm_context()) {
 			LOG("[!] Failed to allocate memory for vmm_context\n");
 			LOG_ERROR(__FILE__, __LINE__);
 			return false;
@@ -27,142 +27,70 @@ namespace hv {
 		return true;
 	}
 
-	auto init_vcpu(__vcpu*& vcpu) -> bool {
+	auto init_vcpu(struct __vcpu*& vcpu) -> bool {
+		unsigned curr_processor = KeGetCurrentProcessorNumber();
 		vcpu = reinterpret_cast<__vcpu*>(ExAllocatePoolWithTag(NonPagedPool, sizeof(__vcpu), VMM_POOL_TAG));
 		if (vcpu == nullptr) {
-			LOG("[!] Failed to create vcpu for processor (%x)\n", KeGetCurrentProcessorNumber());
-			LOG_ERROR(__FILE__, __LINE__);
-			return false;
-		}
-	}
-
-	auto init_vmxon(__vcpu*& vcpu) -> bool {
-
-	}
-
-	auto virtualize_all_processors() -> bool {
-		using vmx::vmx_allocate_vmxon_region;
-		using vmx::vmx_allocate_vmcs_region;
-		using vmx::vmx_allocate_vmexit_stack;
-		using vmx::vmx_allocate_io_bitmap_stack;
-		using vmx::vmx_allocate_msr_bitmap;
-		using ept::initialize_ept;
-
-		//
-		// This was more of an educational project so only one Logical Processor was chosen and virtualized
-		// TODO : Add support for multiple processors
-		// Update: Support for multiple processors added
-		//
-
-		PROCESSOR_NUMBER processor_number;
-		GROUP_AFFINITY affinity, old_affinity;
-
-		//
-		// ExAllocatePool2 - Memory is zero initialized unless POOL_FLAG_UNINITIALIZED is specified.
-		//
-		vmm_context = reinterpret_cast<_vmm_context*>
-			(ExAllocatePoolWithTag(NonPagedPool, sizeof(_vmm_context) * g_num_processors, VMM_POOL_TAG));
-		if (!vmm_context) {
-			LOG("[-] Failed to allocate memory for vmm_context\n");
+			LOG("[!] Failed to create vcpu for processor (%x)\n", curr_processor);
 			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 
-		for (unsigned iter = 0; iter < g_num_processors; iter++) {
-			KeGetProcessorNumberFromIndex(iter, &processor_number);
+		RtlSecureZeroMemory(vcpu, sizeof(__vcpu));
 
-			RtlSecureZeroMemory(&affinity, sizeof(GROUP_AFFINITY));
-			affinity.Group = processor_number.Group;
-			affinity.Mask = (KAFFINITY)1 << processor_number.Number;
-			KeSetSystemGroupAffinityThread(&affinity, &old_affinity);
-			auto irql = KeRaiseIrqlToDpcLevel();
-
-			//
-			// Allocate Memory for VMXON & VMCS regions and initialize
-			//
-			if (!vmx_allocate_vmxon_region(processor_number.Number))		return false;
-			if (!vmx_allocate_vmcs_region(processor_number.Number))		return false;
-
-			//
-			// Allocate space for VM EXIT Handler
-			//
-			if (!vmx_allocate_vmexit_stack(processor_number.Number))		return false;
-
-			//
-			// Allocate memory for IO Bitmap
-			//
-			if (!vmx_allocate_io_bitmap_stack(processor_number.Number))			return false;
-
-			//
-			// Future: Add MSR Bitmap support
-			// Update: Added MSR Bitmap support
-			//
-			if (!vmx_allocate_msr_bitmap(processor_number.Number))			return false;
-
-			//
-			// Setup EPT support for that processor
-			//
-			//if (!initialize_ept(processor_number.Number))				return false;
-
-			KeLowerIrql(irql);
-			KeRevertToUserGroupAffinityThread(&old_affinity);
+		vcpu->vmm_stack = reinterpret_cast<void*>(ExAllocatePoolWithTag(NonPagedPool, VMM_STACK_SIZE, VMM_POOL_TAG));
+		if (vcpu->vmm_stack == nullptr){
+			LOG("[!] vcpu stack for processor (%x) could not be allocated\n", curr_processor);
+			LOG_ERROR(__FILE__, __LINE__);
+			return false;
 		}
-		
+		RtlSecureZeroMemory(vcpu->vmm_stack, VMM_STACK_SIZE);
+
+		vcpu->vcpu_bitmaps.msr_bitmap = reinterpret_cast<unsigned char*>(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL_TAG));
+		if (vcpu->vcpu_bitmaps.msr_bitmap == nullptr) {
+			LOG("[!] vcpu msr bitmap for processor (%x) could not be allocated\n", curr_processor);
+			LOG_ERROR(__FILE__, __LINE__);
+			return false;
+		}
+		RtlSecureZeroMemory(vcpu->vcpu_bitmaps.msr_bitmap, PAGE_SIZE);
+		vcpu->vcpu_bitmaps.msr_bitmap_physical = MmGetPhysicalAddress(vcpu->vcpu_bitmaps.msr_bitmap).QuadPart;
+
+		vcpu->vcpu_bitmaps.io_bitmap_a = reinterpret_cast<unsigned char*>(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL_TAG));
+		if (vcpu->vcpu_bitmaps.io_bitmap_a == nullptr) {
+			LOG("[!] vcpu io bitmap a for processor (%x) could not be allocated\n", curr_processor);
+			LOG_ERROR(__FILE__, __LINE__);
+			return false;
+		}
+		RtlSecureZeroMemory(vcpu->vcpu_bitmaps.io_bitmap_a, PAGE_SIZE);
+		vcpu->vcpu_bitmaps.io_bitmap_a_physical = MmGetPhysicalAddress(vcpu->vcpu_bitmaps.io_bitmap_a).QuadPart;
+
+		vcpu->vcpu_bitmaps.io_bitmap_b = reinterpret_cast<unsigned char*>(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL_TAG));
+		if (vcpu->vcpu_bitmaps.io_bitmap_b == nullptr) {
+			LOG("[!] vcpu io bitmap b for processor (%x) could not be allocated\n", curr_processor);
+			LOG_ERROR(__FILE__, __LINE__);
+			return false;
+		}
+		RtlSecureZeroMemory(vcpu->vcpu_bitmaps.io_bitmap_b, PAGE_SIZE);
+		vcpu->vcpu_bitmaps.io_bitmap_b_physical = MmGetPhysicalAddress(vcpu->vcpu_bitmaps.io_bitmap_b).QuadPart;
+
+		//
+		// Allocate ept state structure
+		//
+		vcpu->ept_state = reinterpret_cast<__ept_state*>(ExAllocatePoolWithTag(NonPagedPool, sizeof(__ept_state), VMM_POOL_TAG));
+		if (vcpu->ept_state == nullptr) {
+			LOG("[!] vcpu ept state for processor (%x) could not be allocated\n", curr_processor);
+			LOG_ERROR(__FILE__, __LINE__);
+			return false;
+		}
+		RtlSecureZeroMemory(vcpu->ept_state, sizeof(__ept_state));
+		InitializeListHead(&vcpu->ept_state->hooked_page_list);
+
 		return true;
 	}
 
-	auto devirtualize_all_processors() -> void {
-		PROCESSOR_NUMBER processor_number;
-		GROUP_AFFINITY affinity, old_affinity;
-
-		for (unsigned iter = 0; iter < g_num_processors; iter++) {
-			KeGetProcessorNumberFromIndex(iter, &processor_number);
-
-			RtlSecureZeroMemory(&affinity, sizeof(GROUP_AFFINITY));
-			affinity.Group = processor_number.Group;
-			affinity.Mask = (KAFFINITY)1 << processor_number.Number;
-			KeSetSystemGroupAffinityThread(&affinity, &old_affinity);
-
-			auto irql = KeRaiseIrqlToDpcLevel();
-
-			__vmx_vmclear(&vmm_context[processor_number.Number].vmcs_region_phys_addr);
-			__vmx_off();
-
-			if (vmm_context[processor_number.Number].vmcs_region_virt_addr)
-				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].vmcs_region_virt_addr));
-
-			if (vmm_context[processor_number.Number].vmxon_region_virt_addr)
-				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].vmxon_region_virt_addr));
-
-			if (vmm_context[processor_number.Number].host_stack)
-				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].host_stack));
-
-			if (vmm_context[processor_number.Number].io_bitmap_a_virt_addr)
-				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].io_bitmap_a_virt_addr));
-
-			if (vmm_context[processor_number.Number].io_bitmap_b_virt_addr)
-				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].io_bitmap_b_virt_addr));
-
-			if (vmm_context[processor_number.Number].msr_bitmap_virt_addr)
-				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].msr_bitmap_virt_addr));
-
-			/*if (vmm_context[processor_number.Number].EptState) {
-				if (vmm_context[processor_number.Number].EptState->EptPageTable)
-					ExFreePoolWithTag(vmm_context[processor_number.Number].EptState->EptPageTable, VMM_POOL);
-
-				if (vmm_context[processor_number.Number].EptState->EptPtr)
-					ExFreePoolWithTag(vmm_context[processor_number.Number].EptState->EptPtr, VMM_POOL);
-
-				ExFreePoolWithTag(vmm_context[processor_number.Number].EptState, VMM_POOL);
-			}*/
-
-			KeLowerIrql(irql);
-			KeRevertToUserGroupAffinityThread(&old_affinity);
-		}
-
-		ExFreePoolWithTag(vmm_context, VMM_POOL_TAG);
-
-		return;
+	auto init_vmxon(struct __vcpu*& vcpu) -> bool {
+		UNREFERENCED_PARAMETER(vcpu);
+		return false;
 	}
 
 	auto launch_vm(ULONG_PTR arg) -> ULONG_PTR {
@@ -174,7 +102,7 @@ namespace hv {
 		unsigned char ret = __vmx_vmclear(&vmm_context[processor_number].vmcs_region_phys_addr);
 		if (ret > 0) {
 			LOG("[-] VMCLEAR operation failed.\n");
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return arg;
 		}
 
@@ -184,7 +112,7 @@ namespace hv {
 		ret = __vmx_vmptrld(&vmm_context[processor_number].vmcs_region_phys_addr);
 		if (ret > 0) {
 			LOG("[-] VMPTRLD operation failed.\n");
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return arg;
 		}
 
