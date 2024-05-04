@@ -5,6 +5,7 @@
 #define DOS_NAME		L"\\DosDevices\\SimpleHypervisor"
 #define VMM_POOL_TAG	'tesT'
 
+#define VMM_STACK_SIZE 0x6000
 #define HOST_STACK_SIZE  (20 * PAGE_SIZE)
 
 using guest_registers = struct guest_registers {
@@ -37,6 +38,13 @@ struct __vmcs {
 	} header;
 	unsigned int abort_indicator;
 	char data[0x1000 - 2 * sizeof(unsigned)];
+};
+
+struct __ept_state {
+	LIST_ENTRY hooked_page_list;
+	ept_pointer* ept_pointer;
+	//__vmm_ept_page_table* ept_page_table;
+	//__ept_hooked_page_info* page_to_change;
 };
 
 struct __vcpu {
@@ -87,7 +95,14 @@ struct __vcpu {
 		unsigned __int64 io_bitmap_b_physical;
 	}vcpu_bitmaps;
 
-	//__ept_state* ept_state;
+	__ept_state* ept_state;
+};
+
+struct __mtrr_range_descriptor {
+	unsigned __int64 physcial_base_address;
+	unsigned __int64 physcial_end_address;
+	unsigned __int8 memory_type;
+	bool fixed_range;
 };
 
 struct __mtrr_info {
