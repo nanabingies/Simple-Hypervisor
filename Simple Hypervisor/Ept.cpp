@@ -74,7 +74,7 @@ namespace ept {
 		static const uint64_t k16k_base = IA32_MTRR_FIX16K_BASE;
 		static const uint64_t k16k_size = IA32_MTRR_FIX16K_SIZE;
 		static const uint64_t k4k_base = IA32_MTRR_FIX4K_BASE;
-		static const uint64_t k4k_managed_size = IA32_MTRR_FIX4K_SIZE;
+		static const uint64_t k4k_size = IA32_MTRR_FIX4K_SIZE;
 
 		// Let's first read Fix64K MTRR
 		ia32_mtrr_fixed_range_msr msr64k;
@@ -94,23 +94,17 @@ namespace ept {
 		ia32_mtrr_fixed_range_msr msr16k;
 		// start -- IA32_MTRR_FIX16K_80000	
 		// end   -- IA32_MTRR_FIX16K_A0000
-		offset = 0;
 
 		for (unsigned start = IA32_MTRR_FIX16K_80000; start <= IA32_MTRR_FIX16K_A0000; start++) {
 			msr16k.all = __readmsr(start);
-			for (unsigned idx = 0; idx < 8; idx++, g_mtrr_num) {
-				uint64_t base = k16k_base + offset;
-				offset += k16k_managed_size;
+			for (unsigned idx = 0; idx < 8; idx++) {
 
 				// Save the MTRR
-				g_mtrr_entries[g_mtrr_num].memory_type = msr16k.fields.types[idx];
-				g_mtrr_entries[g_mtrr_num].mtrr_enabled = true;
-				g_mtrr_entries[g_mtrr_num].mtrr_fixed = true;
-				g_mtrr_entries[g_mtrr_num].physical_address_start = base;
-				g_mtrr_entries[g_mtrr_num].physical_address_end = base + k16k_managed_size - 1;
-
-				g_mtrr_num += 1;
-				//_mtrr_entry++;
+				descriptor = &g_vmm_context->mtrr_info.memory_range[g_vmm_context->mtrr_info.enabled_memory_ranges++];
+				descriptor->memory_type = msr16k.fields.types[idx];
+				descriptor->physcial_base_address = (k16k_base + (start * k16k_size * 8)) + (k16k_size * idx);
+				descriptor->physcial_end_address = (k16k_base + (start * k16k_size * 8)) + (k16k_size * idx) + (k16k_size - 1);
+				descriptor->fixed_range = true;
 			}
 		}
 
@@ -119,28 +113,19 @@ namespace ept {
 		ia32_mtrr_fixed_range_msr msr4k;
 		// start -- IA32_MTRR_FIX4K_C0000	
 		// end   -- IA32_MTRR_FIX4K_F8000
-		offset = 0;
 
 		for (unsigned start = IA32_MTRR_FIX4K_C0000; start <= IA32_MTRR_FIX4K_F8000; start++) {
 			msr4k.all = __readmsr(start);
 			for (unsigned idx = 0; idx < 8; idx++) {
-				uint64_t base = k4k_base + offset;
-				offset += k4k_managed_size;
 
 				// Save the MTRR
-				g_mtrr_entries[g_mtrr_num].memory_type = msr4k.fields.types[idx];
-				g_mtrr_entries[g_mtrr_num].mtrr_enabled = true;
-				g_mtrr_entries[g_mtrr_num].mtrr_fixed = true;
-				g_mtrr_entries[g_mtrr_num].physical_address_start = base;
-				g_mtrr_entries[g_mtrr_num].physical_address_end = base + k4k_managed_size - 1;
-
-				g_mtrr_num += 1;
-				//_mtrr_entry++;
+				descriptor = &g_vmm_context->mtrr_info.memory_range[g_vmm_context->mtrr_info.enabled_memory_ranges++];
+				descriptor->memory_type = msr4k.fields.types[idx];
+				descriptor->physcial_base_address = (k4k_base + (start * k4k_size * 8)) + (k4k_size * idx);
+				descriptor->physcial_end_address = (k4k_base + (start * k4k_size * 8)) + (k4k_size * idx) + (k4k_size - 1);
+				descriptor->fixed_range = true;
 			}
 		}
-
-		//__debugbreak();
-		//mtrr_range_descriptor mtrr_decriptor = _ept_state->mtrr_ranges[_ept_state->num_enabled_memory_ranges];
 
 		for (unsigned iter = 0; iter < var_cnt; iter++) {
 			mtrr_phys_base.flags = __readmsr(IA32_MTRR_PHYSBASE0 + (iter * 2));
@@ -150,21 +135,30 @@ namespace ept {
 			if (!mtrr_phys_mask.valid)
 				continue;
 
-			// Get the length this MTRR manages
-			unsigned long length;
-			BitScanForward64(&length, mtrr_phys_mask.page_frame_number * PAGE_SIZE);
+			descriptor = &g_vmm_context->mtrr_info.memory_range[g_vmm_context->mtrr_info.enabled_memory_ranges++];
 
-			uint64_t physical_base_start, physical_base_end;
-			physical_base_start = mtrr_phys_base.page_frame_number * PAGE_SIZE;
-			physical_base_end = physical_base_start + ((1ull << length) - 1ull);
+			//
+			// Calculate base address, physbase is truncated by 12 bits so we have to left shift it by 12
+			//
+			descriptor->physcial_base_address = mtrr_phys_base.page_frame_number << PAGE_SHIFT;
 
-			g_mtrr_entries[g_mtrr_num].mtrr_enabled = true;
-			g_mtrr_entries[g_mtrr_num].mtrr_fixed = false;
-			g_mtrr_entries[g_mtrr_num].memory_type = mtrr_phys_base.type;
-			g_mtrr_entries[g_mtrr_num].physical_address_start = physical_base_start;
-			g_mtrr_entries[g_mtrr_num].physical_address_end = physical_base_end;
-			g_mtrr_num++;
-			//_mtrr_entry++;
+			//
+			// Index of first bit set to one determines how much do we have to bit shift to get size of range
+			// physmask is truncated by 12 bits so we have to left shift it by 12
+			//
+			unsigned long bits_in_mask = 0;
+			_BitScanForward64(&bits_in_mask, mtrr_phys_mask.page_frame_number << PAGE_SHIFT);
+
+			//
+			// Calculate the end of range specified by mtrr
+			//
+			descriptor->physcial_end_address = descriptor->physcial_base_address + ((1ULL << bits_in_mask) - 1ULL);
+
+			//
+			// Get memory type of range
+			//
+			descriptor->memory_type = (unsigned __int8)mtrr_phys_base.type;
+			descriptor->fixed_range = false;
 		}
 
 		return true;
