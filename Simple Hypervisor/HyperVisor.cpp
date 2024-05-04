@@ -6,7 +6,7 @@ namespace hv {
 		using vmx::vmx_allocate_vmm_context;
 		if (!vmx_allocate_vmm_context) {
 			LOG("[!] Failed to allocate memory for vmm_context\n");
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 
@@ -36,7 +36,7 @@ namespace hv {
 			(ExAllocatePoolWithTag(NonPagedPool, sizeof(_vmm_context) * g_num_processors, VMM_POOL_TAG));
 		if (!vmm_context) {
 			LOG("[-] Failed to allocate memory for vmm_context\n");
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 
