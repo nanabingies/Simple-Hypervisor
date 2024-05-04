@@ -4,8 +4,8 @@
 #define LOG(format, ...) \
 	logger::log(format, __VA_ARGS__)
 
-#define LOG_ERROR() \
-	logger::error()
+#define LOG_ERROR(file, line) \
+	logger::error(file, line)
 
 namespace logger {
 	template <typename ... T>
@@ -15,9 +15,9 @@ namespace logger {
 	}
 
 	template <typename ... T>
-	__forceinline void error()
+	__forceinline void error(char* file, int line)
 	{
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, 
-			"[!] failed at %s:%d, ()\n", __FILE__, __LINE__);	// KeLowerIrql(irql);
+			"[!] failed at %s:%d, ()\n", file, line);	// KeLowerIrql(irql);
 	}
 }
