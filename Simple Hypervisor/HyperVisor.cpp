@@ -89,8 +89,30 @@ namespace hv {
 	}
 
 	auto init_vmxon(struct __vcpu*& vcpu) -> bool {
-		UNREFERENCED_PARAMETER(vcpu);
-		return false;
+		unsigned curr_processor = KeGetCurrentProcessorNumber();
+
+		ia32_vmx_basic_register vmx_basic{};
+		vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
+
+		vcpu->vmxon = reinterpret_cast<__vmcs*>(ExAllocatePoolWithTag(NonPagedPool, vmx_basic.vmcs_size_in_bytes, VMM_POOL_TAG));
+		if (vcpu->vmxon == nullptr) {
+			LOG("[!] vmxon could not be allocated on processor (%x)\n", curr_processor);
+			LOG_ERROR(__FILE__, __LINE__);
+			return false;
+		}
+
+		vcpu->vmxon_physical = MmGetPhysicalAddress(vcpu->vmxon).QuadPart;
+		if (vcpu->vmxon_physical == 0) {
+			LOG("[!] Could not get vmxon physical address on processor (%x)\n", curr_processor);
+			LOG_ERROR(__FILE__, __LINE__);
+			return false;
+		}
+
+		RtlSecureZeroMemory(vcpu->vmxon, vmx_basic.vmcs_size_in_bytes);
+		vcpu->vmxon->header.all = vmx_basic.vmcs_revision_id;
+		vcpu->vmxon->header.shadow_vmcs_indicator = 0;
+
+		return true;
 	}
 
 	auto launch_vm(ULONG_PTR arg) -> ULONG_PTR {
