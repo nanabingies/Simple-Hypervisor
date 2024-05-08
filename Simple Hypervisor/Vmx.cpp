@@ -135,11 +135,18 @@ namespace vmx {
 		return;
 	}
 
+	auto disable_vmx() -> void {
+		cr4 _cr4{};
+		_cr4.flags = __readcr4();
+		_cr4.vmx_enable = 0;
+		__writecr4(_cr4.flags);
+	}
+
 	auto vmx_allocate_vmm_context() -> bool {
 		g_vmm_context = reinterpret_cast<__vmm_context*>(ExAllocatePoolWithTag(NonPagedPool, sizeof __vmm_context, VMM_POOL_TAG));
 		if (g_vmm_context == nullptr)	return false;
 
-		RtlSecureZeroMemory(&g_vmm_context, sizeof __vmm_context);
+		RtlSecureZeroMemory(g_vmm_context, sizeof __vmm_context);
 		g_vmm_context->processor_count = KeQueryActiveProcessorCount(NULL);
 		g_vmm_context->vcpu_table = reinterpret_cast<__vcpu**>(ExAllocatePoolWithTag(NonPagedPool, sizeof(__vcpu*) * g_vmm_context->processor_count, VMM_POOL_TAG));
 		if (g_vmm_context->vcpu_table == nullptr) {
@@ -155,6 +162,10 @@ namespace vmx {
 		ept::ept_build_mtrr_map();
 
 		return true;
+	}
+
+	auto vmx_free_vmm_context() -> void {
+
 	}
 
 	auto vmx_allocate_vmxon_region(uchar processor_number) -> bool {
