@@ -19,8 +19,8 @@ namespace hv {
 			if (init_vmxon(g_vmm_context->vcpu_table[iter]) == false)
 				return false;
 
-			//if (init_vmcs(g_vmm_context->vcpu_table[iter]) == false)
-			//	return false;
+			if (init_vmcs(g_vmm_context->vcpu_table[iter]) == false)
+				return false;
 		}
 
 		//KeGenericCallDpc(dpc_broadcast_initialize_guest, 0);
@@ -111,6 +111,32 @@ namespace hv {
 		RtlSecureZeroMemory(vcpu->vmxon, vmx_basic.vmcs_size_in_bytes);
 		vcpu->vmxon->header.all = vmx_basic.vmcs_revision_id;
 		vcpu->vmxon->header.shadow_vmcs_indicator = 0;
+
+		return true;
+	}
+
+	auto init_vmcs(struct __vcpu*& vcpu) -> bool {
+		ia32_vmx_basic_register vmx_basic = { 0 };
+		PHYSICAL_ADDRESS physical_max;
+
+		vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
+
+		physical_max.QuadPart = ~0ULL;
+		vcpu->vmcs = reinterpret_cast<__vmcs*>(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL_TAG));
+		if (vcpu->vmcs == nullptr) {
+			LOG("[!] vmcs structure for processor (%x) could not be allocated");
+			LOG_ERROR(__FILE__, __LINE__);
+			return false;
+		}
+
+		vcpu->vmcs_physical = MmGetPhysicalAddress(vcpu->vmcs).QuadPart;
+		if (vcpu->vmcs_physical == 0)	return false;
+
+		RtlSecureZeroMemory(vcpu->vmcs, PAGE_SIZE);
+		vcpu->vmcs->header.revision_identifier = vmx_basic.vmcs_revision_id;
+
+		// Indicates if it's shadow vmcs or not
+		vcpu->vmcs->header.shadow_vmcs_indicator = 0;
 
 		return true;
 	}
