@@ -5,6 +5,12 @@
 extern "C" {
 
 	auto DriverUnload(_In_ PDRIVER_OBJECT driver_object) -> void {
+		using vmx::disable_vmx;
+		using vmx::vmx_free_vmm_context;
+
+		disable_vmx();
+		vmx_free_vmm_context();
+
 		UNICODE_STRING us_string{};
 		RtlInitUnicodeString(PUNICODE_STRING(&us_string), DOS_NAME);
 		IoDeleteSymbolicLink(PUNICODE_STRING(&us_string));
