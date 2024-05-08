@@ -31,7 +31,9 @@ extern "C" {
 
 	auto DriverEntry(_In_ PDRIVER_OBJECT driver_object, _In_ PUNICODE_STRING) -> NTSTATUS {
 		using hv::vmm_init;
+		using vmx::disable_vmx;
 		using vmx::vmx_is_vmx_available;
+		using vmx::vmx_free_vmm_context;
 
 		// Opt-in to using non-executable pool memory on Windows 8 and later.
 		// https://msdn.microsoft.com/en-us/library/windows/hardware/hh920402(v=vs.85).aspx
@@ -44,7 +46,6 @@ extern "C" {
 		auto ntstatus = IoCreateDevice(driver_object, 0, PUNICODE_STRING(&us_drv_string), FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN, false, &dev_obj);
 		if (!NT_SUCCESS(ntstatus)) {
 			LOG("[!] Failure creating device object.\n");
-			LOG_ERROR(__FILE__, __LINE__);
 			return STATUS_FAILED_DRIVER_ENTRY;
 		}
 
@@ -53,7 +54,6 @@ extern "C" {
 		ntstatus = IoCreateSymbolicLink(PUNICODE_STRING(&us_dos_string), PUNICODE_STRING(&us_drv_string));
 		if (!NT_SUCCESS(ntstatus)) {
 			LOG("[!] Failure creating dos devices.\n");
-			LOG_ERROR(__FILE__, __LINE__);
 			return STATUS_FAILED_DRIVER_ENTRY;
 		}
 
@@ -65,7 +65,11 @@ extern "C" {
 
 		if (!vmx_is_vmx_available())	return STATUS_FAILED_DRIVER_ENTRY;
 
-		if (!vmm_init())	return STATUS_FAILED_DRIVER_ENTRY;
+		if (!vmm_init()) {
+			disable_vmx();
+			vmx_free_vmm_context();
+			return STATUS_FAILED_DRIVER_ENTRY;
+		}
 
 		return STATUS_SUCCESS;
 	}
