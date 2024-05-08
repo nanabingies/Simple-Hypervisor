@@ -165,7 +165,48 @@ namespace vmx {
 	}
 
 	auto vmx_free_vmm_context() -> void {
+		if (g_vmm_context != nullptr) {
 
+			if (g_vmm_context->vcpu_table != nullptr) {
+
+				for (unsigned iter = 0; iter < g_vmm_context->processor_count; iter++) {
+
+					if (g_vmm_context->vcpu_table[iter] != nullptr) {
+
+						if (g_vmm_context->vcpu_table[iter]->vmxon != nullptr)
+							ExFreePoolWithTag(g_vmm_context->vcpu_table[iter]->vmxon, VMM_POOL_TAG);
+
+						if (g_vmm_context->vcpu_table[iter]->vmcs != nullptr)
+							ExFreePoolWithTag(g_vmm_context->vcpu_table[iter]->vmcs, VMM_POOL_TAG);
+
+						if (g_vmm_context->vcpu_table[iter]->vmm_stack != nullptr)
+							ExFreePoolWithTag(g_vmm_context->vcpu_table[iter]->vmm_stack, VMM_POOL_TAG);
+
+						if (g_vmm_context->vcpu_table[iter]->vcpu_bitmaps.io_bitmap_a != nullptr)
+							ExFreePoolWithTag(g_vmm_context->vcpu_table[iter]->vcpu_bitmaps.io_bitmap_a, VMM_POOL_TAG);
+
+						if (g_vmm_context->vcpu_table[iter]->vcpu_bitmaps.io_bitmap_b != nullptr)
+							ExFreePoolWithTag(g_vmm_context->vcpu_table[iter]->vcpu_bitmaps.io_bitmap_b, VMM_POOL_TAG);
+
+						if (g_vmm_context->vcpu_table[iter]->vcpu_bitmaps.msr_bitmap != nullptr)
+							ExFreePoolWithTag(g_vmm_context->vcpu_table[iter]->vcpu_bitmaps.msr_bitmap, VMM_POOL_TAG);
+
+						if (g_vmm_context->vcpu_table[iter]->ept_state != nullptr) {
+
+							if (g_vmm_context->vcpu_table[iter]->ept_state->ept_pointer != nullptr)
+								ExFreePoolWithTag(g_vmm_context->vcpu_table[iter]->ept_state->ept_pointer, VMM_POOL_TAG);
+						}
+					}
+
+					ExFreePoolWithTag(g_vmm_context->vcpu_table[iter], VMM_POOL_TAG);
+				}
+
+				ExFreePoolWithTag(g_vmm_context->vcpu_table, VMM_POOL_TAG);
+			}
+
+			ExFreePoolWithTag(g_vmm_context, VMM_POOL_TAG);
+			g_vmm_context = nullptr;
+		}
 	}
 
 	auto vmx_allocate_vmxon_region(uchar processor_number) -> bool {
