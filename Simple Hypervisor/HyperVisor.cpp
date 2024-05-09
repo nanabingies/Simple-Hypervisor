@@ -212,8 +212,7 @@ namespace hv {
 	}
 
 	auto initialize_vmm(void* guest_rsp) -> void {
-		UNREFERENCED_PARAMETER(guest_rsp);
-
+		//using 
 		auto current_procesor = KeGetCurrentProcessorNumberEx(nullptr);
 		auto current_vcpu = g_vmm_context->vcpu_table[current_procesor];
 		LOG("[*] current vcpu : %llx\n", ULONG64(current_vcpu));
@@ -225,14 +224,16 @@ namespace hv {
 		}
 
 		current_vcpu->vcpu_status.vmx_on = true;
-		//fill_vmcs(vcpu, guest_rsp);
+		//fill_vmcs(current_vcpu, guest_rsp);
 		current_vcpu->vcpu_status.vmm_launched = true;
 
 		__vmx_vmlaunch();
 
 		// We should never get here
 		__debugbreak();
-		LOG("[!] Failed to launch vmm on processor (%x)\n", current_procesor);
+		size_t error_code = 0;
+		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &error_code);
+		LOG("[!] Failed to launch vmm on processor (%x) with error code : %x\n", current_procesor, error_code);
 		current_vcpu->vcpu_status.vmx_on = false;
 		current_vcpu->vcpu_status.vmm_launched = true;
 	}
