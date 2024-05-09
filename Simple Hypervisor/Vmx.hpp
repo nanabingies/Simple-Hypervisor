@@ -34,6 +34,9 @@ namespace hv {
 	auto init_vmxon(struct __vcpu*&) -> bool;
 	auto init_vmcs(struct __vcpu*&) -> bool;
 
+	extern "C" auto inline asm_save_vmm_state() -> void;
+	auto dpc_broadcast_initialize_guest(struct _KDPC*, void*, void*, void*) -> void;
+
 	auto launch_vm(ULONG_PTR) -> ULONG_PTR;
 	auto terminate_vm(uchar) -> void;
 	auto resume_vm() -> void;
