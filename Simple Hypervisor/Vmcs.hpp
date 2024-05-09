@@ -124,6 +124,4 @@ extern "C" {
 
 auto setup_vmcs(unsigned long, void*, uint64_t) -> EVmErrors;
 
-namespace hv_vmcs {
-    auto setup_vmcs(struct __vcpu*, void*) -> void;
-}
+auto hv_setup_vmcs(struct __vcpu*, void*) -> void;
