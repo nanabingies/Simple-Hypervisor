@@ -189,7 +189,8 @@ asm_save_vmm_state proc
     sub rsp, 020h
     mov rcx, rsp
     call ?initialize_vmm@hv@@YAXPEAX@Z
-    ret
+    
+    int 3   ; error
 
 asm_save_vmm_state endp
 
