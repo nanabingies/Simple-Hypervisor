@@ -325,3 +325,126 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp, uint64_t cr3) -
 	return VM_ERROR_OK;
 
 }
+
+auto save_vmentry_fields(ia32_vmx_entry_ctls_register& entry_ctls) -> void {
+	entry_ctls.load_debug_controls = true;
+	entry_ctls.ia32e_mode_guest = true;
+	entry_ctls.entry_to_smm = false;
+	entry_ctls.deactivate_dual_monitor_treatment = false;
+	entry_ctls.load_ia32_perf_global_ctrl = false;
+	entry_ctls.load_ia32_pat = false;
+	entry_ctls.load_ia32_efer = false;
+	entry_ctls.load_ia32_bndcfgs = false;
+	entry_ctls.conceal_vmx_from_pt = true;
+	entry_ctls.load_cet_state = false;
+	entry_ctls.load_ia32_lbr_ctl = false;
+	entry_ctls.load_ia32_pkrs = false;
+}
+
+auto save_vmexit_fields(ia32_vmx_exit_ctls_register& exit_ctls) -> void {
+	exit_ctls.save_debug_controls = true;
+	exit_ctls.host_address_space_size = true;
+	exit_ctls.load_ia32_perf_global_ctrl = false;
+	exit_ctls.acknowledge_interrupt_on_exit = true;
+	exit_ctls.load_ia32_pat = false;
+	exit_ctls.save_ia32_pat = false;
+	exit_ctls.save_ia32_efer = false;
+	exit_ctls.load_ia32_efer = false;
+	exit_ctls.save_vmx_preemption_timer_value = false;
+	exit_ctls.clear_ia32_bndcfgs = false;
+	exit_ctls.conceal_vmx_from_pt = true;
+	exit_ctls.clear_ia32_rtit_ctl = false;
+	exit_ctls.clear_ia32_lbr_ctl = false;
+	exit_ctls.load_ia32_cet_state = false;
+	exit_ctls.load_ia32_pkrs = false;
+}
+
+auto save_proc_based_fields(ia32_vmx_procbased_ctls_register& procbased_ctls) -> void {
+	procbased_ctls.interrupt_window_exiting = false;
+	procbased_ctls.use_tsc_offsetting = true;
+	procbased_ctls.hlt_exiting = true;
+	procbased_ctls.invlpg_exiting = true;
+	procbased_ctls.mwait_exiting = false;
+	procbased_ctls.rdpmc_exiting = false;
+	procbased_ctls.rdtsc_exiting = true;
+	procbased_ctls.cr3_load_exiting = true;
+	procbased_ctls.cr3_store_exiting = true;
+	procbased_ctls.activate_tertiary_controls = false;
+	procbased_ctls.cr8_load_exiting = false;
+	procbased_ctls.cr8_store_exiting = false;
+	procbased_ctls.use_tpr_shadow = false;
+	procbased_ctls.nmi_window_exiting = false;
+	procbased_ctls.mov_dr_exiting = true;
+	procbased_ctls.unconditional_io_exiting = false;
+	procbased_ctls.use_io_bitmaps = true;
+	procbased_ctls.monitor_trap_flag = false;
+	procbased_ctls.use_msr_bitmaps = true;
+	procbased_ctls.monitor_exiting = false;
+	procbased_ctls.pause_exiting = false;
+	procbased_ctls.activate_secondary_controls = true;
+}
+
+auto save_proc_secondary_fields(ia32_vmx_procbased_ctls2_register& procbased_ctls2) -> void {
+	procbased_ctls2.virtualize_apic_accesses = false;
+	procbased_ctls2.enable_ept = false;
+	procbased_ctls2.descriptor_table_exiting = true;
+	procbased_ctls2.enable_rdtscp = true;
+	procbased_ctls2.virtualize_x2apic_mode = false;
+	procbased_ctls2.enable_vpid = true;
+	procbased_ctls2.wbinvd_exiting = true;
+	procbased_ctls2.unrestricted_guest = false;
+	procbased_ctls2.apic_register_virtualization = false;
+	procbased_ctls2.virtual_interrupt_delivery = false;
+	procbased_ctls2.pause_loop_exiting = false;
+	procbased_ctls2.rdrand_exiting = true;
+	procbased_ctls2.enable_invpcid = true;
+	procbased_ctls2.enable_vm_functions = false;
+	procbased_ctls2.vmcs_shadowing = false;
+	procbased_ctls2.enable_encls_exiting = false;
+	procbased_ctls2.rdseed_exiting = true;
+	procbased_ctls2.enable_pml = false;
+	procbased_ctls2.ept_violation = true;
+	procbased_ctls2.conceal_vmx_from_pt = true;
+	procbased_ctls2.enable_xsaves = true;
+	procbased_ctls2.mode_based_execute_control_for_ept = true;
+	procbased_ctls2.sub_page_write_permissions_for_ept = false;
+	procbased_ctls2.pt_uses_guest_physical_addresses = false;
+	procbased_ctls2.use_tsc_scaling = false;
+	procbased_ctls2.enable_user_wait_pause = false;
+	procbased_ctls2.enable_enclv_exiting = false;
+}
+
+auto save_pin_fields(ia32_vmx_pinbased_ctls_register& pinbased_ctls) -> void {
+	pinbased_ctls.external_interrupt_exiting = false;
+	pinbased_ctls.nmi_exiting = false;
+	pinbased_ctls.virtual_nmi = false;
+	pinbased_ctls.activate_vmx_preemption_timer = false;
+	pinbased_ctls.process_posted_interrupts = false;
+}
+
+auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
+	UNREFERENCED_PARAMETER(vcpu);
+	UNREFERENCED_PARAMETER(guest_rsp);
+
+	__debugbreak();
+
+	/// VM-ENTRY CONTROL FIELDS
+	ia32_vmx_entry_ctls_register entry_ctls{};
+	save_vmentry_fields(entry_ctls);
+	
+	/// VM-EXIT INFORMATION FIELDS
+	ia32_vmx_exit_ctls_register exit_ctls{};
+	save_vmexit_fields(exit_ctls);
+	
+	/// Primary Processor-Based VM-Execution Controls.
+	ia32_vmx_procbased_ctls_register procbased_ctls{};
+	save_proc_based_fields(procbased_ctls);
+
+	/// Secondary Processor-Based VM-Execution Controls
+	ia32_vmx_procbased_ctls2_register procbased_ctls2{};
+	save_proc_secondary_fields(procbased_ctls2);
+
+	/// Pin-Based VM-Execution Controls
+	ia32_vmx_pinbased_ctls_register pinbased_ctls{};
+	save_pin_fields(pinbased_ctls);
+}
