@@ -212,7 +212,6 @@ namespace hv {
 	}
 
 	auto initialize_vmm(void* guest_rsp) -> void {
-		//using 
 		auto current_procesor = KeGetCurrentProcessorNumberEx(nullptr);
 		auto current_vcpu = g_vmm_context->vcpu_table[current_procesor];
 		LOG("[*] current vcpu : %llx\n", ULONG64(current_vcpu));
@@ -224,7 +223,7 @@ namespace hv {
 		}
 
 		current_vcpu->vcpu_status.vmx_on = true;
-		//fill_vmcs(current_vcpu, guest_rsp);
+		hv_setup_vmcs(current_vcpu, guest_rsp);
 		current_vcpu->vcpu_status.vmm_launched = true;
 
 		__vmx_vmlaunch();
