@@ -16,7 +16,7 @@ public  asm_vmx_vmcall
 
 extern	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z:proc
 extern  ?vmexit_handler@vmexit@@YAFPEAX@Z:proc
-;extern
+extern  ?initialize_vmm@hv@@YAXPEAX@Z:proc
 extern  ret_val:dword
 extern  cr3_val:qword
 
@@ -183,7 +183,12 @@ asm_setup_vmcs endp
 
 asm_save_vmm_state proc
 
-    int 3;
+    int 3
+    pushfq
+    SAVE_GP
+    sub rsp, 020h
+    mov rcx, rsp
+    call ?initialize_vmm@hv@@YAXPEAX@Z
     ret
 
 asm_save_vmm_state endp
