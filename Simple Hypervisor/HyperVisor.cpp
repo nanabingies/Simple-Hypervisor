@@ -211,6 +211,32 @@ namespace hv {
 		KeSignalCallDpcDone(SystemArgument1);
 	}
 
+	auto initialize_vmm(void* guest_rsp) -> void {
+		UNREFERENCED_PARAMETER(guest_rsp);
+
+		auto current_procesor = KeGetCurrentProcessorNumberEx(nullptr);
+		auto current_vcpu = g_vmm_context->vcpu_table[current_procesor];
+		LOG("[*] current vcpu : %llx\n", ULONG64(current_vcpu));
+		
+		if (__vmx_on(&current_vcpu->vmxon_physical)) {
+			LOG("[!] Failed to put vcpu %d into VMX operation.\n", current_procesor);
+			LOG_ERROR(__FILE__, __LINE__);
+			return;
+		}
+
+		current_vcpu->vcpu_status.vmx_on = true;
+		//fill_vmcs(vcpu, guest_rsp);
+		current_vcpu->vcpu_status.vmm_launched = true;
+
+		__vmx_vmlaunch();
+
+		// We should never get here
+		__debugbreak();
+		LOG("[!] Failed to launch vmm on processor (%x)\n", current_procesor);
+		current_vcpu->vcpu_status.vmx_on = false;
+		current_vcpu->vcpu_status.vmm_launched = true;
+	}
+
 	auto launch_all_vmms() -> void {
 		
 		KeIpiGenericCall((PKIPI_BROADCAST_WORKER)launch_vm, 0);
