@@ -23,7 +23,7 @@ namespace hv {
 				return false;
 		}
 
-		//KeGenericCallDpc(dpc_broadcast_initialize_guest, 0);
+		KeGenericCallDpc(dpc_broadcast_initialize_guest, 0);
 		return true;
 	}
 
@@ -202,7 +202,7 @@ namespace hv {
 		UNREFERENCED_PARAMETER(DeferredContext);
 		UNREFERENCED_PARAMETER(Dpc);
 
-		launch_vm(0);
+		asm_save_vmm_state();
 
 		// Wait for all DPCs to synchronize at this point
 		KeSignalCallDpcSynchronize(SystemArgument2);
