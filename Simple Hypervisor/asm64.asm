@@ -3,6 +3,8 @@ public	asm_host_continue_execution
 public  asm_setup_vmcs
 public  asm_inv_ept_global
 
+public asm_save_vmm_state
+
 public	asm_get_tr
 public	asm_get_ldtr
 public	asm_get_idt_limit
@@ -176,6 +178,15 @@ asm_setup_vmcs proc
 	ret
 
 asm_setup_vmcs endp
+
+;----------------------------------------------------------------------------------------------------
+
+asm_save_vmm_state proc
+
+    int 3;
+    ret
+
+asm_save_vmm_state endp
 
 ;----------------------------------------------------------------------------------------------------
 
