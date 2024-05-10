@@ -72,7 +72,7 @@ ShvUtilConvertGdtEntry(
 	VmxGdtEntry->Bits.Unusable = !gdtEntry->Bits.Present;
 }
 
-auto AdjustControls(ulong Ctl, ulong Msr) -> unsigned __int64 {
+auto adjust_controls(ulong Ctl, ulong Msr) -> unsigned __int64 {
 	LARGE_INTEGER MsrValue = { 0 };
 
 	MsrValue.QuadPart = __readmsr(Msr);
@@ -262,13 +262,13 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp, uint64_t cr3) -
 	if (__vmx_vmwrite(VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS, AdjustControls(0, IA32_VMX_PINBASED_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
 
 	if (__vmx_vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
-		AdjustControls(IA32_VMX_PROCBASED_CTLS_HLT_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_USE_MSR_BITMAPS_FLAG |
+		adjust_controls(IA32_VMX_PROCBASED_CTLS_HLT_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_USE_MSR_BITMAPS_FLAG |
 			IA32_VMX_PROCBASED_CTLS_CR3_LOAD_EXITING_FLAG | /*IA32_VMX_PROCBASED_CTLS_CR3_STORE_EXITING_FLAG |*/
 			IA32_VMX_PROCBASED_CTLS_USE_IO_BITMAPS_FLAG |
 			IA32_VMX_PROCBASED_CTLS_ACTIVATE_SECONDARY_CONTROLS_FLAG, IA32_VMX_PROCBASED_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
 
 	if (__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
-		AdjustControls(IA32_VMX_PROCBASED_CTLS2_ENABLE_XSAVES_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_RDTSCP_FLAG |
+		adjust_controls(IA32_VMX_PROCBASED_CTLS2_ENABLE_XSAVES_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_RDTSCP_FLAG |
 			/*IA32_VMX_PROCBASED_CTLS2_ENABLE_EPT_FLAG |*/ IA32_VMX_PROCBASED_CTLS2_DESCRIPTOR_TABLE_EXITING_FLAG //|
 			/*IA32_VMX_PROCBASED_CTLS2_ENABLE_VPID_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_INVPCID_FLAG*/,
 			IA32_VMX_PROCBASED_CTLS2)) != 0)	return VM_ERROR_ERR_INFO_ERR;
@@ -279,7 +279,7 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp, uint64_t cr3) -
 	// These fields control VM exits
 	//
 	if (__vmx_vmwrite(VMCS_CTRL_PRIMARY_VMEXIT_CONTROLS,
-		AdjustControls(IA32_VMX_EXIT_CTLS_HOST_ADDRESS_SPACE_SIZE_FLAG | IA32_VMX_EXIT_CTLS_ACKNOWLEDGE_INTERRUPT_ON_EXIT_FLAG,
+		adjust_controls(IA32_VMX_EXIT_CTLS_HOST_ADDRESS_SPACE_SIZE_FLAG | IA32_VMX_EXIT_CTLS_ACKNOWLEDGE_INTERRUPT_ON_EXIT_FLAG,
 			IA32_VMX_EXIT_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
 
 	//
@@ -287,7 +287,7 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp, uint64_t cr3) -
 	// These fields control VM entries.
 	//
 	if (__vmx_vmwrite(VMCS_CTRL_VMENTRY_CONTROLS,
-		AdjustControls(IA32_VMX_ENTRY_CTLS_IA32E_MODE_GUEST_FLAG, IA32_VMX_ENTRY_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+		adjust_controls(IA32_VMX_ENTRY_CTLS_IA32E_MODE_GUEST_FLAG, IA32_VMX_ENTRY_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
 
 	//
 	// VM-exit information fields. 
@@ -426,6 +426,9 @@ auto save_pin_fields(ia32_vmx_pinbased_ctls_register& pinbased_ctls) -> void {
 auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	UNREFERENCED_PARAMETER(vcpu);
 	UNREFERENCED_PARAMETER(guest_rsp);
+
+	ia32_vmx_basic_register vmx_basic{};
+	vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
 
 	/// VM-ENTRY CONTROL FIELDS
 	ia32_vmx_entry_ctls_register entry_ctls{};
@@ -594,4 +597,86 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	__vmx_vmwrite(VMCS_GUEST_IDTR_BASE, asm_get_idt_base());
 	__vmx_vmwrite(VMCS_GUEST_IDTR_LIMIT, asm_get_idt_limit());
 	__vmx_vmwrite(VMCS_HOST_IDTR_BASE, asm_get_idt_base());
+
+	/// The various MSRs as documented in the Intel SDM - Guest & Host
+	__vmx_vmwrite(VMCS_GUEST_DEBUGCTL, __readmsr(MSR_IA32_DEBUGCTL) & 0xffffffff);
+	__vmx_vmwrite(VMCS_GUEST_DEBUGCTL_HIGH, __readmsr(MSR_IA32_DEBUGCTL) >> 32);	// I don't think this is specifically needed
+
+	__vmx_vmwrite(VMCS_GUEST_SYSENTER_CS, __readmsr(MSR_IA32_SYSENTER_CS));
+	__vmx_vmwrite(VMCS_GUEST_SYSENTER_ESP, __readmsr(MSR_IA32_SYSENTER_ESP));
+	__vmx_vmwrite(VMCS_GUEST_SYSENTER_EIP, __readmsr(MSR_IA32_SYSENTER_EIP));
+	__vmx_vmwrite(VMCS_GUEST_EFER, __readmsr(IA32_EFER));
+
+	__vmx_vmwrite(VMCS_HOST_SYSENTER_CS, __readmsr(MSR_IA32_SYSENTER_CS));
+	__vmx_vmwrite(VMCS_HOST_SYSENTER_ESP, __readmsr(MSR_IA32_SYSENTER_ESP));
+	__vmx_vmwrite(VMCS_HOST_SYSENTER_EIP, __readmsr(MSR_IA32_SYSENTER_EIP));
+
+	/// VMCS link pointer
+	__vmx_vmwrite(VMCS_GUEST_VMCS_LINK_POINTER, static_cast<size_t>(~0));
+
+	
+	(CONTROL_VM_EXIT_CONTROLS, ajdust_controls(exit_controls.all, vmx_basic.true_controls ? IA32_VMX_TRUE_EXIT_CTLS : IA32_VMX_EXIT_CTLS));
+	(CONTROL_VM_ENTRY_CONTROLS, ajdust_controls(entry_controls.all, vmx_basic.true_controls ? IA32_VMX_TRUE_ENTRY_CTLS : IA32_VMX_ENTRY_CTLS));
+
+
+	/// VM Execution Control Fields
+	/// These fields control processor behavior in VMX non-root operation.
+	/// They determine in part the causes of VM exits.
+	__vmx_vmwrite(VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS, 
+		adjust_controls(pinbased_ctls.flags, vmx_basic.vmx_controls ? IA32_VMX_TRUE_PINBASED_CTLS : IA32_VMX_PINBASED_CTLS));
+
+	__vmx_vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
+		adjust_controls(procbased_ctls.flags, vmx_basic.vmx_controls ? IA32_VMX_TRUE_PROCBASED_CTLS : IA32_VMX_PROCBASED_CTLS));
+
+	__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
+		adjust_controls(procbased_ctls2.flags, IA32_VMX_PROCBASED_CTLS2));
+
+
+	//
+	// VM-exit control fields. 
+	// These fields control VM exits
+	if (__vmx_vmwrite(VMCS_CTRL_PRIMARY_VMEXIT_CONTROLS,
+		AdjustControls(IA32_VMX_EXIT_CTLS_HOST_ADDRESS_SPACE_SIZE_FLAG | IA32_VMX_EXIT_CTLS_ACKNOWLEDGE_INTERRUPT_ON_EXIT_FLAG,
+			IA32_VMX_EXIT_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	//
+	// VM-entry control fields. 
+	// These fields control VM entries.
+	//
+	if (__vmx_vmwrite(VMCS_CTRL_VMENTRY_CONTROLS,
+		AdjustControls(IA32_VMX_ENTRY_CTLS_IA32E_MODE_GUEST_FLAG, IA32_VMX_ENTRY_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	//
+	// VM-exit information fields. 
+	// These fields receive information on VM exits and describe the cause and the nature of VM exits.
+	//
+	//if (__vmx_vmwrite(VMCS_VMEXIT_INSTRUCTION_INFO,
+	//	AdjustControls(IA32_VMX_EXIT_CTLS_HOST_ADDRESS_SPACE_SIZE_FLAG, IA32_VMX_EXIT_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	//__debugbreak();
+
+	//
+	// Misc
+	//
+	if (__vmx_vmwrite(VMCS_GUEST_ACTIVITY_STATE, 0) != 0)	return VM_ERROR_ERR_INFO_ERR;	// Active State
+	if (__vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY_STATE, 0) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS, 0) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	if (__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_A_ADDRESS, (size_t)vmm_context[processor_number].io_bitmap_a_phys_addr) != 0) return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_B_ADDRESS, (size_t)vmm_context[processor_number].io_bitmap_b_phys_addr) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	if (__vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, vmm_context[processor_number].msr_bitmap_phys_addr) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	if (__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vmm_context[processor_number].ept_ptr) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, KeGetCurrentProcessorNumberEx(NULL) + 1) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	ia32_vmx_misc_register misc;
+	misc.flags = __readmsr(IA32_VMX_MISC);
+
+	if (__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, misc.cr3_target_count) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	for (unsigned iter = 0; iter < misc.cr3_target_count; iter++) {
+		if (__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_0 + (iter * 2), 0) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	}
 }
