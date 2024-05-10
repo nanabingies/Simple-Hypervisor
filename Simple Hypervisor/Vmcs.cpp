@@ -468,5 +468,118 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	__vmx_vmwrite(VMCS_CTRL_CR0_READ_SHADOW, __readcr0());
 	__vmx_vmwrite(VMCS_CTRL_CR4_READ_SHADOW, __readcr4());
 
+	__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, __readcr3());
 	__vmx_vmwrite(VMCS_CTRL_CR4_READ_SHADOW, __readcr4());
+	__vmx_vmwrite(VMCS_CTRL_CR4_GUEST_HOST_MASK, 0x2000);
+
+	/// Debug Register (DR7)
+	__vmx_vmwrite(VMCS_GUEST_DR7, __readdr(7));
+
+	/// RSP, RIP, RFLAGS - Guest & Host
+	__vmx_vmwrite(VMCS_GUEST_RSP, reinterpret_cast<size_t>(guest_rsp));
+	__vmx_vmwrite(VMCS_GUEST_RIP, static_cast<size_t>(guest_rip));
+	__vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags());
+
+	__vmx_vmwrite(VMCS_HOST_RSP, reinterpret_cast<size_t>(vcpu->vmm_stack) + HOST_STACK_SIZE);
+	// Address host should point to, to kick things off when vmexit occurs
+	__vmx_vmwrite(VMCS_HOST_RIP, static_cast<size_t>(asm_vmm_entry));
+
+	/// CS, SS, DS, ES, FS, GS, LDTR, and TR -- Guest & Host
+	CONTEXT ctx;
+	RtlCaptureContext(&ctx);
+
+	uint64_t gdtBase = asm_get_gdt_base();
+	vmx_gdtentry64 vmxGdtEntry;
+
+	ShvUtilConvertGdtEntry(reinterpret_cast<void*>(gdtBase), ctx.SegCs, &vmxGdtEntry);
+
+	__vmx_vmwrite(VMCS_GUEST_CS_SELECTOR, vmxGdtEntry.Selector);
+	__vmx_vmwrite(VMCS_GUEST_CS_BASE, vmxGdtEntry.Base);
+	__vmx_vmwrite(VMCS_GUEST_CS_LIMIT, vmxGdtEntry.Limit);
+	if (__vmx_vmwrite(VMCS_GUEST_CS_ACCESS_RIGHTS, vmxGdtEntry.AccessRights) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	if (__vmx_vmwrite(VMCS_HOST_CS_SELECTOR, (ctx.SegCs & 0xF8)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	ShvUtilConvertGdtEntry(reinterpret_cast<void*>(gdtBase), ctx.SegSs, &vmxGdtEntry);
+
+	if (__vmx_vmwrite(VMCS_GUEST_SS_SELECTOR, vmxGdtEntry.Selector) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_SS_BASE, vmxGdtEntry.Base) != 0)		return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_SS_LIMIT, vmxGdtEntry.Limit) != 0)		return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_SS_ACCESS_RIGHTS, vmxGdtEntry.AccessRights) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	if (__vmx_vmwrite(VMCS_HOST_SS_SELECTOR, (ctx.SegSs & 0xF8)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	ShvUtilConvertGdtEntry(reinterpret_cast<void*>(gdtBase), ctx.SegDs, &vmxGdtEntry);
+
+	if (__vmx_vmwrite(VMCS_GUEST_DS_SELECTOR, vmxGdtEntry.Selector) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_DS_BASE, vmxGdtEntry.Base) != 0)		return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_DS_LIMIT, vmxGdtEntry.Limit) != 0)		return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_DS_ACCESS_RIGHTS, vmxGdtEntry.AccessRights) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	if (__vmx_vmwrite(VMCS_HOST_DS_SELECTOR, (ctx.SegDs & 0xF8)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	ShvUtilConvertGdtEntry(reinterpret_cast<void*>(gdtBase), ctx.SegEs, &vmxGdtEntry);
+
+	if (__vmx_vmwrite(VMCS_GUEST_ES_SELECTOR, vmxGdtEntry.Selector) != 0)	return VM_ERROR_ERR_INFO_ERR;	// GETES() & 0xF8
+	if (__vmx_vmwrite(VMCS_GUEST_ES_BASE, vmxGdtEntry.Base) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_ES_LIMIT, vmxGdtEntry.Limit) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_ES_ACCESS_RIGHTS, vmxGdtEntry.AccessRights) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	if (__vmx_vmwrite(VMCS_HOST_ES_SELECTOR, (ctx.SegEs & 0xF8)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	ShvUtilConvertGdtEntry(reinterpret_cast<void*>(gdtBase), ctx.SegFs, &vmxGdtEntry);
+
+	if (__vmx_vmwrite(VMCS_GUEST_FS_SELECTOR, vmxGdtEntry.Selector) != 0) return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_FS_BASE, __readmsr(IA32_FS_BASE)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_FS_LIMIT, vmxGdtEntry.Limit) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_FS_ACCESS_RIGHTS, vmxGdtEntry.AccessRights) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	if (__vmx_vmwrite(VMCS_HOST_FS_SELECTOR, (ctx.SegFs & 0xF8)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_HOST_FS_BASE, __readmsr(IA32_FS_BASE)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_FS_BASE, __readmsr(IA32_FS_BASE)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	ShvUtilConvertGdtEntry(reinterpret_cast<void*>(gdtBase), ctx.SegGs, &vmxGdtEntry);
+
+	if (__vmx_vmwrite(VMCS_GUEST_GS_SELECTOR, vmxGdtEntry.Selector) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_GS_BASE, __readmsr(IA32_GS_BASE)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_GS_LIMIT, vmxGdtEntry.Limit) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_GS_ACCESS_RIGHTS, vmxGdtEntry.AccessRights) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	if (__vmx_vmwrite(VMCS_HOST_GS_SELECTOR, (ctx.SegGs & 0xF8)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_HOST_GS_BASE, __readmsr(IA32_GS_BASE)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_GS_BASE, __readmsr(IA32_GS_BASE)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+
+	ShvUtilConvertGdtEntry(reinterpret_cast<void*>(gdtBase), asm_get_ldtr(), &vmxGdtEntry);
+
+	if (__vmx_vmwrite(VMCS_GUEST_LDTR_SELECTOR, vmxGdtEntry.Selector) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_LDTR_BASE, vmxGdtEntry.Base) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_LDTR_LIMIT, vmxGdtEntry.Limit) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_LDTR_ACCESS_RIGHTS, vmxGdtEntry.AccessRights) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_LDTR_BASE, asm_get_ldtr() & 0xF8) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	// There is no field in the host - state area for the LDTR selector.
+
+
+	ShvUtilConvertGdtEntry(reinterpret_cast<void*>(gdtBase), asm_get_tr(), &vmxGdtEntry);
+
+	if (__vmx_vmwrite(VMCS_GUEST_TR_SELECTOR, vmxGdtEntry.Selector) != 0)	return VM_ERROR_ERR_INFO_ERR;	// GETTR() & 0xF8
+	if (__vmx_vmwrite(VMCS_GUEST_TR_BASE, vmxGdtEntry.Base) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_TR_LIMIT, vmxGdtEntry.Limit) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_TR_ACCESS_RIGHTS, vmxGdtEntry.AccessRights) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	if (__vmx_vmwrite(VMCS_HOST_TR_SELECTOR, (asm_get_tr() & 0xF8)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_HOST_TR_BASE, vmxGdtEntry.Base) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	//
+	// GDTR and IDTR 
+	//
+
+	if (__vmx_vmwrite(VMCS_GUEST_GDTR_BASE, asm_get_gdt_base()) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_GDTR_LIMIT, asm_get_gdt_limit()) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_HOST_GDTR_BASE, asm_get_gdt_base()) != 0)	return VM_ERROR_ERR_INFO_ERR;
+
+	if (__vmx_vmwrite(VMCS_GUEST_IDTR_BASE, asm_get_idt_base()) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_GUEST_IDTR_LIMIT, asm_get_idt_limit()) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_HOST_IDTR_BASE, asm_get_idt_base()) != 0)	return VM_ERROR_ERR_INFO_ERR;
 }
