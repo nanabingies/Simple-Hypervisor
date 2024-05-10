@@ -8,6 +8,20 @@
 #define VMM_STACK_SIZE 0x6000
 #define HOST_STACK_SIZE  (20 * PAGE_SIZE)
 
+#pragma pack(push, 1)
+struct __descriptor64 {
+	unsigned __int16 limit;
+	unsigned __int64 base_address;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct __descriptor32 {
+	unsigned __int16 limit;
+	unsigned __int32 base_address;
+};
+#pragma pack(pop)
+
 using guest_registers = struct guest_registers {
 	__m128 xmm[6];
 	unsigned __int64 r15;
@@ -199,6 +213,8 @@ inline uint64_t virtual_to_physical_address(void* virtual_address) {
 }
 
 extern "C" {
+	void _sgdt(void*);
+
 	NTKERNELAPI
 		_IRQL_requires_max_(APC_LEVEL)
 		_IRQL_requires_min_(PASSIVE_LEVEL) _IRQL_requires_same_ VOID
