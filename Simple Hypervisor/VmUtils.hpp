@@ -178,6 +178,12 @@ typedef struct _ept_error {
 
 extern _vmm_context* vmm_context;
 
+struct _KPROCESS {
+	DISPATCHER_HEADER Header;                                       //0x0
+	LIST_ENTRY ProfileListHead;                                     //0x18
+	ULONGLONG DirectoryTableBase;
+};
+
 inline uint64_t physical_to_virtual_address(uint64_t physical_address) {
 	PHYSICAL_ADDRESS physAddr;
 	physAddr.QuadPart = physical_address;
