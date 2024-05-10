@@ -39,6 +39,8 @@ namespace hv {
 
 	auto initialize_vmm(void*) -> void;
 
+	auto get_system_dirbase() -> unsigned __int64;
+
 	auto launch_vm(ULONG_PTR) -> ULONG_PTR;
 	auto terminate_vm(uchar) -> void;
 	auto resume_vm() -> void;
