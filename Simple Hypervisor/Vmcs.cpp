@@ -426,8 +426,6 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	UNREFERENCED_PARAMETER(vcpu);
 	UNREFERENCED_PARAMETER(guest_rsp);
 
-	__debugbreak();
-
 	/// VM-ENTRY CONTROL FIELDS
 	ia32_vmx_entry_ctls_register entry_ctls{};
 	save_vmentry_fields(entry_ctls);
@@ -447,4 +445,28 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	/// Pin-Based VM-Execution Controls
 	ia32_vmx_pinbased_ctls_register pinbased_ctls{};
 	save_pin_fields(pinbased_ctls);
+
+	memset(vcpu->vcpu_bitmaps.io_bitmap_a, 0xff, PAGE_SIZE);
+	memset(vcpu->vcpu_bitmaps.io_bitmap_b, 0xff, PAGE_SIZE);
+	memset(vcpu->vcpu_bitmaps.msr_bitmap, 0xff, PAGE_SIZE);
+
+	/// Set VMCS state to inactive
+	__vmx_vmclear(static_cast<unsigned long long*>(&vcpu->vmcs_physical));
+
+	/// Make VMCS the current and active on that processor
+	__vmx_vmptrld(static_cast<unsigned long long*>(&vcpu->vmcs_physical));
+
+	/// Control Registers - Guest & Host
+	__vmx_vmwrite(VMCS_GUEST_CR0, __readcr0());
+	__vmx_vmwrite(VMCS_GUEST_CR3, __readcr3());
+	__vmx_vmwrite(VMCS_GUEST_CR4, __readcr4());
+
+	__vmx_vmwrite(VMCS_HOST_CR0, __readcr0());
+	__vmx_vmwrite(VMCS_HOST_CR3, hv::get_system_dirbase());		// Host cr3
+	__vmx_vmwrite(VMCS_HOST_CR4, __readcr4());
+
+	__vmx_vmwrite(VMCS_CTRL_CR0_READ_SHADOW, __readcr0());
+	__vmx_vmwrite(VMCS_CTRL_CR4_READ_SHADOW, __readcr4());
+
+	__vmx_vmwrite(VMCS_CTRL_CR4_READ_SHADOW, __readcr4());
 }
