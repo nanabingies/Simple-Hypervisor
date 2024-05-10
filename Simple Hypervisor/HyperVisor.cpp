@@ -237,6 +237,11 @@ namespace hv {
 		current_vcpu->vcpu_status.vmm_launched = true;
 	}
 
+	auto get_system_dirbase() -> unsigned __int64 {
+		__debugbreak();
+		return ((_KPROCESS*)PsInitialSystemProcess)->DirectoryTableBase;
+	}
+
 	auto launch_all_vmms() -> void {
 		
 		KeIpiGenericCall((PKIPI_BROADCAST_WORKER)launch_vm, 0);
