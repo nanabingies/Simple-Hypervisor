@@ -259,7 +259,7 @@ auto setup_vmcs(unsigned long processor_number, void* guest_rsp, uint64_t cr3) -
 	// These fields control processor behavior in VMX non-root operation.
 	// They determine in part the causes of VM exits.
 	//
-	if (__vmx_vmwrite(VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS, AdjustControls(0, IA32_VMX_PINBASED_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	if (__vmx_vmwrite(VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS, adjust_controls(0, IA32_VMX_PINBASED_CTLS)) != 0)	return VM_ERROR_ERR_INFO_ERR;
 
 	if (__vmx_vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
 		adjust_controls(IA32_VMX_PROCBASED_CTLS_HLT_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_USE_MSR_BITMAPS_FLAG |
@@ -488,19 +488,6 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	// Address host should point to, to kick things off when vmexit occurs
 	__vmx_vmwrite(VMCS_HOST_RIP, static_cast<size_t>(asm_vmm_entry));
 
-	/*__descriptor64 gdtr = {0};
-	__descriptor64 idtr = { 0 };
-	_sgdt(&gdtr);
-	__sidt(&idtr);
-
-	// Global descriptor table and local one
-	__vmx_vmwrite(VMCS_GUEST_GDTR_LIMIT, gdtr.limit);
-	__vmx_vmwrite(VMCS_GUEST_IDTR_LIMIT, idtr.limit);
-	__vmx_vmwrite(VMCS_GUEST_GDTR_BASE, gdtr.base_address);
-	__vmx_vmwrite(VMCS_GUEST_IDTR_BASE, idtr.base_address);
-	__vmx_vmwrite(VMCS_HOST_GDTR_BASE, gdtr.base_address);
-	__vmx_vmwrite(VMCS_HOST_IDTR_BASE, idtr.base_address);*/
-
 
 	/// CS, SS, DS, ES, FS, GS, LDTR, and TR -- Guest & Host
 	CONTEXT ctx;
@@ -643,20 +630,10 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	__vmx_vmwrite(VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS, 0);
 
 	__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_A_ADDRESS, vcpu->vcpu_bitmaps.io_bitmap_a_physical);
-	if (__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_B_ADDRESS, (size_t)vmm_context[processor_number].io_bitmap_b_phys_addr) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_B_ADDRESS, vcpu->vcpu_bitmaps.io_bitmap_b_physical);
 
-	if (__vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, vmm_context[processor_number].msr_bitmap_phys_addr) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	__vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, vcpu->vcpu_bitmaps.msr_bitmap_physical);
 
-	if (__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vmm_context[processor_number].ept_ptr) != 0)	return VM_ERROR_ERR_INFO_ERR;
-	if (__vmx_vmwrite(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, KeGetCurrentProcessorNumberEx(NULL) + 1) != 0)	return VM_ERROR_ERR_INFO_ERR;
+	__vmx_vmwrite(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, KeGetCurrentProcessorNumberEx(NULL) + 1);
 
-	ia32_vmx_misc_register misc;
-	misc.flags = __readmsr(IA32_VMX_MISC);
-
-	if (__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, misc.cr3_target_count) != 0)	return VM_ERROR_ERR_INFO_ERR;
-
-	for (unsigned iter = 0; iter < misc.cr3_target_count; iter++) {
-		if (__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_0 + (iter * 2), 0) != 0)	return VM_ERROR_ERR_INFO_ERR;
-
-	}
 }
