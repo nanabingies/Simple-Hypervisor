@@ -1,6 +1,5 @@
 
 public	asm_host_continue_execution
-public  asm_setup_vmcs
 public  asm_inv_ept_global
 
 public asm_save_vmm_state
@@ -15,11 +14,8 @@ public	asm_get_gdt_base
 
 public  asm_vmx_vmcall
 
-extern	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z:proc
-extern  ?vmexit_handler@vmexit@@YAFPEAX@Z:proc
+extern  ?vmexit_handler@vmexit@@YAXPEAX@Z:proc
 extern  ?initialize_vmm@hv@@YAXPEAX@Z:proc
-extern  ret_val:dword
-extern  cr3_val:qword
 
 .CONST
 VM_ERROR_OK				equ		00h
@@ -69,7 +65,7 @@ endm
 ;----------------------------------------------------------------------------------------------------
 
 asm_host_continue_execution proc
-	;int 3		; A VM Exit just occured
+	int 3		; A VM Exit just occured
 
     SAVE_GP
     sub     rsp ,60h
@@ -83,7 +79,7 @@ asm_host_continue_execution proc
 
     mov     rcx, rsp
     sub     rsp,  20h
-    ;call    ?vmexit_handler@@YA_NPEAU__vmexit_guest_registers@@@Z       ; handle VM exit 
+    call    ?vmexit_handler@vmexit@@YAXPEAX@Z       ; handle VM exit 
     add     rsp, 20h
 
     movdqa  xmm0, xmmword ptr [rsp]
@@ -99,43 +95,6 @@ asm_host_continue_execution proc
     vmresume
 
 asm_host_continue_execution ENDP
-
-;----------------------------------------------------------------------------------------------------
-
-asm_setup_vmcs proc
-	
-	pushfq
-	SAVE_GP
-
-	sub     rsp, 060h
-	movdqa  xmmword ptr [rsp], xmm0
-    movdqa  xmmword ptr [rsp + 10h], xmm1
-    movdqa  xmmword ptr [rsp + 20h], xmm2
-    movdqa  xmmword ptr [rsp + 30h], xmm3
-    movdqa  xmmword ptr [rsp + 40h], xmm4
-    movdqa  xmmword ptr [rsp + 50h], xmm5
-
-	mov		rdx, rsp
-    mov     r8,  cr3_val
-	sub		rsp, 020h
-    call	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z
-    mov     ret_val, eax
-    add		rsp, 020h
-
-	movdqa  xmm0, xmmword ptr [rsp]
-    movdqa  xmm1, xmmword ptr [rsp + 10h]
-    movdqa  xmm2, xmmword ptr [rsp + 20h]
-    movdqa  xmm3, xmmword ptr [rsp + 30h]
-    movdqa  xmm4, xmmword ptr [rsp + 40h]
-    movdqa  xmm5, xmmword ptr [rsp + 50h]
-	add     rsp,  060h
-
-	RESTORE_GP
-	popfq
-    mov     eax, ret_val
-	ret
-
-asm_setup_vmcs endp
 
 ;----------------------------------------------------------------------------------------------------
 
