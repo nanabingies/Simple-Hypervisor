@@ -1,34 +1,22 @@
 #include "stdafx.h"
 
 namespace vmexit {
-	auto vmexit_handler(void* _guest_registers) -> short {
+	auto vmexit_handler(void* _guest_registers) -> void {
 		auto guest_regs = reinterpret_cast<guest_registers*>(_guest_registers);
-		if (!guest_regs)	return VM_ERROR_ERR_INFO_ERR;
+		if (!guest_regs)	return;
 
 		vmx_vmexit_reason vmexit_reason;
 		__vmx_vmread(VMCS_EXIT_REASON, reinterpret_cast<size_t*>(&vmexit_reason));
 
-		auto current_processor = KeGetCurrentNodeNumber();
-		auto current_vmm_context = vmm_context[current_processor];
+		__vcpu* vcpu = g_vmm_context->vcpu_table[KeGetCurrentProcessorNumberEx(NULL)];
 
-		// let's save vmexit info into our vmm context
-		{
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&vmm_context[current_processor].vmexit_qualification));
-			vmm_context[current_processor].vmexit_reason = vmexit_reason.flags;
-			__vmx_vmread(VMCS_GUEST_RIP, reinterpret_cast<size_t*>(&vmm_context[current_processor].vmexit_guest_rip));
-			__vmx_vmread(VMCS_GUEST_RSP, reinterpret_cast<size_t*>(&vmm_context[current_processor].vmexit_guest_rsp));
-			__vmx_vmread(VMCS_VMEXIT_INSTRUCTION_LENGTH, reinterpret_cast<size_t*>(&vmm_context[current_processor].vmexit_instruction_length));
-			__vmx_vmread(VMCS_VMEXIT_INSTRUCTION_INFO, reinterpret_cast<size_t*>(&vmm_context[current_processor].vmexit_instruction_information));
-			/*current_vmm_context.guest_regs->rax = guest_regs->rax;
-			current_vmm_context.guest_regs->rbx = guest_regs->rbx;
-			current_vmm_context.guest_regs->rcx = guest_regs->rcx;
-			current_vmm_context.guest_regs->rdx = guest_regs->rdx;
-			current_vmm_context.guest_regs->rbp = guest_regs->rbp;
-			current_vmm_context.guest_regs->rsp = guest_regs->rsp;*/
-		}
+		unsigned __int64 rsp = 0;
+		__vmx_vmread(VMCS_GUEST_RSP, &rsp);
 
+		guest_regs->rsp = rsp;
+		vcpu->vmexit_info.guest_registers = guest_regs;
 
-		switch (vmexit_reason.basic_exit_reason)
+		/*switch (vmexit_reason.basic_exit_reason)
 		{
 		case VMX_EXIT_REASON_EXCEPTION_OR_NMI: {
 			//LOG("[*][%ws] exception or nmi\n", __FUNCTIONW__);
@@ -499,7 +487,9 @@ namespace vmexit {
 
 		default:
 			break;
-		}
+		}*/
+
+		//handle_vmexit_instruction(guest_regs);
 
 		size_t rip, inst_len;
 		__vmx_vmread(VMCS_GUEST_RIP, &rip);
@@ -508,6 +498,20 @@ namespace vmexit {
 		rip += inst_len;
 		__vmx_vmwrite(VMCS_GUEST_RIP, rip);
 
-		return VM_ERROR_OK;
+		hv::vmwrite(GUEST_RIP, vcpu->vmexit_info.guest_rip + vcpu->vmexit_info.instruction_length);
+		if (vcpu->vmexit_info.guest_rflags.trap_flag)
+		{
+			__vmx_pending_debug_exceptions pending_debug = { hv::vmread(GUEST_PENDING_DEBUG_EXCEPTION) };
+			__vmx_interruptibility_state interruptibility = { hv::vmread(GUEST_INTERRUPTIBILITY_STATE) };
+
+			pending_debug.bs = true;
+			hv::vmwrite(GUEST_PENDING_DEBUG_EXCEPTION, pending_debug.all);
+
+			interruptibility.blocking_by_sti = false;
+			interruptibility.blocking_by_mov_ss = false;
+			hv::vmwrite(GUEST_INTERRUPTIBILITY_STATE, interruptibility.all);
+		}
+
+		return;
 	}
 }
