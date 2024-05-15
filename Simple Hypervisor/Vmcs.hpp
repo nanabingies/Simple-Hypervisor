@@ -109,7 +109,6 @@ extern "C" {
 
     auto inline asm_setup_vmcs(unsigned long) -> EVmErrors;
 
-    auto inline __stdcall asm_host_continue_execution() -> unsigned __int64;
     auto inline asm_guest_continue_execution() -> void;
 
     auto inline asm_get_ldtr() -> unsigned short;
@@ -125,3 +124,7 @@ extern "C" {
 auto setup_vmcs(unsigned long, void*, uint64_t) -> EVmErrors;
 
 auto hv_setup_vmcs(struct __vcpu*, void*) -> void;
+
+extern "C" auto inline asm_restore_vmm_state() -> void;
+
+extern "C" auto inline asm_host_continue_execution() -> void;
