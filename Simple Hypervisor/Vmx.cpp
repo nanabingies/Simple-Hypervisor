@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #pragma warning(disable: 4996)
 
-_vmm_context* vmm_context;
-
 namespace vmx {
 	auto vmx_is_vmx_available() -> bool {
 		//
@@ -248,122 +246,6 @@ namespace vmx {
 		}
 
 		//LOG("[*] vmxon initialized on logical processor (%x)\n", processor_number);
-		return true;
-	}
-
-	auto vmx_allocate_vmcs_region(uchar processor_number) -> bool {
-		if (!vmm_context) {
-			LOG("[!] Unspecified VMM context for processor %x\n", processor_number);
-			LOG_ERROR(__FILE__, __LINE__);
-			return false;
-		}
-
-		PHYSICAL_ADDRESS phys_addr;
-		phys_addr.QuadPart = static_cast<uint64_t>(~0);
-
-		ia32_vmx_basic_register vmx_basic{};
-		vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
-
-		void* vmcs = MmAllocateContiguousMemory(vmx_basic.vmcs_size_in_bytes, phys_addr);
-		if (!vmcs) {
-			LOG("[!] Allocating vmcs failed for processor (%x).\n", processor_number);
-			LOG_ERROR(__FILE__, __LINE__);
-			return false;
-		}
-
-		RtlSecureZeroMemory(vmcs, vmx_basic.vmcs_size_in_bytes);
-		//LOG("[*] Allocated vmcs for processor (%x) at %llx with size %llx\n", processor_number, reinterpret_cast<uint64_t>(vmcs), vmx_basic.vmcs_size_in_bytes);
-
-		*reinterpret_cast<uint64_t*>(vmcs) = vmx_basic.vmcs_revision_id;
-
-		vmm_context[processor_number].vmcs_region_virt_addr = reinterpret_cast<UINT64>(vmcs);
-		vmm_context[processor_number].vmcs_region_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(vmcs));
-
-		//
-		// Load current VMCS and make it active
-		//
-		auto ret = __vmx_vmptrld(&vmm_context[processor_number].vmcs_region_phys_addr);
-		if (ret > 0) {
-			LOG("[!] Failed vmcs with error code %x\n", ret);
-			LOG_ERROR(__FILE__, __LINE__);
-			return FALSE;
-		}
-
-		//LOG("[*] vmcs loaded on logical processor (%x)\n", processor_number);
-		return true;
-	}
-
-	auto vmx_allocate_vmexit_stack(uchar processor_number) -> bool {
-		PHYSICAL_ADDRESS phys_addr;
-		phys_addr.QuadPart = static_cast<uint64_t>(~0);
-
-		void* vmexitStack = MmAllocateContiguousMemory(HOST_STACK_SIZE, phys_addr);
-		if (!vmexitStack) {
-			LOG("[!] Failure allocating memory for VM EXIT Handler for processor (%x).\n", processor_number);
-			LOG_ERROR(__FILE__, __LINE__);
-			return false;
-		}
-		RtlSecureZeroMemory(vmexitStack, HOST_STACK_SIZE);
-
-		vmm_context[processor_number].host_stack = reinterpret_cast<UINT64>(vmexitStack);
-		//LOG("[*] vmm_context[%x].HostStack : %llx\n", processor_number, vmm_context[processor_number].host_stack);
-
-		return true;
-	}
-
-	auto vmx_allocate_io_bitmap_stack(uchar processor_number) -> bool {
-		PHYSICAL_ADDRESS phys_addr;
-		phys_addr.QuadPart = static_cast<ULONGLONG>(~0);
-
-		void* bitmap = MmAllocateContiguousMemory(PAGE_SIZE, phys_addr);
-		if (!bitmap) {
-			LOG("[!] Failure allocating memory for IO Bitmap A on processor (%x).\n", processor_number);
-			LOG_ERROR(__FILE__, __LINE__);
-			return false;
-		}
-		RtlSecureZeroMemory(bitmap, PAGE_SIZE);
-
-		vmm_context[processor_number].io_bitmap_a_virt_addr = reinterpret_cast<uint64_t>(bitmap);
-		vmm_context[processor_number].io_bitmap_a_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(bitmap));
-
-		phys_addr.QuadPart = static_cast<ULONGLONG>(~0);
-		bitmap = MmAllocateContiguousMemory(PAGE_SIZE, phys_addr);
-		if (!bitmap) {
-			LOG("[!] Failure allocating memory for IO Bitmap B on processor (%x).\n", processor_number);
-			LOG_ERROR(__FILE__, __LINE__);
-			return false;
-		}
-		RtlSecureZeroMemory(bitmap, PAGE_SIZE);
-
-		vmm_context[processor_number].io_bitmap_b_virt_addr = reinterpret_cast<uint64_t>(bitmap);
-		vmm_context[processor_number].io_bitmap_b_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(bitmap));
-
-		//LOG("[*] vmm_context[%x].io_bitmap_a_virt_addr : %llx\n", processor_number, vmm_context[processor_number].io_bitmap_a_virt_addr);
-		//LOG("[*] vmm_context[%x].io_bitmap_b_virt_addr : %llx\n", processor_number, vmm_context[processor_number].io_bitmap_b_virt_addr);
-
-		//
-		// We want to vmexit on every io and msr access
-		//memset(vmm_context[processor_number].io_bitmap_a_virt_addr, 0xff, PAGE_SIZE);
-		//memset(vmm_context[processor_number].io_bitmap_b_virt_addr, 0xff, PAGE_SIZE);
-
-		return true;
-	}
-
-	auto vmx_allocate_msr_bitmap(uchar processor_number) -> bool {
-		PHYSICAL_ADDRESS phys_addr;
-		phys_addr.QuadPart = static_cast<ULONGLONG>(~0);
-
-		void* bitmap = MmAllocateContiguousMemory(PAGE_SIZE, phys_addr);
-		if (!bitmap) {
-			LOG("[!] Failure allocating memory for MSR Bitmap for processor (%x).\n", processor_number);
-			LOG_ERROR(__FILE__, __LINE__);
-			return false;
-		}
-		RtlSecureZeroMemory(bitmap, PAGE_SIZE);
-
-		vmm_context[processor_number].msr_bitmap_virt_addr = reinterpret_cast<uint64_t>(bitmap);
-		vmm_context[processor_number].msr_bitmap_phys_addr = static_cast<uint64_t>(virtual_to_physical_address(bitmap));
-
 		return true;
 	}
 
