@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "intrin.h"
 #define VMCS_CTRL_TSC_OFFSET_HIGH	0x2011
+#pragma warning(disable: 4244)
 
 //
 // https://github.com/ionescu007/SimpleVisor/blob/HEAD/shvutil.c#L25-L89 
@@ -481,12 +482,12 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 
 	/// RSP, RIP, RFLAGS - Guest & Host
 	__vmx_vmwrite(VMCS_GUEST_RSP, reinterpret_cast<size_t>(guest_rsp));
-	__vmx_vmwrite(VMCS_GUEST_RIP, static_cast<size_t>(guest_rip));
+	__vmx_vmwrite(VMCS_GUEST_RIP, reinterpret_cast<size_t>(asm_restore_vmm_state));
 	__vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags());
 
 	__vmx_vmwrite(VMCS_HOST_RSP, reinterpret_cast<size_t>(vcpu->vmm_stack) + HOST_STACK_SIZE);
 	// Address host should point to, to kick things off when vmexit occurs
-	__vmx_vmwrite(VMCS_HOST_RIP, static_cast<size_t>(asm_vmm_entry));
+	__vmx_vmwrite(VMCS_HOST_RIP, reinterpret_cast<size_t>(asm_host_continue_execution));
 
 
 	/// CS, SS, DS, ES, FS, GS, LDTR, and TR -- Guest & Host
