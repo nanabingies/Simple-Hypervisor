@@ -502,19 +502,6 @@ namespace vmexit {
 		rip += inst_len;
 		__vmx_vmwrite(VMCS_GUEST_RIP, rip);
 
-		//__vmx_vmwrite(VMCS_GUEST_RIP, vcpu->vmexit_info.guest_rip + vcpu->vmexit_info.instruction_length);
-		/*if (vcpu->vmexit_info.guest_rflags.trap_flag) {
-			__vmx_pending_debug_exceptions pending_debug = { hv::vmread(GUEST_PENDING_DEBUG_EXCEPTION) };
-			__vmx_interruptibility_state interruptibility = { hv::vmread(GUEST_INTERRUPTIBILITY_STATE) };
-
-			pending_debug.bs = true;
-			hv::vmwrite(GUEST_PENDING_DEBUG_EXCEPTION, pending_debug.all);
-
-			interruptibility.blocking_by_sti = false;
-			interruptibility.blocking_by_mov_ss = false;
-			hv::vmwrite(GUEST_INTERRUPTIBILITY_STATE, interruptibility.all);
-		}*/
-
 		return;
 	}
 }
