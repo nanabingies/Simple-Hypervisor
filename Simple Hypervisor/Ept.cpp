@@ -200,8 +200,8 @@ namespace ept {
 			return false;
 		}
 
-		vmm_context[processor_number].ept_ptr = _ept_state->ept_ptr->flags;
-		vmm_context[processor_number].ept_state = _ept_state;
+		//vmm_context[processor_number].ept_ptr = _ept_state->ept_ptr->flags;
+		//vmm_context[processor_number].ept_state = _ept_state;
 		//vmm_context[processor_number].ept_pml4 = static_cast<uint64_t>
 		//	(MmGetPhysicalAddress(_ept_state->ept_page_table->ept_pml4).QuadPart >> PAGE_SHIFT);
 
@@ -230,7 +230,7 @@ namespace ept {
 		pml4e->user_mode_execute = 1;
 		pml4e->write_access = 1;
 
-		vmm_context[KeGetCurrentProcessorNumber()].ept_pml4 = pml4e->flags;
+		//vmm_context[KeGetCurrentProcessorNumber()].ept_pml4 = pml4e->flags;
 
 		ept_pdpte pdpte_template = { 0 };
 		pdpte_template.read_access = 1;
@@ -535,7 +535,8 @@ namespace ept {
 	}
 
 	auto handle_ept_violation(unsigned __int64 phys_addr, unsigned __int64 linear_addr) -> bool {
-		ept_state* _ept_state = vmm_context[KeGetCurrentProcessorNumber()].ept_state;
+		//ept_state* _ept_state = vmm_context[KeGetCurrentProcessorNumber()].ept_state;
+		ept_state* _ept_state = (ept_state*)phys_addr;
 		__debugbreak();
 
 		// Get faulting page table entry (PTE)
