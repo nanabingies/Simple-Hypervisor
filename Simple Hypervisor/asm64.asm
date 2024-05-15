@@ -66,81 +66,38 @@ RESTORE_GP macro
         pop     rax
 endm
 
+;----------------------------------------------------------------------------------------------------
+
 asm_host_continue_execution proc
 	;int 3		; A VM Exit just occured
 
-	pushfq
-	SAVE_GP
+    SAVE_GP
+    sub     rsp ,60h
 
-	sub     rsp, 060h
-	movdqa  xmmword ptr [rsp], xmm0
+    movdqa  xmmword ptr [rsp], xmm0
     movdqa  xmmword ptr [rsp + 10h], xmm1
     movdqa  xmmword ptr [rsp + 20h], xmm2
     movdqa  xmmword ptr [rsp + 30h], xmm3
     movdqa  xmmword ptr [rsp + 40h], xmm4
     movdqa  xmmword ptr [rsp + 50h], xmm5
 
-	mov rcx, rsp
-	sub rsp, 020h
-	call ?vmexit_handler@vmexit@@YAFPEAX@Z			; handle VM exit 
-	add rsp, 020h
+    mov     rcx, rsp
+    sub     rsp,  20h
+    ;call    ?vmexit_handler@@YA_NPEAU__vmexit_guest_registers@@@Z       ; handle VM exit 
+    add     rsp, 20h
 
-	movdqa  xmm0, xmmword ptr [rsp]
+    movdqa  xmm0, xmmword ptr [rsp]
     movdqa  xmm1, xmmword ptr [rsp + 10h]
     movdqa  xmm2, xmmword ptr [rsp + 20h]
     movdqa  xmm3, xmmword ptr [rsp + 30h]
     movdqa  xmm4, xmmword ptr [rsp + 40h]
     movdqa  xmm5, xmmword ptr [rsp + 50h]
-	add     rsp,  060h
 
-	cmp     al, 0
-    jnz      exit
+    add     rsp,  60h
 
-	RESTORE_GP
-
-    ;mov     edi, 681Eh
-    ;vmread  rdx, rdi
-    ;mov     ecx, 440Ch
-    ;vmread  rcx, rcx
-    ;add     rdx, rcx
-    ;vmwrite rdi, rdx
+    RESTORE_GP
     vmresume
 
-exit:
-	sub rsp, 20h
-    ;call ?return_rsp_for_vmxoff@@YA_KXZ
-    add rsp, 20h
-
-	push rax
-
-    sub rsp, 20h
-    ;call ?return_rip_for_vmxoff@@YA_KXZ
-    add rsp, 20h
-
-	push rax
-
-    mov rcx,rsp
-    mov rsp,[rcx+8h]
-    mov rax,[rcx]
-    push rax
-
-    mov r15, [rcx + 10h]
-    mov r14, [rcx + 18h]
-    mov r13, [rcx + 20h]
-    mov r12, [rcx + 28h]
-    mov r11, [rcx + 30h]
-    mov r10, [rcx + 38h]
-    mov r9,  [rcx + 40h]
-    mov r8,  [rcx + 48h]
-    mov rdi, [rcx + 50h]
-    mov rsi, [rcx + 58h]
-    mov rbp, [rcx + 60h]
-    mov rbx, [rcx + 70h]
-    mov rdx, [rcx + 78h]
-    mov rax, [rcx + 88h]
-    mov rcx, [rcx + 80h]
-
-	ret
 asm_host_continue_execution ENDP
 
 ;----------------------------------------------------------------------------------------------------
