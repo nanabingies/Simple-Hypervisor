@@ -183,7 +183,7 @@ asm_setup_vmcs endp
 
 asm_save_vmm_state proc
 
-    int 3
+    ;int 3
     pushfq
     SAVE_GP
     sub rsp, 020h
@@ -193,6 +193,15 @@ asm_save_vmm_state proc
     int 3   ; error
 
 asm_save_vmm_state endp
+
+;----------------------------------------------------------------------------------------------------
+
+asm_restore_vmm_state proc
+    add rsp, 020h
+    RESTORE_GP
+    popfq
+    ret
+asm_restore_vmm_state endp
 
 ;----------------------------------------------------------------------------------------------------
 
