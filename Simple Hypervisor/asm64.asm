@@ -4,6 +4,7 @@ public  asm_setup_vmcs
 public  asm_inv_ept_global
 
 public asm_save_vmm_state
+public asm_restore_vmm_state
 
 public	asm_get_tr
 public	asm_get_ldtr
