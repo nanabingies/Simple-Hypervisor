@@ -13,8 +13,12 @@ namespace vmexit {
 		unsigned __int64 rsp = 0;
 		__vmx_vmread(VMCS_GUEST_RSP, &rsp);
 
-		guest_regs->rsp = rsp;
-		vcpu->vmexit_info.guest_registers = guest_regs;
+		{
+			// Save vmexit info
+			guest_regs->rsp = rsp;
+			vcpu->vmexit_info.guest_registers = guest_regs;
+		}
+		
 
 		/*switch (vmexit_reason.basic_exit_reason)
 		{
@@ -498,9 +502,8 @@ namespace vmexit {
 		rip += inst_len;
 		__vmx_vmwrite(VMCS_GUEST_RIP, rip);
 
-		hv::vmwrite(GUEST_RIP, vcpu->vmexit_info.guest_rip + vcpu->vmexit_info.instruction_length);
-		if (vcpu->vmexit_info.guest_rflags.trap_flag)
-		{
+		//__vmx_vmwrite(VMCS_GUEST_RIP, vcpu->vmexit_info.guest_rip + vcpu->vmexit_info.instruction_length);
+		/*if (vcpu->vmexit_info.guest_rflags.trap_flag) {
 			__vmx_pending_debug_exceptions pending_debug = { hv::vmread(GUEST_PENDING_DEBUG_EXCEPTION) };
 			__vmx_interruptibility_state interruptibility = { hv::vmread(GUEST_INTERRUPTIBILITY_STATE) };
 
@@ -510,7 +513,7 @@ namespace vmexit {
 			interruptibility.blocking_by_sti = false;
 			interruptibility.blocking_by_mov_ss = false;
 			hv::vmwrite(GUEST_INTERRUPTIBILITY_STATE, interruptibility.all);
-		}
+		}*/
 
 		return;
 	}
