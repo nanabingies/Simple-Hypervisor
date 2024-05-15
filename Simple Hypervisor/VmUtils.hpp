@@ -71,7 +71,7 @@ struct __vcpu {
 	unsigned __int64 vmxon_physical;
 
 	struct __vmexit_info {
-		//__vmexit_guest_registers* guest_registers;
+		guest_registers* guest_registers;
 
 		unsigned __int64 guest_rip;
 
@@ -189,8 +189,6 @@ typedef struct _ept_error {
 	void*	param_1;
 	void*	param_2;
 } ept_error;
-
-extern _vmm_context* vmm_context;
 
 struct _KPROCESS {
 	DISPATCHER_HEADER Header;                                       //0x0
