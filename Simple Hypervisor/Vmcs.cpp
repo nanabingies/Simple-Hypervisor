@@ -214,26 +214,26 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	__vmx_vmptrld(static_cast<unsigned long long*>(&vcpu->vmcs_physical));
 
 	/// Control Registers - Guest & Host
-	__vmx_vmwrite(VMCS_GUEST_CR0, __readcr0());
-	__vmx_vmwrite(VMCS_GUEST_CR3, __readcr3());
-	__vmx_vmwrite(VMCS_GUEST_CR4, __readcr4());
+	if (__vmx_vmwrite(VMCS_GUEST_CR0, __readcr0()))	return;
+	if (__vmx_vmwrite(VMCS_GUEST_CR3, __readcr3()))	return;
+	if (__vmx_vmwrite(VMCS_GUEST_CR4, __readcr4()))	return;
 
-	__vmx_vmwrite(VMCS_HOST_CR0, __readcr0());
-	__vmx_vmwrite(VMCS_HOST_CR3, __readcr3());		// Host cr3		// hv::get_system_dirbase()
-	__vmx_vmwrite(VMCS_HOST_CR4, __readcr4());
+	if (__vmx_vmwrite(VMCS_HOST_CR0, __readcr0()))	return;
+	if (__vmx_vmwrite(VMCS_HOST_CR3, __readcr3()))	return;		// Host cr3		// hv::get_system_dirbase()
+	if (__vmx_vmwrite(VMCS_HOST_CR4, __readcr4()))	return;
 
-	__vmx_vmwrite(VMCS_CTRL_CR0_READ_SHADOW, __readcr0());
-	__vmx_vmwrite(VMCS_CTRL_CR4_READ_SHADOW, __readcr4());
+	if (__vmx_vmwrite(VMCS_CTRL_CR0_READ_SHADOW, __readcr0()))	return;
+	if (__vmx_vmwrite(VMCS_CTRL_CR4_READ_SHADOW, __readcr4()))	return;
 
-	__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, __readcr3());
-	__vmx_vmwrite(VMCS_CTRL_CR4_READ_SHADOW, __readcr4());
-	__vmx_vmwrite(VMCS_CTRL_CR4_GUEST_HOST_MASK, 0x2000);
+	if (__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, __readcr3()))	return;
+	if (__vmx_vmwrite(VMCS_CTRL_CR4_READ_SHADOW, __readcr4()))	return;
+	if (__vmx_vmwrite(VMCS_CTRL_CR4_GUEST_HOST_MASK, 0x2000))	return;
 
 	/// Debug Register (DR7)
-	__vmx_vmwrite(VMCS_GUEST_DR7, __readdr(7));
+	if (__vmx_vmwrite(VMCS_GUEST_DR7, __readdr(7)))	return;
 
 	/// RSP, RIP, RFLAGS - Guest & Host
-	if (!__vmx_vmwrite(VMCS_GUEST_RSP, reinterpret_cast<size_t>(guest_rsp)))	return;
+	if (__vmx_vmwrite(VMCS_GUEST_RSP, reinterpret_cast<size_t>(guest_rsp)))	return;
 	if (__vmx_vmwrite(VMCS_GUEST_RIP, reinterpret_cast<size_t>(asm_restore_vmm_state)))	return;
 	if (__vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags())) return;
 
@@ -339,20 +339,20 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	__vmx_vmwrite(VMCS_HOST_IDTR_BASE, asm_get_idt_base());
 
 	/// The various MSRs as documented in the Intel SDM - Guest & Host
-	__vmx_vmwrite(VMCS_GUEST_DEBUGCTL, __readmsr(MSR_IA32_DEBUGCTL) & 0xffffffff);
-	__vmx_vmwrite(VMCS_GUEST_DEBUGCTL_HIGH, __readmsr(MSR_IA32_DEBUGCTL) >> 32);	// I don't think this is specifically needed
+	if (__vmx_vmwrite(VMCS_GUEST_DEBUGCTL, __readmsr(MSR_IA32_DEBUGCTL) & 0xffffffff))	return;
+	if (__vmx_vmwrite(VMCS_GUEST_DEBUGCTL_HIGH, __readmsr(MSR_IA32_DEBUGCTL) >> 32))	return;	// I don't think this is specifically needed
 
-	__vmx_vmwrite(VMCS_GUEST_SYSENTER_CS, __readmsr(MSR_IA32_SYSENTER_CS));
-	__vmx_vmwrite(VMCS_GUEST_SYSENTER_ESP, __readmsr(MSR_IA32_SYSENTER_ESP));
-	__vmx_vmwrite(VMCS_GUEST_SYSENTER_EIP, __readmsr(MSR_IA32_SYSENTER_EIP));
-	__vmx_vmwrite(VMCS_GUEST_EFER, __readmsr(IA32_EFER));
+	if (__vmx_vmwrite(VMCS_GUEST_SYSENTER_CS, __readmsr(MSR_IA32_SYSENTER_CS)))	return;
+	if (__vmx_vmwrite(VMCS_GUEST_SYSENTER_ESP, __readmsr(MSR_IA32_SYSENTER_ESP)))	return;
+	if (__vmx_vmwrite(VMCS_GUEST_SYSENTER_EIP, __readmsr(MSR_IA32_SYSENTER_EIP)))	return;
+	if (__vmx_vmwrite(VMCS_GUEST_EFER, __readmsr(IA32_EFER)))	return;
 
-	__vmx_vmwrite(VMCS_HOST_SYSENTER_CS, __readmsr(MSR_IA32_SYSENTER_CS));
-	__vmx_vmwrite(VMCS_HOST_SYSENTER_ESP, __readmsr(MSR_IA32_SYSENTER_ESP));
-	__vmx_vmwrite(VMCS_HOST_SYSENTER_EIP, __readmsr(MSR_IA32_SYSENTER_EIP));
+	if (__vmx_vmwrite(VMCS_HOST_SYSENTER_CS, __readmsr(MSR_IA32_SYSENTER_CS)))	return;
+	if (__vmx_vmwrite(VMCS_HOST_SYSENTER_ESP, __readmsr(MSR_IA32_SYSENTER_ESP)))	return;
+	if (__vmx_vmwrite(VMCS_HOST_SYSENTER_EIP, __readmsr(MSR_IA32_SYSENTER_EIP)))	return;
 
 	/// VMCS link pointer
-	__vmx_vmwrite(VMCS_GUEST_VMCS_LINK_POINTER, static_cast<size_t>(~0));
+	if (__vmx_vmwrite(VMCS_GUEST_VMCS_LINK_POINTER, static_cast<size_t>(~0)))	return;
 
 	/// VM Execution Control Fields
 	/// These fields control processor behavior in VMX non-root operation.
