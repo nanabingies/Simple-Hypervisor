@@ -8,6 +8,8 @@
 #define VMM_STACK_SIZE 0x6000
 #define HOST_STACK_SIZE  (20 * PAGE_SIZE)
 
+#define MASK_32BITS 0xffffffff
+
 #pragma pack(push, 1)
 struct __descriptor64 {
 	unsigned __int16 limit;
@@ -21,6 +23,47 @@ struct __descriptor32 {
 	unsigned __int32 base_address;
 };
 #pragma pack(pop)
+
+union __segment_access_rights {
+	struct {
+		unsigned __int32 type : 4;
+		unsigned __int32 descriptor_type : 1;
+		unsigned __int32 dpl : 2;
+		unsigned __int32 present : 1;
+		unsigned __int32 reserved0 : 4;
+		unsigned __int32 available : 1;
+		unsigned __int32 long_mode : 1;
+		unsigned __int32 default_big : 1;
+		unsigned __int32 granularity : 1;
+		unsigned __int32 unusable : 1;
+		unsigned __int32 reserved1 : 15;
+	};
+
+	unsigned __int32 all;
+};
+
+struct __segment_descriptor {
+	unsigned __int16 limit_low;
+	unsigned __int16 base_low;
+	union {
+		struct {
+			unsigned __int32 base_middle : 8;
+			unsigned __int32 type : 4;
+			unsigned __int32 descriptor_type : 1;
+			unsigned __int32 dpl : 2;
+			unsigned __int32 present : 1;
+			unsigned __int32 segment_limit_high : 4;
+			unsigned __int32 system : 1;
+			unsigned __int32 long_mode : 1;
+			unsigned __int32 default_big : 1;
+			unsigned __int32 granularity : 1;
+			unsigned __int32 base_high : 8;
+		};
+	};
+
+	unsigned __int32 base_upper;
+	unsigned __int32 reserved;
+};
 
 using guest_registers = struct guest_registers {
 	__m128 xmm[6];
@@ -211,7 +254,7 @@ inline uint64_t virtual_to_physical_address(void* virtual_address) {
 }
 
 extern "C" {
-	void _sgdt(void*);
+	void __sgdt(void*);
 
 	NTKERNELAPI
 		_IRQL_requires_max_(APC_LEVEL)
