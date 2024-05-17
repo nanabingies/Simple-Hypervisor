@@ -157,7 +157,6 @@ namespace hv {
 	auto initialize_vmm(void* guest_rsp) -> void {
 		auto current_procesor = KeGetCurrentProcessorNumberEx(nullptr);
 		auto current_vcpu = g_vmm_context->vcpu_table[current_procesor];
-		LOG("[*] current vcpu : %llx\n", ULONG64(current_vcpu));
 		
 		if (__vmx_on(&current_vcpu->vmxon_physical)) {
 			LOG("[!] Failed to put vcpu %d into VMX operation.\n", current_procesor);
