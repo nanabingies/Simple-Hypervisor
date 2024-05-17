@@ -119,6 +119,16 @@ extern "C" {
 
     auto inline asm_get_gdt_base() -> unsigned __int64;
     auto inline asm_get_idt_base() -> unsigned __int64;
+
+    unsigned __int32 __load_ar(unsigned __int16);
+    unsigned short __read_ldtr(void);
+    unsigned short __read_tr(void);
+    unsigned short __read_cs(void);
+    unsigned short __read_ss(void);
+    unsigned short __read_ds(void);
+    unsigned short __read_es(void);
+    unsigned short __read_fs(void);
+    unsigned short __read_gs(void);
 }
 
 auto setup_vmcs(unsigned long, void*, uint64_t) -> EVmErrors;
