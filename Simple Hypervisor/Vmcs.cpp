@@ -73,6 +73,57 @@ ShvUtilConvertGdtEntry(
 	VmxGdtEntry->Bits.Unusable = !gdtEntry->Bits.Present;
 }
 
+void fill_guest_selector_data(void* gdt_base, unsigned __int32 segment_register, unsigned __int16 selector) {
+	__segment_access_rights segment_access_rights;
+	__segment_descriptor* segment_descriptor;
+
+	if (selector & 0x4)
+		return;
+
+	segment_descriptor = (__segment_descriptor*)((unsigned __int8*)gdt_base + (selector & ~0x7));
+
+	unsigned __int64 segment_base = segment_descriptor->base_low | segment_descriptor->base_middle << 16 | segment_descriptor->base_high << 24;
+
+	unsigned __int32 segment_limit = segment_descriptor->limit_low | (segment_descriptor->segment_limit_high << 16);
+
+	//
+	// Load ar get access rights of descriptor specified by selector
+	// Lower 8 bits are zeroed so we have to bit shift it to right by 8
+	//
+	segment_access_rights.all = __load_ar(selector) >> 8;
+	segment_access_rights.unusable = 0;
+	segment_access_rights.reserved0 = 0;
+	segment_access_rights.reserved1 = 0;
+
+	// This is a TSS or callgate etc, save the base high part
+	if (segment_descriptor->descriptor_type == false)
+		segment_base = (segment_base & MASK_32BITS) | (unsigned __int64)segment_descriptor->base_upper << 32;
+
+	if (segment_descriptor->granularity == true)
+		segment_limit = (segment_limit << 12) + 0xfff;
+
+	if (selector == 0)
+		segment_access_rights.all |= 0x10000;
+
+	__vmx_vmwrite(VMCS_GUEST_ES_SELECTOR + segment_register * 2, selector);
+	__vmx_vmwrite(VMCS_GUEST_ES_LIMIT + segment_register * 2, segment_limit);
+	__vmx_vmwrite(VMCS_GUEST_ES_BASE + segment_register * 2, segment_base);
+	__vmx_vmwrite(VMCS_GUEST_ES_ACCESS_RIGHTS + segment_register * 2, segment_access_rights.all);
+}
+
+unsigned __int64 get_segment_base(unsigned __int16 selector, unsigned __int8* gdt_base) {
+	__segment_descriptor* segment_descriptor;
+
+	segment_descriptor = (__segment_descriptor*)(gdt_base + (selector & ~0x7));
+
+	unsigned __int64 segment_base = segment_descriptor->base_low | segment_descriptor->base_middle << 16 | segment_descriptor->base_high << 24;
+
+	if (segment_descriptor->descriptor_type == false)
+		segment_base = (segment_base & MASK_32BITS) | (unsigned __int64)segment_descriptor->base_upper << 32;
+
+	return segment_base;
+}
+
 auto adjust_controls(ulong Ctl, ulong Msr) -> unsigned __int64 {
 	LARGE_INTEGER MsrValue = { 0 };
 
@@ -179,7 +230,7 @@ auto save_pin_fields(ia32_vmx_pinbased_ctls_register& pinbased_ctls) -> void {
 	pinbased_ctls.process_posted_interrupts = false;
 }
 
-auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
+/*auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	ia32_vmx_basic_register vmx_basic{};
 	vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
 
@@ -392,4 +443,168 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 
 	if (__vmx_vmwrite(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, KeGetCurrentProcessorNumberEx(NULL) + 1))	return;
 
+}*/
+
+auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
+	__descriptor64 gdtr = { 0 };
+	__descriptor64 idtr = { 0 };
+	//__exception_bitmap exception_bitmap = { 0 };
+	ia32_vmx_basic_register vmx_basic = { 0 };
+	ia32_vmx_entry_ctls_register entry_controls = { 0 };
+	ia32_vmx_exit_ctls_register exit_controls = { 0 };
+	ia32_vmx_pinbased_ctls_register pinbased_controls = { 0 };
+	ia32_vmx_procbased_ctls_register primary_controls = { 0 };
+	ia32_vmx_procbased_ctls2_register secondary_controls = { 0 };
+
+	const unsigned __int8 selector_mask = 7;
+
+	vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
+
+	save_vmentry_fields(entry_controls);
+
+	save_vmexit_fields(exit_controls);
+
+	save_proc_based_fields(primary_controls);
+
+	save_proc_secondary_fields(secondary_controls);
+
+	//set_exception_bitmap(exception_bitmap);
+
+	save_pin_fields(pinbased_controls);
+
+	//
+	// We want to vmexit on every io and msr access
+	memset(vcpu->vcpu_bitmaps.io_bitmap_a, 0xff, PAGE_SIZE);
+	memset(vcpu->vcpu_bitmaps.io_bitmap_b, 0xff, PAGE_SIZE);
+
+	memset(vcpu->vcpu_bitmaps.msr_bitmap, 0xff, PAGE_SIZE);
+
+	//
+	// Only if your upper hypervisor is vmware
+	// Because Vmware tools use ports 0x5655,0x5656,0x5657,0x5658,0x5659,0x565a,0x565b,0x1090,0x1094 as I/O backdoor
+	//hv::set_io_bitmap(0x5655, vcpu, false);
+	//hv::set_io_bitmap(0x5656, vcpu, false);
+	//hv::set_io_bitmap(0x5657, vcpu, false);
+	//hv::set_io_bitmap(0x5658, vcpu, false);
+	//hv::set_io_bitmap(0x5659, vcpu, false);
+	//hv::set_io_bitmap(0x565a, vcpu, false);
+	//hv::set_io_bitmap(0x565b, vcpu, false);
+	//hv::set_io_bitmap(0x1094, vcpu, false);
+	//hv::set_io_bitmap(0x1090, vcpu, false);
+
+	__vmx_vmclear((unsigned __int64*)&vcpu->vmcs_physical);
+	__vmx_vmptrld((unsigned __int64*)&vcpu->vmcs_physical);
+
+	__sgdt(&gdtr);
+	__sidt(&idtr);
+
+	__vmx_vmwrite(VMCS_GUEST_GDTR_BASE, gdtr.base_address);
+	__vmx_vmwrite(VMCS_GUEST_GDTR_LIMIT, gdtr.limit);
+	__vmx_vmwrite(VMCS_HOST_GDTR_BASE, gdtr.base_address);
+	__vmx_vmwrite(VMCS_GUEST_IDTR_BASE, idtr.base_address);
+	__vmx_vmwrite(VMCS_GUEST_IDTR_LIMIT, idtr.limit);
+	__vmx_vmwrite(VMCS_HOST_IDTR_BASE, idtr.base_address);
+
+	/// VM Execution Control Fields
+	/// These fields control processor behavior in VMX non-root operation.
+	/// They determine in part the causes of VM exits.
+	__vmx_vmwrite(VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS,
+		adjust_controls(pinbased_controls.flags, vmx_basic.vmx_controls ? IA32_VMX_TRUE_PINBASED_CTLS : IA32_VMX_PINBASED_CTLS));
+
+	__vmx_vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
+		adjust_controls(primary_controls.flags, vmx_basic.vmx_controls ? IA32_VMX_TRUE_PROCBASED_CTLS : IA32_VMX_PROCBASED_CTLS));
+
+	__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
+		adjust_controls(secondary_controls.flags, IA32_VMX_PROCBASED_CTLS2));
+
+
+	/// VM-exit control fields. 
+	/// These fields control VM exits
+	__vmx_vmwrite(VMCS_CTRL_PRIMARY_VMEXIT_CONTROLS,
+		adjust_controls(exit_controls.flags, vmx_basic.vmx_controls ? IA32_VMX_TRUE_EXIT_CTLS : IA32_VMX_EXIT_CTLS));
+
+	/// VM-entry control fields. 
+	/// These fields control VM entries.
+	__vmx_vmwrite(VMCS_CTRL_VMENTRY_CONTROLS,
+		adjust_controls(entry_controls.flags, vmx_basic.vmx_controls ? IA32_VMX_TRUE_ENTRY_CTLS : IA32_VMX_ENTRY_CTLS));
+
+	// Segments
+	fill_guest_selector_data((void*)gdtr.base_address, ES, __read_es());
+	fill_guest_selector_data((void*)gdtr.base_address, CS, __read_cs());
+	fill_guest_selector_data((void*)gdtr.base_address, SS, __read_ss());
+	fill_guest_selector_data((void*)gdtr.base_address, DS, __read_ds());
+	fill_guest_selector_data((void*)gdtr.base_address, FS, __read_fs());
+	fill_guest_selector_data((void*)gdtr.base_address, GS, __read_gs());
+	fill_guest_selector_data((void*)gdtr.base_address, LDTR, __read_ldtr());
+	fill_guest_selector_data((void*)gdtr.base_address, TR, __read_tr());
+	__vmx_vmwrite(VMCS_GUEST_FS_BASE, __readmsr(IA32_FS_BASE));
+	__vmx_vmwrite(VMCS_GUEST_GS_BASE, __readmsr(IA32_GS_BASE));
+	__vmx_vmwrite(VMCS_HOST_CS_SELECTOR, __read_cs() & ~selector_mask);
+	__vmx_vmwrite(VMCS_HOST_SS_SELECTOR, __read_ss() & ~selector_mask);
+	__vmx_vmwrite(VMCS_HOST_DS_SELECTOR, __read_ds() & ~selector_mask);
+	__vmx_vmwrite(VMCS_HOST_ES_SELECTOR, __read_es() & ~selector_mask);
+	__vmx_vmwrite(VMCS_HOST_FS_SELECTOR, __read_fs() & ~selector_mask);
+	__vmx_vmwrite(VMCS_HOST_GS_SELECTOR, __read_gs() & ~selector_mask);
+	__vmx_vmwrite(VMCS_HOST_TR_SELECTOR, __read_tr() & ~selector_mask);
+	__vmx_vmwrite(VMCS_HOST_FS_BASE, __readmsr(IA32_FS_BASE));
+	__vmx_vmwrite(VMCS_HOST_GS_BASE, __readmsr(IA32_GS_BASE));
+	__vmx_vmwrite(VMCS_HOST_TR_BASE, get_segment_base(__read_tr(), (unsigned char*)gdtr.base_address));
+
+	// Cr registers
+	__vmx_vmwrite(VMCS_GUEST_CR0, __readcr0());
+	__vmx_vmwrite(VMCS_HOST_CR0, __readcr0());
+	__vmx_vmwrite(VMCS_CTRL_CR0_READ_SHADOW, __readcr0());
+
+	__vmx_vmwrite(VMCS_GUEST_CR3, __readcr3());
+	__vmx_vmwrite(VMCS_HOST_CR3, __readcr3());		// get_system_directory_table_base
+	__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, 0);
+
+	__vmx_vmwrite(VMCS_GUEST_CR4, __readcr4());
+	__vmx_vmwrite(VMCS_HOST_CR4, __readcr4());
+	__vmx_vmwrite(VMCS_CTRL_CR4_READ_SHADOW, __readcr4() & ~0x2000);
+	__vmx_vmwrite(VMCS_CTRL_CR4_GUEST_HOST_MASK, 0x2000); // Virtual Machine Extensions Enable	
+
+	// Debug register
+	__vmx_vmwrite(VMCS_GUEST_DR7, __readdr(7));
+
+	// RFLAGS
+	__vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags());
+
+	// RSP and RIP
+	__vmx_vmwrite(VMCS_GUEST_RSP, reinterpret_cast<size_t>(guest_rsp));
+	__vmx_vmwrite(VMCS_GUEST_RIP, reinterpret_cast<size_t>(asm_restore_vmm_state));
+	__vmx_vmwrite(VMCS_HOST_RSP, (unsigned __int64)vcpu->vmm_stack + VMM_STACK_SIZE);
+	__vmx_vmwrite(VMCS_HOST_RIP, reinterpret_cast<size_t>(asm_host_continue_execution));
+
+	// MSRS Guest
+	__vmx_vmwrite(VMCS_GUEST_DEBUGCTL, __readmsr(IA32_DEBUGCTL));
+	__vmx_vmwrite(VMCS_GUEST_SYSENTER_CS, __readmsr(IA32_SYSENTER_CS));
+	__vmx_vmwrite(VMCS_GUEST_SYSENTER_ESP, __readmsr(IA32_SYSENTER_ESP));
+	__vmx_vmwrite(VMCS_GUEST_SYSENTER_EIP, __readmsr(IA32_SYSENTER_EIP));
+	__vmx_vmwrite(VMCS_GUEST_EFER, __readmsr(IA32_EFER));
+
+	// MSRS Host
+	__vmx_vmwrite(VMCS_HOST_SYSENTER_CS, __readmsr(IA32_SYSENTER_CS));
+	__vmx_vmwrite(VMCS_HOST_SYSENTER_ESP, __readmsr(IA32_SYSENTER_ESP));
+	__vmx_vmwrite(VMCS_HOST_SYSENTER_EIP, __readmsr(IA32_SYSENTER_EIP));
+	__vmx_vmwrite(VMCS_HOST_EFER, __readmsr(IA32_EFER));
+
+	// Features
+	__vmx_vmwrite(VMCS_GUEST_VMCS_LINK_POINTER, ~0ULL);
+
+	//__vmx_vmwrite(CONTROL_EXCEPTION_BITMAP, exception_bitmap.all);
+
+	if (primary_controls.use_msr_bitmaps == true)
+		__vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, vcpu->vcpu_bitmaps.msr_bitmap_physical);
+
+	if (primary_controls.use_io_bitmaps == true) {
+		__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_A_ADDRESS, vcpu->vcpu_bitmaps.io_bitmap_a_physical);
+		__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_B_ADDRESS, vcpu->vcpu_bitmaps.io_bitmap_b_physical);
+	}
+
+	if (secondary_controls.enable_vpid == true)
+		__vmx_vmwrite(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, KeGetCurrentProcessorNumberEx(NULL) + 1);
+
+	if (secondary_controls.enable_ept == true && secondary_controls.enable_vpid == true)
+		__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vcpu->ept_state->ept_pointer->flags);
 }
