@@ -233,13 +233,13 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	__vmx_vmwrite(VMCS_GUEST_DR7, __readdr(7));
 
 	/// RSP, RIP, RFLAGS - Guest & Host
-	__vmx_vmwrite(VMCS_GUEST_RSP, reinterpret_cast<size_t>(guest_rsp));
-	__vmx_vmwrite(VMCS_GUEST_RIP, reinterpret_cast<size_t>(asm_restore_vmm_state));
-	__vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags());
+	if (!__vmx_vmwrite(VMCS_GUEST_RSP, reinterpret_cast<size_t>(guest_rsp)))	return;
+	if (__vmx_vmwrite(VMCS_GUEST_RIP, reinterpret_cast<size_t>(asm_restore_vmm_state)))	return;
+	if (__vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags())) return;
 
-	__vmx_vmwrite(VMCS_HOST_RSP, reinterpret_cast<size_t>(vcpu->vmm_stack) + HOST_STACK_SIZE);
+	if (__vmx_vmwrite(VMCS_HOST_RSP, reinterpret_cast<size_t>(vcpu->vmm_stack) + HOST_STACK_SIZE))	return;
 	// Address host should point to, to kick things off when vmexit occurs
-	__vmx_vmwrite(VMCS_HOST_RIP, reinterpret_cast<size_t>(asm_host_continue_execution));
+	if (__vmx_vmwrite(VMCS_HOST_RIP, reinterpret_cast<size_t>(asm_host_continue_execution)))	return;
 
 
 	/// CS, SS, DS, ES, FS, GS, LDTR, and TR -- Guest & Host
@@ -357,36 +357,36 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	/// VM Execution Control Fields
 	/// These fields control processor behavior in VMX non-root operation.
 	/// They determine in part the causes of VM exits.
-	__vmx_vmwrite(VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS, 
-		adjust_controls(pinbased_ctls.flags, vmx_basic.vmx_controls ? IA32_VMX_TRUE_PINBASED_CTLS : IA32_VMX_PINBASED_CTLS));
+	if (__vmx_vmwrite(VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS, 
+		adjust_controls(pinbased_ctls.flags, vmx_basic.vmx_controls ? IA32_VMX_TRUE_PINBASED_CTLS : IA32_VMX_PINBASED_CTLS)))	return;
 
-	__vmx_vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
-		adjust_controls(procbased_ctls.flags, vmx_basic.vmx_controls ? IA32_VMX_TRUE_PROCBASED_CTLS : IA32_VMX_PROCBASED_CTLS));
+	if (__vmx_vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
+		adjust_controls(procbased_ctls.flags, vmx_basic.vmx_controls ? IA32_VMX_TRUE_PROCBASED_CTLS : IA32_VMX_PROCBASED_CTLS))) return;
 
-	__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
-		adjust_controls(procbased_ctls2.flags, IA32_VMX_PROCBASED_CTLS2));
+	if (__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
+		adjust_controls(procbased_ctls2.flags, IA32_VMX_PROCBASED_CTLS2))) return;
 
 
 	/// VM-exit control fields. 
 	/// These fields control VM exits
-	__vmx_vmwrite(VMCS_CTRL_PRIMARY_VMEXIT_CONTROLS,
-		adjust_controls(exit_ctls.flags, vmx_basic.vmx_controls ? IA32_VMX_TRUE_EXIT_CTLS : IA32_VMX_EXIT_CTLS));
+	if (__vmx_vmwrite(VMCS_CTRL_PRIMARY_VMEXIT_CONTROLS,
+		adjust_controls(exit_ctls.flags, vmx_basic.vmx_controls ? IA32_VMX_TRUE_EXIT_CTLS : IA32_VMX_EXIT_CTLS)))	return;
 
 	/// VM-entry control fields. 
 	/// These fields control VM entries.
-	__vmx_vmwrite(VMCS_CTRL_VMENTRY_CONTROLS,
-		adjust_controls(entry_ctls.flags, vmx_basic.vmx_controls ? IA32_VMX_TRUE_ENTRY_CTLS : IA32_VMX_ENTRY_CTLS));
+	if (__vmx_vmwrite(VMCS_CTRL_VMENTRY_CONTROLS,
+		adjust_controls(entry_ctls.flags, vmx_basic.vmx_controls ? IA32_VMX_TRUE_ENTRY_CTLS : IA32_VMX_ENTRY_CTLS)))	return;
 
 	/// Misc
-	__vmx_vmwrite(VMCS_GUEST_ACTIVITY_STATE, 0);	// Active State
-	__vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY_STATE, 0);
-	__vmx_vmwrite(VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS, 0);
+	if (__vmx_vmwrite(VMCS_GUEST_ACTIVITY_STATE, 0))	return;	// Active State
+	if (__vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY_STATE, 0))	return;
+	if (__vmx_vmwrite(VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS, 0))	return;
 
-	__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_A_ADDRESS, vcpu->vcpu_bitmaps.io_bitmap_a_physical);
-	__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_B_ADDRESS, vcpu->vcpu_bitmaps.io_bitmap_b_physical);
+	if (__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_A_ADDRESS, vcpu->vcpu_bitmaps.io_bitmap_a_physical))	return;
+	if (__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_B_ADDRESS, vcpu->vcpu_bitmaps.io_bitmap_b_physical))	return;
 
-	__vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, vcpu->vcpu_bitmaps.msr_bitmap_physical);
+	if (__vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, vcpu->vcpu_bitmaps.msr_bitmap_physical))	return;
 
-	__vmx_vmwrite(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, KeGetCurrentProcessorNumberEx(NULL) + 1);
+	if (__vmx_vmwrite(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, KeGetCurrentProcessorNumberEx(NULL) + 1))	return;
 
 }
