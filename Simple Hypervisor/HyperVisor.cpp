@@ -182,6 +182,12 @@ namespace hv {
 
 	auto get_system_dirbase() -> unsigned __int64 {
 		__debugbreak();
+		UNICODE_STRING us_string{};
+		RtlInitUnicodeString(&us_string, L"PsInitialSystemProcess");
+		auto initial_process = MmGetSystemRoutineAddress(&us_string);
+		DbgPrint("[*] PsInitialSystemProcess : %p\n", initial_process);
+		auto dir_base = ((_KPROCESS*)initial_process)->DirectoryTableBase;
+		DbgPrint("[*] dirbase : %llx\n", dir_base);
 		return ((_KPROCESS*)PsInitialSystemProcess)->DirectoryTableBase;
 	}
 
