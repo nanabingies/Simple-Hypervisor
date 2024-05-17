@@ -180,9 +180,6 @@ auto save_pin_fields(ia32_vmx_pinbased_ctls_register& pinbased_ctls) -> void {
 }
 
 auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
-	UNREFERENCED_PARAMETER(vcpu);
-	UNREFERENCED_PARAMETER(guest_rsp);
-
 	ia32_vmx_basic_register vmx_basic{};
 	vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
 
@@ -222,7 +219,7 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	__vmx_vmwrite(VMCS_GUEST_CR4, __readcr4());
 
 	__vmx_vmwrite(VMCS_HOST_CR0, __readcr0());
-	__vmx_vmwrite(VMCS_HOST_CR3, hv::get_system_dirbase());		// Host cr3
+	__vmx_vmwrite(VMCS_HOST_CR3, __readcr3());		// Host cr3		// hv::get_system_dirbase()
 	__vmx_vmwrite(VMCS_HOST_CR4, __readcr4());
 
 	__vmx_vmwrite(VMCS_CTRL_CR0_READ_SHADOW, __readcr0());
