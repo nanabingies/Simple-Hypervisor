@@ -111,7 +111,7 @@ void fill_guest_selector_data(void* gdt_base, unsigned __int32 segment_register,
 	__vmx_vmwrite(VMCS_GUEST_ES_ACCESS_RIGHTS + segment_register * 2, segment_access_rights.all);
 }
 
-unsigned __int64 get_segment_base(unsigned __int16 selector, unsigned __int8* gdt_base) {
+auto get_segment_base(unsigned __int16 selector, unsigned __int8* gdt_base) -> unsigned __int64 {
 	__segment_descriptor* segment_descriptor;
 
 	segment_descriptor = (__segment_descriptor*)(gdt_base + (selector & ~0x7));
