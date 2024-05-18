@@ -134,6 +134,74 @@ auto adjust_controls(ulong Ctl, ulong Msr) -> unsigned __int64 {
 	return Ctl;
 }
 
+void set_io_bitmap(unsigned __int16 io_port, __vcpu* vcpu, bool value) {
+	unsigned __int16 bitmap_position;
+	unsigned __int8 bitmap_bit;
+
+	//
+	// IO ports from 0x8000 to 0xFFFF are encoded in io bitmap b
+	if (io_port >= 0x8000) {
+		io_port -= 0x8000;
+		bitmap_position = io_port / 8;
+		bitmap_bit = io_port % 8;
+
+		if (value == true)
+			*(vcpu->vcpu_bitmaps.io_bitmap_b + bitmap_position) |= (1 << bitmap_bit);
+		else
+			*(vcpu->vcpu_bitmaps.io_bitmap_b + bitmap_position) &= ~(1 << bitmap_bit);
+	}
+
+	//
+	// IO ports from 0 to 0x7fff are encoded in io bitmap b
+	else {
+		bitmap_position = io_port / 8;
+		bitmap_bit = io_port % 8;
+
+		if (value == true)
+			*(vcpu->vcpu_bitmaps.io_bitmap_a + bitmap_position) |= (1 << bitmap_bit);
+		else
+			*(vcpu->vcpu_bitmaps.io_bitmap_a + bitmap_position) &= ~(1 << bitmap_bit);
+	}
+}
+
+auto set_exception_bitmap(__exception_bitmap& exception_bitmap) -> void {
+	exception_bitmap.divide_error = false;
+
+	exception_bitmap.debug = true;
+
+	exception_bitmap.nmi_interrupt = false;
+
+	exception_bitmap.breakpoint = false;
+
+	exception_bitmap.overflow = false;
+
+	exception_bitmap.bound = false;
+
+	exception_bitmap.invalid_opcode = false;
+
+	exception_bitmap.coprocessor_segment_overrun = false;
+
+	exception_bitmap.invalid_tss = false;
+
+	exception_bitmap.segment_not_present = false;
+
+	exception_bitmap.stack_segment_fault = false;
+
+	exception_bitmap.general_protection = false;
+
+	exception_bitmap.page_fault = false;
+
+	exception_bitmap.x87_floating_point_error = false;
+
+	exception_bitmap.alignment_check = false;
+
+	exception_bitmap.machine_check = false;
+
+	exception_bitmap.simd_floating_point_error = false;
+
+	exception_bitmap.virtualization_exception = false;
+}
+
 auto save_vmentry_fields(ia32_vmx_entry_ctls_register& entry_ctls) -> void {
 	entry_ctls.load_debug_controls = true;
 	entry_ctls.ia32e_mode_guest = true;
@@ -448,7 +516,7 @@ auto save_pin_fields(ia32_vmx_pinbased_ctls_register& pinbased_ctls) -> void {
 auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	__descriptor64 gdtr = { 0 };
 	__descriptor64 idtr = { 0 };
-	//__exception_bitmap exception_bitmap = { 0 };
+	__exception_bitmap exception_bitmap = { 0 };
 	ia32_vmx_basic_register vmx_basic = { 0 };
 	ia32_vmx_entry_ctls_register entry_controls = { 0 };
 	ia32_vmx_exit_ctls_register exit_controls = { 0 };
@@ -468,7 +536,7 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 
 	save_proc_secondary_fields(secondary_controls);
 
-	//set_exception_bitmap(exception_bitmap);
+	set_exception_bitmap(exception_bitmap);
 
 	save_pin_fields(pinbased_controls);
 
@@ -482,15 +550,15 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	//
 	// Only if your upper hypervisor is vmware
 	// Because Vmware tools use ports 0x5655,0x5656,0x5657,0x5658,0x5659,0x565a,0x565b,0x1090,0x1094 as I/O backdoor
-	//hv::set_io_bitmap(0x5655, vcpu, false);
-	//hv::set_io_bitmap(0x5656, vcpu, false);
-	//hv::set_io_bitmap(0x5657, vcpu, false);
-	//hv::set_io_bitmap(0x5658, vcpu, false);
-	//hv::set_io_bitmap(0x5659, vcpu, false);
-	//hv::set_io_bitmap(0x565a, vcpu, false);
-	//hv::set_io_bitmap(0x565b, vcpu, false);
-	//hv::set_io_bitmap(0x1094, vcpu, false);
-	//hv::set_io_bitmap(0x1090, vcpu, false);
+	set_io_bitmap(0x5655, vcpu, false);
+	set_io_bitmap(0x5656, vcpu, false);
+	set_io_bitmap(0x5657, vcpu, false);
+	set_io_bitmap(0x5658, vcpu, false);
+	set_io_bitmap(0x5659, vcpu, false);
+	set_io_bitmap(0x565a, vcpu, false);
+	set_io_bitmap(0x565b, vcpu, false);
+	set_io_bitmap(0x1094, vcpu, false);
+	set_io_bitmap(0x1090, vcpu, false);
 
 	__vmx_vmclear((unsigned __int64*)&vcpu->vmcs_physical);
 	__vmx_vmptrld((unsigned __int64*)&vcpu->vmcs_physical);
@@ -592,7 +660,7 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	// Features
 	__vmx_vmwrite(VMCS_GUEST_VMCS_LINK_POINTER, ~0ULL);
 
-	//__vmx_vmwrite(CONTROL_EXCEPTION_BITMAP, exception_bitmap.all);
+	__vmx_vmwrite(VMCS_CTRL_EXCEPTION_BITMAP, exception_bitmap.all);
 
 	if (primary_controls.use_msr_bitmaps == true)
 		__vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, vcpu->vcpu_bitmaps.msr_bitmap_physical);
