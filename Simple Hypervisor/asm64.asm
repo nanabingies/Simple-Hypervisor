@@ -5,12 +5,7 @@ public  asm_inv_ept_global
 public asm_save_vmm_state
 public asm_restore_vmm_state
 
-public	asm_get_tr
-public	asm_get_ldtr
-public	asm_get_idt_limit
-public	asm_get_gdt_limit
-public	asm_get_idt_base
-public	asm_get_gdt_base
+
 
 public  asm_vmx_vmcall
 
@@ -100,7 +95,7 @@ asm_host_continue_execution ENDP
 
 asm_save_vmm_state proc
 
-    ;int 3
+    int 3
     pushfq
     SAVE_GP
     sub rsp, 020h
@@ -122,49 +117,63 @@ asm_restore_vmm_state endp
 
 ;----------------------------------------------------------------------------------------------------
 
-asm_get_idt_base proc
-	local	idtr[10]:byte
-	sidt	idtr
-	mov		RAX, qword ptr idtr[2]
-	ret
-asm_get_idt_base endp
+__read_ldtr proc
+    sldt ax
+    ret
+__read_ldtr endp
 
-asm_get_gdt_limit proc
-	local	gdtr[10]:byte
-	sgdt	gdtr
-	mov		ax, word ptr gdtr[0]
-	ret
-asm_get_gdt_limit endp
+__read_tr proc
+    str ax
+    ret
+__read_tr endp
 
-asm_get_idt_limit proc
-	local	idtr[10]:byte
-	SIDT	idtr
-	mov		ax, word ptr idtr[0]
-	ret
-asm_get_idt_limit endp
+__read_cs proc
+    mov ax, cs
+    ret
+__read_cs endp
 
-asm_get_rflags proc
-	pushfq
-	POP		rax
-	ret
-asm_get_rflags endp
+__read_ss proc
+    mov ax, ss
+    ret
+__read_ss endp
 
-asm_get_gdt_base proc
-	local	gdtr[10]:byte
-	sgdt	gdtr
-	mov		rax, qword ptr gdtr[2]
-	ret
-asm_get_gdt_base endp
+__read_ds proc
+    mov ax, ds
+    ret
+__read_ds endp
 
-asm_get_ldtr proc
-	sldt	rax
-	ret
-asm_get_ldtr endp
+__read_es proc
+    mov ax, es              
+    ret
+__read_es endp
 
-asm_get_tr proc
-	str		rax
-	ret
-asm_get_tr endp
+__read_fs proc
+    mov ax, fs
+    ret
+__read_fs endp
+
+__read_gs proc
+    mov ax, gs
+    ret
+__read_gs endp
+
+__sgdt proc
+    sgdt qword ptr [rcx]
+    ret
+__sgdt endp
+
+__sidt proc
+    sidt qword ptr [rcx]
+    ret
+__sidt endp
+
+__load_ar proc
+    lar rax, rcx
+    jz no_error
+    xor rax, rax
+no_error:
+    ret
+__load_ar endp
 
 ;----------------------------------------------------------------------------------------------------
 
