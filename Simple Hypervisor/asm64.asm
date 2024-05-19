@@ -177,6 +177,52 @@ __load_ar endp
 
 ;----------------------------------------------------------------------------------------------------
 
+asm_get_idt_base proc
+	local	idtr[10]:byte
+	sidt	idtr
+	mov		RAX, qword ptr idtr[2]
+	ret
+asm_get_idt_base endp
+
+asm_get_gdt_limit proc
+	local	gdtr[10]:byte
+	sgdt	gdtr
+	mov		ax, word ptr gdtr[0]
+	ret
+asm_get_gdt_limit endp
+
+asm_get_idt_limit proc
+	local	idtr[10]:byte
+	SIDT	idtr
+	mov		ax, word ptr idtr[0]
+	ret
+asm_get_idt_limit endp
+
+asm_get_rflags proc
+	pushfq
+	POP		rax
+	ret
+asm_get_rflags endp
+
+asm_get_gdt_base proc
+	local	gdtr[10]:byte
+	sgdt	gdtr
+	mov		rax, qword ptr gdtr[2]
+	ret
+asm_get_gdt_base endp
+
+asm_get_ldtr proc
+	sldt	rax
+	ret
+asm_get_ldtr endp
+
+asm_get_tr proc
+	str		rax
+	ret
+asm_get_tr endp
+
+;----------------------------------------------------------------------------------------------------
+
 asm_inv_ept_global proc
     invept	rcx, oword ptr [rdx]
 	jz      error_with_code						; if (ZF) jmp
