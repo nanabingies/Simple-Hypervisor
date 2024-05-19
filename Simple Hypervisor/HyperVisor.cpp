@@ -176,7 +176,7 @@ namespace hv {
 		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &error_code);
 		LOG("[!] Failed to launch vmm on processor (%x) with error code : %x\n", current_procesor, error_code);
 		current_vcpu->vcpu_status.vmx_on = false;
-		current_vcpu->vcpu_status.vmm_launched = true;
+		current_vcpu->vcpu_status.vmm_launched = false;
 	}
 
 	auto get_system_dirbase() -> unsigned __int64 {
