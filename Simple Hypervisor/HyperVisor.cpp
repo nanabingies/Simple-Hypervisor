@@ -172,6 +172,8 @@ namespace hv {
 
 		// We should never get here
 		__debugbreak();
+		hv_vmcs::dump_vmcs();
+
 		size_t error_code = 0;
 		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &error_code);
 		LOG("[!] Failed to launch vmm on processor (%x) with error code : %x\n", current_procesor, error_code);
