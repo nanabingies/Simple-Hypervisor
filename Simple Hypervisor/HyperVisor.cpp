@@ -173,6 +173,7 @@ namespace hv {
 		// We should never get here
 		__debugbreak();
 		hv_vmcs::dump_vmcs();
+		__debugbreak();
 
 		size_t error_code = 0;
 		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &error_code);
