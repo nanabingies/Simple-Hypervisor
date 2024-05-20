@@ -640,29 +640,29 @@ namespace hv_vmcs {
 	}
 }
 
-/*auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
+auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	ia32_vmx_basic_register vmx_basic{};
 	vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
 
 	/// VM-ENTRY CONTROL FIELDS
-	ia32_vmx_entry_ctls_register entry_ctls{};
-	save_vmentry_fields(entry_ctls);
+	//ia32_vmx_entry_ctls_register entry_ctls{};
+	//save_vmentry_fields(entry_ctls);
 	
 	/// VM-EXIT INFORMATION FIELDS
-	ia32_vmx_exit_ctls_register exit_ctls{};
-	save_vmexit_fields(exit_ctls);
+	//ia32_vmx_exit_ctls_register exit_ctls{};
+	//save_vmexit_fields(exit_ctls);
 	
 	/// Primary Processor-Based VM-Execution Controls.
-	ia32_vmx_procbased_ctls_register procbased_ctls{};
-	save_proc_based_fields(procbased_ctls);
+	//ia32_vmx_procbased_ctls_register procbased_ctls{};
+	//save_proc_based_fields(procbased_ctls);
 
 	/// Secondary Processor-Based VM-Execution Controls
-	ia32_vmx_procbased_ctls2_register procbased_ctls2{};
-	save_proc_secondary_fields(procbased_ctls2);
+	//ia32_vmx_procbased_ctls2_register procbased_ctls2{};
+	//save_proc_secondary_fields(procbased_ctls2);
 
 	/// Pin-Based VM-Execution Controls
-	ia32_vmx_pinbased_ctls_register pinbased_ctls{};
-	save_pin_fields(pinbased_ctls);
+	//ia32_vmx_pinbased_ctls_register pinbased_ctls{};
+	//save_pin_fields(pinbased_ctls);
 
 	memset(vcpu->vcpu_bitmaps.io_bitmap_a, 0xff, PAGE_SIZE);
 	memset(vcpu->vcpu_bitmaps.io_bitmap_b, 0xff, PAGE_SIZE);
@@ -818,44 +818,66 @@ namespace hv_vmcs {
 	/// VM Execution Control Fields
 	/// These fields control processor behavior in VMX non-root operation.
 	/// They determine in part the causes of VM exits.
-	if (__vmx_vmwrite(VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS, 
-		adjust_controls(pinbased_ctls.flags, IA32_VMX_PINBASED_CTLS)))	return;	// vmx_basic.vmx_controls ? IA32_VMX_TRUE_PINBASED_CTLS : IA32_VMX_PINBASED_CTLS
+	//if (__vmx_vmwrite(VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS, 
+	//	adjust_controls(pinbased_ctls.flags, vmx_basic.vmx_controls ? IA32_VMX_TRUE_PINBASED_CTLS : IA32_VMX_PINBASED_CTLS)))	return;
+	__vmx_vmwrite(VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS, adjust_controls(0, IA32_VMX_PINBASED_CTLS));
 
-	if (__vmx_vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
-		adjust_controls(procbased_ctls.flags, IA32_VMX_PROCBASED_CTLS))) return;	// vmx_basic.vmx_controls ? IA32_VMX_TRUE_PROCBASED_CTLS : IA32_VMX_PROCBASED_CTLS
+	//if (__vmx_vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
+	//	adjust_controls(procbased_ctls.flags, vmx_basic.vmx_controls ? IA32_VMX_TRUE_PROCBASED_CTLS : IA32_VMX_PROCBASED_CTLS))) return;
+	__vmx_vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
+		adjust_controls(IA32_VMX_PROCBASED_CTLS_HLT_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_USE_MSR_BITMAPS_FLAG |
+			IA32_VMX_PROCBASED_CTLS_CR3_LOAD_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_CR3_STORE_EXITING_FLAG |
+			IA32_VMX_PROCBASED_CTLS_USE_IO_BITMAPS_FLAG |
+			IA32_VMX_PROCBASED_CTLS_ACTIVATE_SECONDARY_CONTROLS_FLAG, IA32_VMX_PROCBASED_CTLS));
 
-	if (__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
-		adjust_controls(procbased_ctls2.flags, IA32_VMX_PROCBASED_CTLS2))) return;
-
+	//if (__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
+	//	adjust_controls(procbased_ctls2.flags, IA32_VMX_PROCBASED_CTLS2))) return;
+	__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
+		adjust_controls(IA32_VMX_PROCBASED_CTLS2_ENABLE_XSAVES_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_RDTSCP_FLAG,
+			IA32_VMX_PROCBASED_CTLS2));
 
 	/// VM-exit control fields. 
 	/// These fields control VM exits
-	if (__vmx_vmwrite(VMCS_CTRL_PRIMARY_VMEXIT_CONTROLS,
-		adjust_controls(exit_ctls.flags, IA32_VMX_EXIT_CTLS)))	return;		// vmx_basic.vmx_controls ? IA32_VMX_TRUE_EXIT_CTLS : IA32_VMX_EXIT_CTLS
+	//if (__vmx_vmwrite(VMCS_CTRL_PRIMARY_VMEXIT_CONTROLS,
+	//	adjust_controls(exit_ctls.flags, vmx_basic.vmx_controls ? IA32_VMX_TRUE_EXIT_CTLS : IA32_VMX_EXIT_CTLS)))	return;
+	__vmx_vmwrite(VMCS_CTRL_PRIMARY_VMEXIT_CONTROLS,
+		adjust_controls(IA32_VMX_EXIT_CTLS_HOST_ADDRESS_SPACE_SIZE_FLAG | IA32_VMX_EXIT_CTLS_ACKNOWLEDGE_INTERRUPT_ON_EXIT_FLAG,
+			IA32_VMX_EXIT_CTLS));
 
 	/// VM-entry control fields. 
 	/// These fields control VM entries.
-	if (__vmx_vmwrite(VMCS_CTRL_VMENTRY_CONTROLS,
-		adjust_controls(entry_ctls.flags, IA32_VMX_ENTRY_CTLS)))	return;		// vmx_basic.vmx_controls ? IA32_VMX_TRUE_ENTRY_CTLS : IA32_VMX_ENTRY_CTLS
+	//if (__vmx_vmwrite(VMCS_CTRL_VMENTRY_CONTROLS,
+	//	adjust_controls(entry_ctls.flags, vmx_basic.vmx_controls ? IA32_VMX_TRUE_ENTRY_CTLS : IA32_VMX_ENTRY_CTLS)))	return;
+	__vmx_vmwrite(VMCS_CTRL_VMENTRY_CONTROLS,
+		adjust_controls(IA32_VMX_ENTRY_CTLS_IA32E_MODE_GUEST_FLAG, IA32_VMX_ENTRY_CTLS));
 
 	/// Misc
 	if (__vmx_vmwrite(VMCS_GUEST_ACTIVITY_STATE, 0))	return;	// Active State
 	if (__vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY_STATE, 0))	return;
 	if (__vmx_vmwrite(VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS, 0))	return;
 
-	if (procbased_ctls.use_io_bitmaps) {
+	//if (procbased_ctls.use_io_bitmaps) {
 		if (__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_A_ADDRESS, vcpu->vcpu_bitmaps.io_bitmap_a_physical))	return;
 		if (__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_B_ADDRESS, vcpu->vcpu_bitmaps.io_bitmap_b_physical))	return;
-	}
+	//}
 
-	if (procbased_ctls.use_msr_bitmaps)
+	//if (procbased_ctls.use_msr_bitmaps)
 		if (__vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, vcpu->vcpu_bitmaps.msr_bitmap_physical))	return;
 
 	if (__vmx_vmwrite(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, KeGetCurrentProcessorNumberEx(NULL) + 1))	return;
 
-}*/
+	ia32_vmx_misc_register misc;
+	misc.flags = __readmsr(IA32_VMX_MISC);
 
-auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
+	__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, misc.cr3_target_count);
+
+	for (unsigned iter = 0; iter < misc.cr3_target_count; iter++) {
+		__vmx_vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_0 + (iter * 2), 0);
+	}
+
+}
+
+/*auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	__descriptor64 gdtr = { 0 };
 	__descriptor64 idtr = { 0 };
 	__exception_bitmap exception_bitmap = { 0 };
@@ -1017,4 +1039,4 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 
 	if (secondary_controls.enable_ept == true && secondary_controls.enable_vpid == true)
 		__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vcpu->ept_state->ept_pointer->flags);
-}
+}*/
