@@ -698,7 +698,7 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	if (__vmx_vmwrite(VMCS_GUEST_RIP, reinterpret_cast<size_t>(asm_restore_vmm_state)))	return;
 	if (__vmx_vmwrite(VMCS_GUEST_RFLAGS, __readeflags())) return;
 
-	if (__vmx_vmwrite(VMCS_HOST_RSP, reinterpret_cast<size_t>(vcpu->vmm_stack) + HOST_STACK_SIZE))	return;
+	if (__vmx_vmwrite(VMCS_HOST_RSP, reinterpret_cast<size_t>(vcpu->vmm_stack) + VMM_STACK_SIZE))	return;
 	// Address host should point to, to kick things off when vmexit occurs
 	if (__vmx_vmwrite(VMCS_HOST_RIP, reinterpret_cast<size_t>(asm_host_continue_execution)))	return;
 
