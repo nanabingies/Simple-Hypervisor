@@ -131,10 +131,12 @@ extern "C" {
     unsigned short __read_gs(void);
 }
 
-auto setup_vmcs(unsigned long, void*, uint64_t) -> EVmErrors;
-
 auto hv_setup_vmcs(struct __vcpu*, void*) -> void;
 
 extern "C" auto inline asm_restore_vmm_state() -> void;
 
 extern "C" auto inline asm_host_continue_execution() -> void;
+
+namespace hv_vmcs {
+    auto dump_vmcs() -> void;
+}
