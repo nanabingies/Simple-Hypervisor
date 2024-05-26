@@ -60,7 +60,7 @@ endm
 ;----------------------------------------------------------------------------------------------------
 
 asm_host_continue_execution proc
-	int 3		; A VM Exit just occured
+	;int 3		; A VM Exit just occured
 
     SAVE_GP
     sub     rsp ,60h
@@ -95,7 +95,7 @@ asm_host_continue_execution ENDP
 
 asm_save_vmm_state proc
 
-    int 3
+    ;int 3
     pushfq
     SAVE_GP
     sub rsp, 020h
