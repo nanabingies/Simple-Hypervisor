@@ -82,7 +82,7 @@ namespace hv {
 		RtlSecureZeroMemory(vcpu->ept_state, sizeof(__ept_state));
 		InitializeListHead(&vcpu->ept_state->hooked_page_list);
 
-		if (ept::initialize_ept(vcpu->ept_state) == false) {
+		if (ept::initialize_ept(*vcpu->ept_state) == false) {
 			LOG("[!] Failure setting up ept structure for vcpu table on processor (%x).\n", curr_processor);
 			LOG_ERROR(__FILE__, __LINE__);
 			return false;
