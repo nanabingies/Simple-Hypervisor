@@ -171,7 +171,7 @@ namespace ept {
 		}
 		RtlSecureZeroMemory(ept_state.ept_pointer, sizeof(ept_pointer));
 
-		if (create_ept_state(ept_state) == false) {
+		if (initialize_ept_page_table(ept_state) == false) {
 			DbgPrint("[!] Failed to setup ept page table entries.\n");
 			LOG_ERROR(__FILE__, __LINE__);
 			return false;
@@ -185,11 +185,11 @@ namespace ept {
 		return true;
 	}
 
-	auto create_ept_state(ept_state* _ept_state) -> bool {
-		ept_page_table* page_table = reinterpret_cast<ept_page_table*>
-			(ExAllocatePoolWithTag(NonPagedPool, sizeof ept_page_table, VMM_POOL_TAG));
-		if (!page_table)	return false;
-		_ept_state->ept_page_table = page_table;
+	auto initialize_ept_page_table(__ept_state& ept_state) -> bool {
+		ept_state.ept_page_table = reinterpret_cast<__ept_page_table*>
+			(ExAllocatePoolWithTag(NonPagedPool, sizeof(__ept_page_table), VMM_POOL_TAG));
+		if (page_table == nullptr)	return false;
+		RtlSecureZeroMemory(ept_state.ept_page_table, sizeof(__ept_page_table));
 
 		ept_pml4e* pml4e = reinterpret_cast<ept_pml4e*>(&page_table->ept_pml4[0]);
 		ept_pdpte* pdpte = reinterpret_cast<ept_pdpte*>(&page_table->ept_pdpte[0]);
@@ -256,31 +256,31 @@ namespace ept {
 		return true;
 	}
 
-	auto setup_pml2_entries(ept_state* _ept_state, ept_pde_2mb* pde_entry, unsigned __int64 pfn) -> bool {
-		UNREFERENCED_PARAMETER(_ept_state);
+	//auto setup_pml2_entries(ept_state* _ept_state, ept_pde_2mb* pde_entry, unsigned __int64 pfn) -> bool {
+	//	UNREFERENCED_PARAMETER(_ept_state);
 
-		pde_entry->page_frame_number = pfn;
+	//	pde_entry->page_frame_number = pfn;
 
-		uint64_t addr_of_page = pfn * PAGE2MB;
-		if (pfn == 0) {
-			pde_entry->memory_type = Uncacheable;
-			return true;
-		}
+	//	uint64_t addr_of_page = pfn * PAGE2MB;
+	//	if (pfn == 0) {
+	//		pde_entry->memory_type = Uncacheable;
+	//		return true;
+	//	}
 		
-		uint64_t memory_type = WriteBack;
-		for (unsigned idx = 0; idx < g_mtrr_num; idx++) {
-			if (addr_of_page <= g_mtrr_entries[idx].physical_address_end) {
-				if ((addr_of_page + PAGE2MB - 1) >= g_mtrr_entries[idx].physical_address_start) {
-					memory_type = g_mtrr_entries[idx].memory_type;
-					if (memory_type == Uncacheable) {
-						break;
-					}
-				}
-			}
-		}
+	//	uint64_t memory_type = WriteBack;
+	//	for (unsigned idx = 0; idx < g_mtrr_num; idx++) {
+	//		if (addr_of_page <= g_mtrr_entries[idx].physical_address_end) {
+	//			if ((addr_of_page + PAGE2MB - 1) >= g_mtrr_entries[idx].physical_address_start) {
+	//				memory_type = g_mtrr_entries[idx].memory_type;
+	//				if (memory_type == Uncacheable) {
+	//					break;
+	//				}
+	//			}
+	//		}
+	//	}
 
-		pde_entry->memory_type = memory_type;
-		return true;
+	//	pde_entry->memory_type = memory_type;
+	//	return true;
 
 		/*if (is_valid_for_large_page(pfn) == true) {
 			pde_entry->memory_type = ept_get_memory_type(pfn, true);
@@ -296,7 +296,7 @@ namespace ept {
 
 			return split_pml2_entry(_ept_state, split_buffer, pfn * LARGE_PAGE_SIZE);
 		}*/
-	}
+	//}
 
 	auto is_valid_for_large_page(unsigned __int64 pfn) -> bool {
 		UNREFERENCED_PARAMETER(pfn);
@@ -337,7 +337,7 @@ namespace ept {
 		return memory_type;
 	}
 
-	auto split_pml2_entry(ept_state* _ept_state, void* buffer, unsigned __int64 physical_address) -> bool {
+	/*auto split_pml2_entry(ept_state* _ept_state, void* buffer, unsigned __int64 physical_address) -> bool {
 		ept_pde_2mb* entry = get_pde_entry(_ept_state->ept_page_table, physical_address);
 		if (entry == NULL) {
 			LOG("[!] Invalid address passed");
@@ -378,7 +378,7 @@ namespace ept {
 		RtlCopyMemory(entry, &new_entry, sizeof(new_entry));
 
 		return true;
-	}
+	}*/
 
 	auto get_pde_entry(ept_page_table* page_table, unsigned __int64 pfn) -> ept_pde_2mb* {
 		uint64_t pml4_index = MASK_EPT_PML4_INDEX(pfn);
@@ -509,7 +509,7 @@ namespace ept {
 		return asm_inv_ept_global(invept_all_context, &err);
 	}
 
-	auto handle_ept_violation(unsigned __int64 phys_addr, unsigned __int64 linear_addr) -> bool {
+	/*auto handle_ept_violation(unsigned __int64 phys_addr, unsigned __int64 linear_addr) -> bool {
 		//ept_state* _ept_state = vmm_context[KeGetCurrentProcessorNumber()].ept_state;
 		ept_state* _ept_state = (ept_state*)phys_addr;
 		__debugbreak();
@@ -532,7 +532,7 @@ namespace ept {
 		ept_inv_global_entry();
 
 		return true;
-	}
+	}*/
 
 	auto ept_construct_tables(ept_entry* _ept_entry, unsigned __int64 level, unsigned __int64 pfn, ept_page_table* page_table) -> ept_entry* {
 		switch (level) {
