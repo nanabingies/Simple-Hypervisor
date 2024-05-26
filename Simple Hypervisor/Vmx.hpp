@@ -49,6 +49,27 @@ namespace vmexit {
 	auto handle_task_switch(void*) -> void;
 	auto handle_wrmsr(void*) -> void;
 	auto handle_rdmsr(void*) -> void;
+	auto handle_execute_cpuid(void*) -> void;
+	auto handle_execute_vmcall(void*) -> void;
+	auto handle_execute_vmptrld(void*) -> void;
+	auto handle_execute_vmptrst(void*) -> void;
+	auto handle_execute_vmread(void*) -> void;
+	auto handle_execute_vmwrite(void*) -> void;
+	auto handle_execute_vmxon(void*) -> void;
+	auto handle_mov_cr(void*) -> void;
+	auto handle_mov_dr(void*) -> void;
+	auto handle_execute_io_instruction(void*) -> void;
+	auto handle_apic_access(void*) -> void;
+	auto handle_gdtr_idtr_access(void*) -> void;
+	auto handle_ldtr_tr_access(void*) -> void;
+	auto handle_ept_violation(void*) -> void;
+	auto handle_ept_misconfiguration(void*) -> void;
+	auto handle_execute_invept(void*) -> void;
+	auto handle_execute_invvpid(void*) -> void;
+	auto handle_execute_rdrand(void*) -> void;
+	auto handle_execute_invpcid(void*) -> void;
+	auto handle_execute_xsaves(void*) -> void;
+	auto handle_execute_xrstors(void*) -> void;
 }
 
 extern "C" {
