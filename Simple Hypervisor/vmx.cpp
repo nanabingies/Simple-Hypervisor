@@ -148,7 +148,7 @@ namespace vmx {
 		g_vmm_context->processor_count = KeQueryActiveProcessorCount(NULL);
 		g_vmm_context->vcpu_table = reinterpret_cast<__vcpu**>(ExAllocatePoolWithTag(NonPagedPool, sizeof(__vcpu*) * g_vmm_context->processor_count, VMM_POOL_TAG));
 		if (g_vmm_context->vcpu_table == nullptr) {
-			LOG("[!] Failure allocating memory for vcpu table.\n");
+			LOG("[!] Failure allocating memory for vcpu table (%x).\n", KeGetCurrentProcessorNumber());
 			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
