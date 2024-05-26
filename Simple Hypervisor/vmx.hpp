@@ -10,6 +10,21 @@ enum vmcall_numbers : unsigned long {
 	vmx_invept_single_context,
 };
 
+union __cr_fixed
+{
+	unsigned __int64 all;
+	struct
+	{
+		unsigned long low;
+		long high;
+	} split;
+	struct
+	{
+		unsigned long low;
+		long high;
+	} u;
+};
+
 namespace vmx {
 	auto vmx_is_vmx_available() -> bool;
 	auto vmx_is_vmx_support() -> bool;
@@ -24,6 +39,8 @@ namespace vmx {
 	auto vmx_allocate_vmexit_stack(uchar) -> bool;
 	auto vmx_allocate_io_bitmap_stack(uchar) -> bool;
 	auto vmx_allocate_msr_bitmap(uchar) -> bool;
+
+	auto adjust_control_registers() -> void;
 
 	auto vmx_handle_vmcall(unsigned __int64, unsigned __int64, unsigned __int64, unsigned __int64) -> unsigned __int64;
 }
