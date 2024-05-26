@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
 namespace vmexit {
-	auto vmexit_handler(void* _guest_registers) -> void {
-		auto guest_regs = reinterpret_cast<guest_registers*>(_guest_registers);
+	auto vmexit_handler(void* args) -> void {
+		auto guest_regs = reinterpret_cast<guest_registers*>(args);
 		if (!guest_regs)	return;
 
 		vmx_vmexit_reason vmexit_reason;
@@ -12,15 +12,23 @@ namespace vmexit {
 
 		unsigned __int64 rsp = 0;
 		__vmx_vmread(VMCS_GUEST_RSP, &rsp);
+		unsigned __int64 rip = 0;
+		__vmx_vmread(VMCS_GUEST_RIP, &rip);
 
 		{
 			// Save vmexit info
 			guest_regs->rsp = rsp;
 			vcpu->vmexit_info.guest_registers = guest_regs;
 		}
-		
 
-		/*switch (vmexit_reason.basic_exit_reason)
+		LOG("[*] exit reason : %llx\n", vmexit_reason.basic_exit_reason);
+		LOG("[*] guest rsp : %llx\n", rsp);
+		LOG("[*] guest rip : %llx\n", rip);
+		LOG("[>]=======================================================================[<]\n\n");
+
+		//__debugbreak();
+
+		switch (vmexit_reason.basic_exit_reason)
 		{
 		case VMX_EXIT_REASON_EXCEPTION_OR_NMI: {
 			//LOG("[*][%ws] exception or nmi\n", __FUNCTIONW__);
@@ -271,28 +279,12 @@ namespace vmexit {
 
 		case VMX_EXIT_REASON_EXECUTE_RDMSR: {
 			//LOG("[*][%ws] execute rdmsr\n", __FUNCTIONW__);
-			if ((guest_regs->rcx <= 0x00001FFF) ||
-				((guest_regs->rcx >= 0xC0000000) && (guest_regs->rcx <= 0xC0001FFF))) {
-
-				LARGE_INTEGER msr;
-				msr.QuadPart = __readmsr(static_cast<ulong>(guest_regs->rcx));
-				guest_regs->rdx = msr.HighPart;
-				guest_regs->rax = msr.LowPart;
-			}
+			handle_rdmsr(guest_regs);
 		}
 										  break;
 
 		case VMX_EXIT_REASON_EXECUTE_WRMSR: {
-			//LOG("[*][%ws] execute wrmsr\n", __FUNCTIONW__);
-			if ((guest_regs->rcx <= 0x00001FFF) ||
-				((guest_regs->rcx >= 0xC0000000) && (guest_regs->rcx <= 0xC0001FFF))) {
-
-				LARGE_INTEGER msr;
-				msr.LowPart = static_cast<ulong>(guest_regs->rax);
-				msr.HighPart = static_cast<ulong>(guest_regs->rdx);
-				__writemsr(static_cast<ulong>(guest_regs->rcx), msr.QuadPart);
-			}
-
+			handle_wrmsr(guest_regs);
 		}
 										  break;
 
@@ -381,7 +373,7 @@ namespace vmexit {
 				// These caused an EPT Violation
 				__debugbreak();
 				LOG("Error: VA = %llx, PA = %llx", linear_addr, phys_addr);
-				return VM_ERROR_ERR_INFO_ERR;
+				return;
 			}
 
 			if (!handle_ept_violation(phys_addr, linear_addr)) {
@@ -491,17 +483,45 @@ namespace vmexit {
 
 		default:
 			break;
-		}*/
+		}
 
 		//handle_vmexit_instruction(guest_regs);
 
-		size_t rip, inst_len;
-		__vmx_vmread(VMCS_GUEST_RIP, &rip);
-		__vmx_vmread(VMCS_VMEXIT_INSTRUCTION_LENGTH, &inst_len);
+		size_t guest_rip, guest_inst_len;
+		__vmx_vmread(VMCS_GUEST_RIP, &guest_rip);
+		__vmx_vmread(VMCS_VMEXIT_INSTRUCTION_LENGTH, &guest_inst_len);
 
-		rip += inst_len;
-		__vmx_vmwrite(VMCS_GUEST_RIP, rip);
+		guest_rip += guest_inst_len;
+		__vmx_vmwrite(VMCS_GUEST_RIP, guest_rip);
 
 		return;
+	}
+
+	auto handle_wrmsr(void* args) -> void {
+		NT_ASSERTMSG("ARGS == NULL", guest_regs != nullptr);
+
+		auto guest_regs = reinterpret_cast<guest_registers*>(args);
+		if ((guest_regs->rcx <= 0x00001FFF) ||
+			((guest_regs->rcx >= 0xC0000000) && (guest_regs->rcx <= 0xC0001FFF))) {
+
+			LARGE_INTEGER msr;
+			msr.LowPart = static_cast<ULONG>(guest_regs->rax);
+			msr.HighPart = static_cast<ULONG>(guest_regs->rdx);
+			__writemsr(static_cast<ULONG>(guest_regs->rcx), msr.QuadPart);
+		}
+	}
+
+	auto handle_rdmsr(void* args) -> void {
+		NT_ASSERTMSG("ARGS == NULL", guest_regs != nullptr);
+
+		auto guest_regs = reinterpret_cast<guest_registers*>(args);
+		if ((guest_regs->rcx <= 0x00001FFF) ||
+			((guest_regs->rcx >= 0xC0000000) && (guest_regs->rcx <= 0xC0001FFF))) {
+
+			LARGE_INTEGER msr;
+			msr.QuadPart = __readmsr(static_cast<ulong>(guest_regs->rcx));
+			guest_regs->rdx = msr.HighPart;
+			guest_regs->rax = msr.LowPart;
+		}
 	}
 }
