@@ -157,6 +157,8 @@ namespace hv {
 	auto initialize_vmm(void* guest_rsp) -> void {
 		auto current_procesor = KeGetCurrentProcessorNumberEx(nullptr);
 		auto current_vcpu = g_vmm_context->vcpu_table[current_procesor];
+
+		vmx::adjust_control_registers();
 		
 		if (__vmx_on(&current_vcpu->vmxon_physical)) {
 			LOG("[!] Failed to put vcpu %d into VMX operation.\n", current_procesor);
@@ -180,17 +182,6 @@ namespace hv {
 		LOG("[!] Failed to launch vmm on processor (%x) with error code : %x\n", current_procesor, error_code);
 		current_vcpu->vcpu_status.vmx_on = false;
 		current_vcpu->vcpu_status.vmm_launched = false;
-	}
-
-	auto get_system_dirbase() -> unsigned __int64 {
-		__debugbreak();
-		UNICODE_STRING us_string{};
-		RtlInitUnicodeString(&us_string, L"PsInitialSystemProcess");
-		auto initial_process = MmGetSystemRoutineAddress(&us_string);
-		DbgPrint("[*] PsInitialSystemProcess : %p\n", initial_process);
-		auto dir_base = ((_KPROCESS*)initial_process)->DirectoryTableBase;
-		DbgPrint("[*] dirbase : %llx\n", dir_base);
-		return ((_KPROCESS*)PsInitialSystemProcess)->DirectoryTableBase;
 	}
 
 }
