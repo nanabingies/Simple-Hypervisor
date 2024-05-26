@@ -74,14 +74,14 @@ using ept_page_table = struct _ept_page_table {
 	unsigned __int64					dynamic_pages_count;
 };
 
-using ept_state = struct _ept_state {
+/*using ept_state = struct _ept_state {
 	unsigned __int64	guest_address_width_value;
 	ept_pointer*		ept_ptr;
 	ept_page_table*		ept_page_table;
 
 	mtrr_range_descriptor	mtrr_ranges[9];
 	unsigned __int64		num_enabled_memory_ranges;
-};
+};*/
 
 using vmx_non_root_memory = struct vmx_non_root_memory {
 	void* pre_allocated_buffer;
@@ -95,7 +95,7 @@ namespace ept {
 
 	auto check_ept_support() -> bool;
 
-	auto initialize_ept(unsigned char) -> bool;
+	auto initialize_ept(__ept_state&) -> bool;
 
 	auto ept_build_mtrr_map() -> bool;
 
