@@ -10,23 +10,23 @@ namespace vmexit {
 
 		__vcpu* vcpu = g_vmm_context->vcpu_table[KeGetCurrentProcessorNumberEx(NULL)];
 
-		unsigned __int64 rsp = 0;
-		__vmx_vmread(VMCS_GUEST_RSP, &rsp);
+		unsigned __int64 vmcs_guest_rsp = 0;
+		__vmx_vmread(VMCS_GUEST_RSP, &vmcs_guest_rsp);
 		unsigned __int64 rip = 0;
 		__vmx_vmread(VMCS_GUEST_RIP, &rip);
 
 		{
 			// Save vmexit info
-			guest_regs->rsp = rsp;
+			guest_regs->rsp = vmcs_guest_rsp;
 			vcpu->vmexit_info.guest_registers = guest_regs;
 		}
 
 		LOG("[*] exit reason : %llx\n", vmexit_reason.basic_exit_reason);
-		LOG("[*] guest rsp : %llx\n", rsp);
+		LOG("[*] guest rsp : %llx\n", vmcs_guest_rsp);
 		LOG("[*] guest rip : %llx\n", rip);
 		LOG("[>]=======================================================================[<]\n\n");
 
-		//__debugbreak();
+		__debugbreak();
 
 		switch (vmexit_reason.basic_exit_reason)
 		{
@@ -77,8 +77,7 @@ namespace vmexit {
 
 		case VMX_EXIT_REASON_TASK_SWITCH: {
 			//LOG("[*][%ws] task switch\n", __FUNCTIONW__);
-			vmx_exit_qualification_task_switch exitQualification;
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			handle_task_switch(guest_regs);
 		}
 										break;
 
@@ -485,20 +484,18 @@ namespace vmexit {
 			break;
 		}
 
-		//handle_vmexit_instruction(guest_regs);
+		size_t vmcs_guest_rip, vmcs_guest_inst_len;
+		__vmx_vmread(VMCS_GUEST_RIP, &vmcs_guest_rip);
+		__vmx_vmread(VMCS_VMEXIT_INSTRUCTION_LENGTH, &vmcs_guest_inst_len);
 
-		size_t guest_rip, guest_inst_len;
-		__vmx_vmread(VMCS_GUEST_RIP, &guest_rip);
-		__vmx_vmread(VMCS_VMEXIT_INSTRUCTION_LENGTH, &guest_inst_len);
-
-		guest_rip += guest_inst_len;
-		__vmx_vmwrite(VMCS_GUEST_RIP, guest_rip);
+		vmcs_guest_rip += vmcs_guest_inst_len;
+		__vmx_vmwrite(VMCS_GUEST_RIP, vmcs_guest_rip);
 
 		return;
 	}
 
 	auto handle_wrmsr(void* args) -> void {
-		NT_ASSERTMSG("ARGS == NULL", guest_regs != nullptr);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
 
 		auto guest_regs = reinterpret_cast<guest_registers*>(args);
 		if ((guest_regs->rcx <= 0x00001FFF) ||
@@ -512,7 +509,7 @@ namespace vmexit {
 	}
 
 	auto handle_rdmsr(void* args) -> void {
-		NT_ASSERTMSG("ARGS == NULL", guest_regs != nullptr);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
 
 		auto guest_regs = reinterpret_cast<guest_registers*>(args);
 		if ((guest_regs->rcx <= 0x00001FFF) ||
@@ -523,5 +520,13 @@ namespace vmexit {
 			guest_regs->rdx = msr.HighPart;
 			guest_regs->rax = msr.LowPart;
 		}
+	}
+
+	auto handle_task_switch(void* args) -> void {
+		UNREFERENCED_PARAMETER(args);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+
+		vmx_exit_qualification_task_switch exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 }
