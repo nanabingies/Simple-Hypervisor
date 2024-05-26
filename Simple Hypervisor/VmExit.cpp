@@ -271,55 +271,25 @@ namespace vmexit {
 
 		case VMX_EXIT_REASON_LDTR_TR_ACCESS: {
 			//LOG("[*][%ws] ldtr tr access\n", __FUNCTIONW__);
-			vmx_vmexit_instruction_info_ldtr_tr_access exitQualification;
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			handle_ldtr_tr_access(guest_regs);
 		}
 										   break;
 
 		case VMX_EXIT_REASON_EPT_VIOLATION: {
-			using ept::handle_ept_violation;
 			//LOG("[*][%ws] ept violation\n", __FUNCTIONW__);
-
-			vmx_exit_qualification_ept_violation exitQualification;
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
-
-			uint64_t phys_addr;
-			__vmx_vmread(VMCS_GUEST_PHYSICAL_ADDRESS, &phys_addr);
-			//phys_addr = PAGE_ALIGN((PVOID)phys_addr);
-
-
-			uint64_t linear_addr;
-			__vmx_vmread(VMCS_EXIT_GUEST_LINEAR_ADDRESS, &linear_addr);
-
-			if (exitQualification.ept_executable || exitQualification.ept_readable || exitQualification.ept_writeable) {
-				// These caused an EPT Violation
-				__debugbreak();
-				LOG("Error: VA = %llx, PA = %llx", linear_addr, phys_addr);
-				return;
-			}
-
-			if (!handle_ept_violation(phys_addr, linear_addr)) {
-				LOG("[!][%ws] Error handling apt violation\n", __FUNCTIONW__);
-			}
+			handle_ept_violation(guest_regs);
 		}
 										  break;
 
 		case VMX_EXIT_REASON_EPT_MISCONFIGURATION: {
 			//LOG("[*][%ws] EPT Misconfiguration\n", __FUNCTIONW__);
-			//LOG_ERROR();
-			__debugbreak();
-
-			// Failure setting EPT
-			// Bugcheck and restart system
-			KeBugCheck(PFN_LIST_CORRUPT);	// Is this bug code even correct??
+			handle_ept_misconfiguration(guest_regs);
 		}
 												 break;
 
 		case VMX_EXIT_REASON_EXECUTE_INVEPT: {
 			//LOG("[*][%ws] invept\n", __FUNCTIONW__);
-			vmx_vmexit_instruction_info_invalidate exitQualification;
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
-			__debugbreak();
+			handle_execute_invept(guest_regs);
 		}
 										   break;
 
@@ -335,8 +305,7 @@ namespace vmexit {
 
 		case VMX_EXIT_REASON_EXECUTE_INVVPID: {
 			//LOG("[*][%ws] invvpid\n", __FUNCTIONW__);
-			vmx_vmexit_instruction_info_invalidate exitQualification;
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			handle_execute_invvpid(guest_regs);
 		}
 											break;
 
@@ -357,15 +326,13 @@ namespace vmexit {
 
 		case VMX_EXIT_REASON_EXECUTE_RDRAND: {
 			//LOG("[*][%ws] rdrand\n", __FUNCTIONW__);
-			vmx_vmexit_instruction_info_rdrand_rdseed exitQualification;
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			handle_execute_rdrand(guest_regs);
 		}
 										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_INVPCID: {
 			//LOG("[*][%ws] invpcid\n", __FUNCTIONW__);
-			vmx_vmexit_instruction_info_invalidate exitQualification;
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			handle_execute_invpcid(guest_regs);
 		}
 											break;
 
@@ -391,15 +358,13 @@ namespace vmexit {
 
 		case VMX_EXIT_REASON_EXECUTE_XSAVES: {
 			//LOG("[*][%ws] execute xsaves\n", __FUNCTIONW__);
-			vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			handle_execute_xsaves(guest_regs);
 		}
 										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_XRSTORS: {
 			//LOG("[*][%ws] execute xstors\n", __FUNCTIONW__);
-			vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			handle_execute_xrstors(guest_regs);
 		}
 											break;
 
@@ -607,6 +572,100 @@ namespace vmexit {
 		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
 		// TODO:
 		vmx_vmexit_instruction_info_gdtr_idtr_access exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+	}
+
+	auto handle_ldtr_tr_access(void* args) -> void {
+		UNREFERENCED_PARAMETER(args);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		// TODO:
+		vmx_vmexit_instruction_info_ldtr_tr_access exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+	}
+
+	auto handle_ept_violation(void* args) -> void {
+		using ept::handle_ept_violation;
+
+		auto guest_regs = reinterpret_cast<guest_registers*>(args);
+		vmx_exit_qualification_ept_violation exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+
+		uint64_t phys_addr;
+		__vmx_vmread(VMCS_GUEST_PHYSICAL_ADDRESS, &phys_addr);
+		//phys_addr = PAGE_ALIGN((PVOID)phys_addr);
+
+		uint64_t linear_addr;
+		__vmx_vmread(VMCS_EXIT_GUEST_LINEAR_ADDRESS, &linear_addr);
+
+		if (exitQualification.ept_executable || exitQualification.ept_readable || exitQualification.ept_writeable) {
+			// These caused an EPT Violation
+			__debugbreak();
+			LOG("Error: VA = %llx, PA = %llx", linear_addr, phys_addr);
+			return;
+		}
+
+		if (!handle_ept_violation(phys_addr, linear_addr)) {
+			LOG("[!][%ws] Error handling apt violation\n", __FUNCTIONW__);
+		}
+	}
+
+	auto handle_ept_misconfiguration(void* args) -> void {
+		UNREFERENCED_PARAMETER(args);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		// TODO:
+		__debugbreak();
+
+		// Failure setting EPT
+		// Bugcheck and restart system
+		KeBugCheck(PFN_LIST_CORRUPT);	// Is this bug code even correct??
+	}
+
+	auto handle_execute_invept(void* args) -> void {
+		UNREFERENCED_PARAMETER(args);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		// TODO:
+		vmx_vmexit_instruction_info_invalidate exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+		__debugbreak();
+	}
+
+	auto handle_execute_invvpid(void* args) -> void {
+		UNREFERENCED_PARAMETER(args);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		// TODO:
+		vmx_vmexit_instruction_info_invalidate exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+	}
+
+	auto handle_execute_rdrand(void* args) -> void {
+		UNREFERENCED_PARAMETER(args);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		// TODO:
+		vmx_vmexit_instruction_info_rdrand_rdseed exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+	}
+
+	auto handle_execute_invpcid(void* args) -> void {
+		UNREFERENCED_PARAMETER(args);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		// TODO:
+		vmx_vmexit_instruction_info_invalidate exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+	}
+
+	auto handle_execute_xsaves(void* args) -> void {
+		UNREFERENCED_PARAMETER(args);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		// TODO:
+		vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+	}
+
+	auto handle_execute_xrstors(void* args) -> void {
+		UNREFERENCED_PARAMETER(args);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		// TODO:
+		vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 }
