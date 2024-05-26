@@ -207,6 +207,35 @@ namespace vmx {
 		}
 	}
 
+	auto adjust_control_registers() -> void {
+		cr4 _cr4{};
+		cr0 _cr0{};
+		__cr_fixed cr_fixed;
+
+		cr_fixed.all = __readmsr(IA32_VMX_CR0_FIXED0);
+		_cr0.flags = __readcr0();
+		_cr0.flags |= cr_fixed.split.low;
+		cr_fixed.all = __readmsr(IA32_VMX_CR0_FIXED1);
+		_cr0.flags &= cr_fixed.split.low;
+		__writecr0(_cr0.flags);
+		cr_fixed.all = __readmsr(IA32_VMX_CR4_FIXED0);
+		_cr4.flags = __readcr4();
+		_cr4.flags |= cr_fixed.split.low;
+		cr_fixed.all = __readmsr(IA32_VMX_CR4_FIXED1);
+		_cr4.flags &= cr_fixed.split.low;
+		__writecr4(_cr4.flags);
+
+		ia32_feature_control_register feature_msr = { 0 };
+		feature_msr.flags = __readmsr(IA32_FEATURE_CONTROL);
+
+		if (feature_msr.lock_bit == 0) {
+			feature_msr.enable_vmx_outside_smx = 1;
+			feature_msr.lock_bit = 1;
+
+			__writemsr(IA32_FEATURE_CONTROL, feature_msr.flags);
+		}
+	}
+
 	auto vmx_handle_vmcall(unsigned __int64 vmcall_number, unsigned __int64 param1, unsigned __int64 param2, unsigned __int64 param3) -> unsigned __int64 {
 		UNREFERENCED_PARAMETER(param1);
 		UNREFERENCED_PARAMETER(param2);
