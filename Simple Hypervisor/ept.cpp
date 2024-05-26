@@ -191,30 +191,21 @@ namespace ept {
 		if (page_table == nullptr)	return false;
 		RtlSecureZeroMemory(ept_state.ept_page_table, sizeof(__ept_page_table));
 
-		ept_pml4e* pml4e = reinterpret_cast<ept_pml4e*>(&page_table->ept_pml4[0]);
-		ept_pdpte* pdpte = reinterpret_cast<ept_pdpte*>(&page_table->ept_pdpte[0]);
-
-		_ept_state->ept_ptr->page_frame_number = (virtual_to_physical_address(&pml4e) >> PAGE_SHIFT);
-		_ept_state->ept_ptr->enable_access_and_dirty_flags = 0;
-		_ept_state->ept_ptr->memory_type = g_default_memory_type; // WriteBack;
-		_ept_state->ept_ptr->page_walk_length = max_ept_walk_length - 1;
-
-		pml4e->page_frame_number = (virtual_to_physical_address(&pdpte) >> PAGE_SHIFT);
-		pml4e->execute_access = 1;
-		pml4e->read_access = 1;
-		pml4e->user_mode_execute = 1;
-		pml4e->write_access = 1;
-
-		//vmm_context[KeGetCurrentProcessorNumber()].ept_pml4 = pml4e->flags;
+		ept_state.ept_page_table->ept_pml4->page_frame_number = (virtual_to_physical_address(&ept_state.ept_page_table->ept_pdpte[0]) >> PAGE_SHIFT);
+		ept_state.ept_page_table->ept_pml4->read_access = 1;
+		ept_state.ept_page_table->ept_pml4->execute_access = 1;
+		ept_state.ept_page_table->ept_pml4->write_access = 1;
+		ept_state.ept_page_table->ept_pml4->accessed = 1;
 
 		ept_pdpte pdpte_template = { 0 };
 		pdpte_template.read_access = 1;
 		pdpte_template.write_access = 1;
 		pdpte_template.execute_access = 1;
 
-		__stosq((SIZE_T*)&page_table->ept_pdpte[0], pdpte_template.flags, EPTPDPTEENTRIES);
-		for (unsigned idx = 0; idx < EPTPDPTEENTRIES; idx++) {
-			page_table->ept_pdpte[idx].page_frame_number = (virtual_to_physical_address(&page_table->ept_pde[idx][0]) >> PAGE_SHIFT);
+		__stosq((unsigned __int64*)&ept_state.ept_page_table->ept_pdpte[0], pdpte_template.flags, 512);
+		for (unsigned idx = 0; idx < 512; idx++) {
+			ept_state.ept_page_table->ept_pdpte[idx].page_frame_number = 
+				(virtual_to_physical_address(&ept_state.ept_page_table->ept_pde[idx][0]) >> PAGE_SHIFT);
 		}
 
 		ept_pde_2mb pde_template = { 0 };
@@ -223,35 +214,13 @@ namespace ept {
 		pde_template.execute_access = 1;
 		pde_template.large_page = 1;
 
-		__stosq((SIZE_T*)&page_table->ept_pde[0], pde_template.flags, EPTPDEENTRIES);
-		for (unsigned i = 0; i < EPTPML4ENTRIES; i++) {
-			for (unsigned j = 0; j < EPTPDPTEENTRIES; j++) {
-				if (setup_pml2_entries(_ept_state, &page_table->ept_pde[i][j], (i * 512) + j) == false)
+		__stosq((unsigned __int64*)&ept_state.ept_page_table->ept_pde[0], pde_template.flags, 512 * 512);
+		for (unsigned i = 0; i < 512; i++) {
+			for (unsigned j = 0; j < 512; j++) {
+				if (setup_pml2_entries(ept_state, &ept_state.ept_page_table->ept_pde[i][j], (i * 512) + j) == false)
 					return false;
 			}
 		}
-
-		// Allocate preallocated entries
-		const uint64_t preallocated_entries_size = sizeof(ept_entry) * DYNAMICPAGESCOUNT;
-		ept_entry** dynamic_pages = reinterpret_cast<ept_entry**>
-			(ExAllocatePoolWithTag(NonPagedPool, preallocated_entries_size, VMM_POOL_TAG));
-		if (!dynamic_pages) {
-			ExFreePoolWithTag(page_table, VMM_POOL_TAG);
-			return false;
-		}
-		RtlSecureZeroMemory(dynamic_pages, preallocated_entries_size);
-
-		ept_entry * _ept_entry = ept_allocate_ept_entry(NULL);
-		if (!_ept_entry) {
-			ExFreePoolWithTag(dynamic_pages, VMM_POOL_TAG);
-			ExFreePoolWithTag(page_table, VMM_POOL_TAG);
-			return false;
-		}
-		dynamic_pages[0] = _ept_entry;
-
-		page_table->dynamic_pages_count = 0;
-		page_table->dynamic_pages = const_cast<ept_entry**>(dynamic_pages);
-		_ept_state->guest_address_width_value = max_ept_walk_length - 1;
 
 		return true;
 	}
