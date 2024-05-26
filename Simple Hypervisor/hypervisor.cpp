@@ -73,9 +73,6 @@ namespace hv {
 		RtlSecureZeroMemory(vcpu->vcpu_bitmaps.io_bitmap_b, PAGE_SIZE);
 		vcpu->vcpu_bitmaps.io_bitmap_b_physical = MmGetPhysicalAddress(vcpu->vcpu_bitmaps.io_bitmap_b).QuadPart;
 
-		//
-		// Allocate ept state structure
-		//
 		vcpu->ept_state = reinterpret_cast<__ept_state*>(ExAllocatePoolWithTag(NonPagedPool, sizeof(__ept_state), VMM_POOL_TAG));
 		if (vcpu->ept_state == nullptr) {
 			LOG("[!] vcpu ept state for processor (%x) could not be allocated\n", curr_processor);
@@ -84,6 +81,12 @@ namespace hv {
 		}
 		RtlSecureZeroMemory(vcpu->ept_state, sizeof(__ept_state));
 		InitializeListHead(&vcpu->ept_state->hooked_page_list);
+
+		if (ept::initialize_ept(vcpu->ept_state) == false) {
+			LOG("[!] Failure setting up ept structure for vcpu table on processor (%x).\n", curr_processor);
+			LOG_ERROR(__FILE__, __LINE__);
+			return false;
+		}
 
 		return true;
 	}
