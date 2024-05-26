@@ -123,18 +123,27 @@ struct __vmcs {
 	char data[0x1000 - 2 * sizeof(unsigned)];
 };
 
-struct __vmm_ept_page_table {
+struct __ept_page_table {
+	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pml4e ept_pml4[512];
+	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pdpte ept_pdpte[512];
+	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pde_2mb ept_pde[512][512];
+	ept_entry**					dynamic_pages;
+	unsigned __int64			dynamic_pages_count;
+};
+
+/*struct __vmm_ept_page_table {
 	DECLSPEC_ALIGN(PAGE_SIZE) ept_pml4e pml4[512];
 
 	DECLSPEC_ALIGN(PAGE_SIZE) ept_pdpte pml3[512];
 
 	DECLSPEC_ALIGN(PAGE_SIZE) ept_pde pml2[512][512];
-};
+};*/
 
 struct __ept_state {
 	LIST_ENTRY hooked_page_list;
 	ept_pointer* ept_pointer;
-	__vmm_ept_page_table* ept_page_table;
+	//__vmm_ept_page_table* ept_page_table;
+	__ept_page_table* ept_page_table;
 	//__ept_hooked_page_info* page_to_change;
 };
 
