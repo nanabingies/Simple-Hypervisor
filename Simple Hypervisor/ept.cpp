@@ -47,8 +47,6 @@ namespace ept {
 	}
 
 	auto ept_build_mtrr_map() -> bool {
-		RtlSecureZeroMemory(&g_mtrr_entries, sizeof(g_mtrr_entries));
-
 		ia32_mtrr_capabilities_register mtrr_cap{};
 		ia32_mtrr_def_type_register mtrr_def{};
 		ia32_mtrr_physbase_register mtrr_phys_base{};
@@ -193,7 +191,7 @@ namespace ept {
 
 
 		if (create_ept_state(_ept_state) == false) {
-			DbgPrint("[!] Failed to set Ept Page Table Entries.\n");
+			DbgPrint("[!] Failed to setup ept page table Entries.\n");
 			LOG_ERROR(__FILE__, __LINE__);
 			ExFreePoolWithTag(ept_ptr, VMM_POOL_TAG);
 			ExFreePoolWithTag(_ept_state, VMM_POOL_TAG);
