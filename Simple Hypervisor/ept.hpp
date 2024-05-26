@@ -66,13 +66,7 @@ using ept_split_page = struct _ept_split_page {
 	LIST_ENTRY					split_pages;
 };
 
-using ept_page_table = struct _ept_page_table {
-	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pml4e ept_pml4[EPTPML4ENTRIES];
-	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pdpte ept_pdpte[EPTPDPTEENTRIES];
-	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pde_2mb ept_pde[EPTPML4ENTRIES][EPTPDPTEENTRIES];
-	ept_entry** dynamic_pages;
-	unsigned __int64					dynamic_pages_count;
-};
+
 
 /*using ept_state = struct _ept_state {
 	unsigned __int64	guest_address_width_value;
@@ -99,33 +93,31 @@ namespace ept {
 
 	auto ept_build_mtrr_map() -> bool;
 
-	auto create_ept_state(ept_state*) -> bool;
+	auto initialize_ept_page_table(__ept_state&) -> bool;
 
-	//auto handle_ept_violation(unsigned __int64, unsigned __int64) -> void;
-
-	auto setup_pml2_entries(ept_state*, ept_pde_2mb*, unsigned __int64) -> bool;
+	//auto setup_pml2_entries(ept_state*, ept_pde_2mb*, unsigned __int64) -> bool;
 
 	auto is_in_range(unsigned __int64, unsigned __int64, unsigned __int64) -> bool;
 
 	auto is_valid_for_large_page(unsigned __int64) -> bool;
 
-	auto split_pml2_entry(ept_state*, void*, unsigned __int64) -> bool;
+	//auto split_pml2_entry(ept_state*, void*, unsigned __int64) -> bool;
 
-	auto get_pte_entry(ept_page_table*, unsigned __int64) -> ept_pte*;
+	//auto get_pte_entry(ept_page_table*, unsigned __int64) -> ept_pte*;
 
-	auto get_pde_entry(ept_page_table*, unsigned __int64) -> ept_pde_2mb*;
+	//auto get_pde_entry(ept_page_table*, unsigned __int64) -> ept_pde_2mb*;
 
-	auto ept_construct_tables(ept_entry*, unsigned __int64, unsigned __int64, ept_page_table*) -> ept_entry*;
+	//auto ept_construct_tables(ept_entry*, unsigned __int64, unsigned __int64, ept_page_table*) -> ept_entry*;
 
 	auto ept_init_table_entry(ept_entry*, unsigned __int64, unsigned __int64) -> void;
 
-	auto ept_allocate_ept_entry(ept_page_table*) -> ept_entry*;
+	//auto ept_allocate_ept_entry(ept_page_table*) -> ept_entry*;
 
 	auto ept_get_memory_type(unsigned __int64, bool) -> unsigned __int64;
 
 	auto ept_inv_global_entry() -> unsigned __int64;
 
-	auto split_pde(ept_page_table*, void*, unsigned __int64) -> void;
+	//auto split_pde(ept_page_table*, void*, unsigned __int64) -> void;
 
 	auto handle_ept_violation(unsigned __int64, unsigned __int64) -> bool;
 }
