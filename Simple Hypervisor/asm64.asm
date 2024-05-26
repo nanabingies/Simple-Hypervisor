@@ -1,22 +1,16 @@
 
 public	asm_host_continue_execution
-public  asm_setup_vmcs
 public  asm_inv_ept_global
 
-public	asm_get_tr
-public	asm_get_ldtr
-public	asm_get_idt_limit
-public	asm_get_gdt_limit
-public	asm_get_idt_base
-public	asm_get_gdt_base
+public asm_save_vmm_state
+public asm_restore_vmm_state
+
+
 
 public  asm_vmx_vmcall
 
-extern	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z:proc
-extern  ?vmexit_handler@vmexit@@YAFPEAX@Z:proc
-;extern
-extern  ret_val:dword
-extern  cr3_val:qword
+extern  ?vmexit_handler@vmexit@@YAXPEAX@Z:proc
+extern  ?initialize_vmm@hv@@YAXPEAX@Z:proc
 
 .CONST
 VM_ERROR_OK				equ		00h
@@ -63,119 +57,123 @@ RESTORE_GP macro
         pop     rax
 endm
 
+;----------------------------------------------------------------------------------------------------
+
 asm_host_continue_execution proc
 	;int 3		; A VM Exit just occured
 
-	pushfq
-	SAVE_GP
+    SAVE_GP
+    sub     rsp ,60h
 
-	sub     rsp, 060h
-	movdqa  xmmword ptr [rsp], xmm0
+    movdqa  xmmword ptr [rsp], xmm0
     movdqa  xmmword ptr [rsp + 10h], xmm1
     movdqa  xmmword ptr [rsp + 20h], xmm2
     movdqa  xmmword ptr [rsp + 30h], xmm3
     movdqa  xmmword ptr [rsp + 40h], xmm4
     movdqa  xmmword ptr [rsp + 50h], xmm5
 
-	mov rcx, rsp
-	sub rsp, 020h
-	call ?vmexit_handler@vmexit@@YAFPEAX@Z			; handle VM exit 
-	add rsp, 020h
+    mov     rcx, rsp
+    sub     rsp,  20h
+    call    ?vmexit_handler@vmexit@@YAXPEAX@Z       ; handle VM exit 
+    add     rsp, 20h
 
-	movdqa  xmm0, xmmword ptr [rsp]
+    movdqa  xmm0, xmmword ptr [rsp]
     movdqa  xmm1, xmmword ptr [rsp + 10h]
     movdqa  xmm2, xmmword ptr [rsp + 20h]
     movdqa  xmm3, xmmword ptr [rsp + 30h]
     movdqa  xmm4, xmmword ptr [rsp + 40h]
     movdqa  xmm5, xmmword ptr [rsp + 50h]
-	add     rsp,  060h
 
-	cmp     al, 0
-    jnz      exit
+    add     rsp,  60h
 
-	RESTORE_GP
-
-    ;mov     edi, 681Eh
-    ;vmread  rdx, rdi
-    ;mov     ecx, 440Ch
-    ;vmread  rcx, rcx
-    ;add     rdx, rcx
-    ;vmwrite rdi, rdx
+    RESTORE_GP
     vmresume
 
-exit:
-	sub rsp, 20h
-    ;call ?return_rsp_for_vmxoff@@YA_KXZ
-    add rsp, 20h
-
-	push rax
-
-    sub rsp, 20h
-    ;call ?return_rip_for_vmxoff@@YA_KXZ
-    add rsp, 20h
-
-	push rax
-
-    mov rcx,rsp
-    mov rsp,[rcx+8h]
-    mov rax,[rcx]
-    push rax
-
-    mov r15, [rcx + 10h]
-    mov r14, [rcx + 18h]
-    mov r13, [rcx + 20h]
-    mov r12, [rcx + 28h]
-    mov r11, [rcx + 30h]
-    mov r10, [rcx + 38h]
-    mov r9,  [rcx + 40h]
-    mov r8,  [rcx + 48h]
-    mov rdi, [rcx + 50h]
-    mov rsi, [rcx + 58h]
-    mov rbp, [rcx + 60h]
-    mov rbx, [rcx + 70h]
-    mov rdx, [rcx + 78h]
-    mov rax, [rcx + 88h]
-    mov rcx, [rcx + 80h]
-
-	ret
 asm_host_continue_execution ENDP
 
 ;----------------------------------------------------------------------------------------------------
 
-asm_setup_vmcs proc
-	
-	pushfq
-	SAVE_GP
+asm_save_vmm_state proc
 
-	sub     rsp, 060h
-	movdqa  xmmword ptr [rsp], xmm0
-    movdqa  xmmword ptr [rsp + 10h], xmm1
-    movdqa  xmmword ptr [rsp + 20h], xmm2
-    movdqa  xmmword ptr [rsp + 30h], xmm3
-    movdqa  xmmword ptr [rsp + 40h], xmm4
-    movdqa  xmmword ptr [rsp + 50h], xmm5
+    ;int 3
+    pushfq
+    SAVE_GP
+    sub rsp, 020h
+    mov rcx, rsp
+    call ?initialize_vmm@hv@@YAXPEAX@Z
+    
+    int 3   ; error
 
-	mov		rdx, rsp
-    mov     r8,  cr3_val
-	sub		rsp, 020h
-    call	?setup_vmcs@@YA?AW4EVmErrors@@KPEAX_K@Z
-    mov     ret_val, eax
-    add		rsp, 020h
+asm_save_vmm_state endp
 
-	movdqa  xmm0, xmmword ptr [rsp]
-    movdqa  xmm1, xmmword ptr [rsp + 10h]
-    movdqa  xmm2, xmmword ptr [rsp + 20h]
-    movdqa  xmm3, xmmword ptr [rsp + 30h]
-    movdqa  xmm4, xmmword ptr [rsp + 40h]
-    movdqa  xmm5, xmmword ptr [rsp + 50h]
-	add     rsp,  060h
+;----------------------------------------------------------------------------------------------------
 
-	RESTORE_GP
-	popfq
-    mov     eax, ret_val
-	ret
+asm_restore_vmm_state proc
+    add rsp, 020h
+    RESTORE_GP
+    popfq
+    ret
+asm_restore_vmm_state endp
 
-asm_setup_vmcs endp
+;----------------------------------------------------------------------------------------------------
+
+__read_ldtr proc
+    sldt ax
+    ret
+__read_ldtr endp
+
+__read_tr proc
+    str ax
+    ret
+__read_tr endp
+
+__read_cs proc
+    mov ax, cs
+    ret
+__read_cs endp
+
+__read_ss proc
+    mov ax, ss
+    ret
+__read_ss endp
+
+__read_ds proc
+    mov ax, ds
+    ret
+__read_ds endp
+
+__read_es proc
+    mov ax, es              
+    ret
+__read_es endp
+
+__read_fs proc
+    mov ax, fs
+    ret
+__read_fs endp
+
+__read_gs proc
+    mov ax, gs
+    ret
+__read_gs endp
+
+__sgdt proc
+    sgdt qword ptr [rcx]
+    ret
+__sgdt endp
+
+__sidt proc
+    sidt qword ptr [rcx]
+    ret
+__sidt endp
+
+__load_ar proc
+    lar rax, rcx
+    jz no_error
+    xor rax, rax
+no_error:
+    ret
+__load_ar endp
 
 ;----------------------------------------------------------------------------------------------------
 

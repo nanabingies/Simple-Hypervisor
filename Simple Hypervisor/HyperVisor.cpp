@@ -2,193 +2,150 @@
 #pragma warning(disable: 4996)
 
 namespace hv {
-	auto virtualize_all_processors() -> bool {
-		using vmx::vmx_allocate_vmxon_region;
-		using vmx::vmx_allocate_vmcs_region;
-		using vmx::vmx_allocate_vmexit_stack;
-		using vmx::vmx_allocate_io_bitmap_stack;
-		using vmx::vmx_allocate_msr_bitmap;
-		using ept::initialize_ept;
+	auto vmm_init() -> bool {
+		using vmx::vmx_allocate_vmm_context;
 
-		//
-		// This was more of an educational project so only one Logical Processor was chosen and virtualized
-		// TODO : Add support for multiple processors
-		// Update: Support for multiple processors added
-		//
-
-		PROCESSOR_NUMBER processor_number;
-		GROUP_AFFINITY affinity, old_affinity;
-
-		//
-		// ExAllocatePool2 - Memory is zero initialized unless POOL_FLAG_UNINITIALIZED is specified.
-		//
-		vmm_context = reinterpret_cast<_vmm_context*>
-			(ExAllocatePoolWithTag(NonPagedPool, sizeof(_vmm_context) * g_num_processors, VMM_POOL_TAG));
-		if (!vmm_context) {
-			LOG("[-] Failed to allocate memory for vmm_context\n");
-			LOG_ERROR();
+		if (!vmx_allocate_vmm_context()) {
+			LOG("[!] Failed to allocate memory for vmm_context\n");
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 
-		for (unsigned iter = 0; iter < g_num_processors; iter++) {
-			KeGetProcessorNumberFromIndex(iter, &processor_number);
+		// Initialize vcpu for each logical processor
+		for (unsigned iter = 0; iter < g_vmm_context->processor_count; iter++) {
+			if (init_vcpu(g_vmm_context->vcpu_table[iter]) == false)
+				return false;
 
-			RtlSecureZeroMemory(&affinity, sizeof(GROUP_AFFINITY));
-			affinity.Group = processor_number.Group;
-			affinity.Mask = (KAFFINITY)1 << processor_number.Number;
-			KeSetSystemGroupAffinityThread(&affinity, &old_affinity);
-			auto irql = KeRaiseIrqlToDpcLevel();
+			if (init_vmxon(g_vmm_context->vcpu_table[iter]) == false)
+				return false;
 
-			//
-			// Allocate Memory for VMXON & VMCS regions and initialize
-			//
-			if (!vmx_allocate_vmxon_region(processor_number.Number))		return false;
-			if (!vmx_allocate_vmcs_region(processor_number.Number))		return false;
-
-			//
-			// Allocate space for VM EXIT Handler
-			//
-			if (!vmx_allocate_vmexit_stack(processor_number.Number))		return false;
-
-			//
-			// Allocate memory for IO Bitmap
-			//
-			if (!vmx_allocate_io_bitmap_stack(processor_number.Number))			return false;
-
-			//
-			// Future: Add MSR Bitmap support
-			// Update: Added MSR Bitmap support
-			//
-			if (!vmx_allocate_msr_bitmap(processor_number.Number))			return false;
-
-			//
-			// Setup EPT support for that processor
-			//
-			//if (!initialize_ept(processor_number.Number))				return false;
-
-			KeLowerIrql(irql);
-			KeRevertToUserGroupAffinityThread(&old_affinity);
+			if (init_vmcs(g_vmm_context->vcpu_table[iter]) == false)
+				return false;
 		}
-		
+
+		KeGenericCallDpc(dpc_broadcast_initialize_guest, 0);
 		return true;
 	}
 
-	auto devirtualize_all_processors() -> void {
-		PROCESSOR_NUMBER processor_number;
-		GROUP_AFFINITY affinity, old_affinity;
-
-		for (unsigned iter = 0; iter < g_num_processors; iter++) {
-			KeGetProcessorNumberFromIndex(iter, &processor_number);
-
-			RtlSecureZeroMemory(&affinity, sizeof(GROUP_AFFINITY));
-			affinity.Group = processor_number.Group;
-			affinity.Mask = (KAFFINITY)1 << processor_number.Number;
-			KeSetSystemGroupAffinityThread(&affinity, &old_affinity);
-
-			auto irql = KeRaiseIrqlToDpcLevel();
-
-			__vmx_vmclear(&vmm_context[processor_number.Number].vmcs_region_phys_addr);
-			__vmx_off();
-
-			if (vmm_context[processor_number.Number].vmcs_region_virt_addr)
-				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].vmcs_region_virt_addr));
-
-			if (vmm_context[processor_number.Number].vmxon_region_virt_addr)
-				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].vmxon_region_virt_addr));
-
-			if (vmm_context[processor_number.Number].host_stack)
-				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].host_stack));
-
-			if (vmm_context[processor_number.Number].io_bitmap_a_virt_addr)
-				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].io_bitmap_a_virt_addr));
-
-			if (vmm_context[processor_number.Number].io_bitmap_b_virt_addr)
-				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].io_bitmap_b_virt_addr));
-
-			if (vmm_context[processor_number.Number].msr_bitmap_virt_addr)
-				MmFreeContiguousMemory(reinterpret_cast<void*>(vmm_context[processor_number.Number].msr_bitmap_virt_addr));
-
-			/*if (vmm_context[processor_number.Number].EptState) {
-				if (vmm_context[processor_number.Number].EptState->EptPageTable)
-					ExFreePoolWithTag(vmm_context[processor_number.Number].EptState->EptPageTable, VMM_POOL);
-
-				if (vmm_context[processor_number.Number].EptState->EptPtr)
-					ExFreePoolWithTag(vmm_context[processor_number.Number].EptState->EptPtr, VMM_POOL);
-
-				ExFreePoolWithTag(vmm_context[processor_number.Number].EptState, VMM_POOL);
-			}*/
-
-			KeLowerIrql(irql);
-			KeRevertToUserGroupAffinityThread(&old_affinity);
+	auto init_vcpu(struct __vcpu*& vcpu) -> bool {
+		unsigned curr_processor = KeGetCurrentProcessorNumber();
+		vcpu = reinterpret_cast<__vcpu*>(ExAllocatePoolWithTag(NonPagedPool, sizeof(__vcpu), VMM_POOL_TAG));
+		if (vcpu == nullptr) {
+			LOG("[!] Failed to create vcpu for processor (%x)\n", curr_processor);
+			LOG_ERROR(__FILE__, __LINE__);
+			return false;
 		}
 
-		ExFreePoolWithTag(vmm_context, VMM_POOL_TAG);
+		RtlSecureZeroMemory(vcpu, sizeof(__vcpu));
 
-		return;
+		vcpu->vmm_stack = reinterpret_cast<void*>(ExAllocatePoolWithTag(NonPagedPool, VMM_STACK_SIZE, VMM_POOL_TAG));
+		if (vcpu->vmm_stack == nullptr){
+			LOG("[!] vcpu stack for processor (%x) could not be allocated\n", curr_processor);
+			LOG_ERROR(__FILE__, __LINE__);
+			return false;
+		}
+		RtlSecureZeroMemory(vcpu->vmm_stack, VMM_STACK_SIZE);
+
+		vcpu->vcpu_bitmaps.msr_bitmap = reinterpret_cast<unsigned char*>(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL_TAG));
+		if (vcpu->vcpu_bitmaps.msr_bitmap == nullptr) {
+			LOG("[!] vcpu msr bitmap for processor (%x) could not be allocated\n", curr_processor);
+			LOG_ERROR(__FILE__, __LINE__);
+			return false;
+		}
+		RtlSecureZeroMemory(vcpu->vcpu_bitmaps.msr_bitmap, PAGE_SIZE);
+		vcpu->vcpu_bitmaps.msr_bitmap_physical = MmGetPhysicalAddress(vcpu->vcpu_bitmaps.msr_bitmap).QuadPart;
+
+		vcpu->vcpu_bitmaps.io_bitmap_a = reinterpret_cast<unsigned char*>(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL_TAG));
+		if (vcpu->vcpu_bitmaps.io_bitmap_a == nullptr) {
+			LOG("[!] vcpu io bitmap a for processor (%x) could not be allocated\n", curr_processor);
+			LOG_ERROR(__FILE__, __LINE__);
+			return false;
+		}
+		RtlSecureZeroMemory(vcpu->vcpu_bitmaps.io_bitmap_a, PAGE_SIZE);
+		vcpu->vcpu_bitmaps.io_bitmap_a_physical = MmGetPhysicalAddress(vcpu->vcpu_bitmaps.io_bitmap_a).QuadPart;
+
+		vcpu->vcpu_bitmaps.io_bitmap_b = reinterpret_cast<unsigned char*>(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL_TAG));
+		if (vcpu->vcpu_bitmaps.io_bitmap_b == nullptr) {
+			LOG("[!] vcpu io bitmap b for processor (%x) could not be allocated\n", curr_processor);
+			LOG_ERROR(__FILE__, __LINE__);
+			return false;
+		}
+		RtlSecureZeroMemory(vcpu->vcpu_bitmaps.io_bitmap_b, PAGE_SIZE);
+		vcpu->vcpu_bitmaps.io_bitmap_b_physical = MmGetPhysicalAddress(vcpu->vcpu_bitmaps.io_bitmap_b).QuadPart;
+
+		//
+		// Allocate ept state structure
+		//
+		vcpu->ept_state = reinterpret_cast<__ept_state*>(ExAllocatePoolWithTag(NonPagedPool, sizeof(__ept_state), VMM_POOL_TAG));
+		if (vcpu->ept_state == nullptr) {
+			LOG("[!] vcpu ept state for processor (%x) could not be allocated\n", curr_processor);
+			LOG_ERROR(__FILE__, __LINE__);
+			return false;
+		}
+		RtlSecureZeroMemory(vcpu->ept_state, sizeof(__ept_state));
+		InitializeListHead(&vcpu->ept_state->hooked_page_list);
+
+		return true;
 	}
 
-	auto launch_vm(ULONG_PTR arg) -> ULONG_PTR {
-		ulong processor_number = KeGetCurrentProcessorNumber();
+	auto init_vmxon(struct __vcpu*& vcpu) -> bool {
+		unsigned curr_processor = KeGetCurrentProcessorNumber();
 
-		//
-		// Set VMCS state to inactive
-		//
-		unsigned char ret = __vmx_vmclear(&vmm_context[processor_number].vmcs_region_phys_addr);
-		if (ret > 0) {
-			LOG("[-] VMCLEAR operation failed.\n");
-			LOG_ERROR();
-			return arg;
+		ia32_vmx_basic_register vmx_basic{};
+		vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
+
+		vcpu->vmxon = reinterpret_cast<__vmcs*>(ExAllocatePoolWithTag(NonPagedPool, vmx_basic.vmcs_size_in_bytes, VMM_POOL_TAG));
+		if (vcpu->vmxon == nullptr) {
+			LOG("[!] vmxon could not be allocated on processor (%x)\n", curr_processor);
+			LOG_ERROR(__FILE__, __LINE__);
+			return false;
 		}
 
-		//
-		//  Make VMCS the current and active on that processor
-		//
-		ret = __vmx_vmptrld(&vmm_context[processor_number].vmcs_region_phys_addr);
-		if (ret > 0) {
-			LOG("[-] VMPTRLD operation failed.\n");
-			LOG_ERROR();
-			return arg;
+		vcpu->vmxon_physical = MmGetPhysicalAddress(vcpu->vmxon).QuadPart;
+		if (vcpu->vmxon_physical == 0) {
+			LOG("[!] Could not get vmxon physical address on processor (%x)\n", curr_processor);
+			LOG_ERROR(__FILE__, __LINE__);
+			return false;
 		}
 
-		//
-		//	read cr3 and save for guest
-		//
-		cr3_val = __readcr3();
+		RtlSecureZeroMemory(vcpu->vmxon, vmx_basic.vmcs_size_in_bytes);
+		vcpu->vmxon->header.all = vmx_basic.vmcs_revision_id;
+		vcpu->vmxon->header.shadow_vmcs_indicator = 0;
 
-		//
-		// Setup VMCS structure fields for that logical processor
-		//
-		if (asm_setup_vmcs(processor_number) != VM_ERROR_OK) {
-			LOG("[-] Failure setting Virtual Machine VMCS for processor %x.\n", processor_number);
+		return true;
+	}
 
-			size_t error_code = 0;
-			__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &error_code);
-			LOG("[-] Exiting with error code : %llx\n", error_code);
-			return arg;
+	auto init_vmcs(struct __vcpu*& vcpu) -> bool {
+		ia32_vmx_basic_register vmx_basic = { 0 };
+		PHYSICAL_ADDRESS physical_max;
+
+		vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
+
+		physical_max.QuadPart = ~0ULL;
+		vcpu->vmcs = reinterpret_cast<__vmcs*>(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL_TAG));
+		if (vcpu->vmcs == nullptr) {
+			LOG("[!] vmcs structure for processor (%x) could not be allocated");
+			LOG_ERROR(__FILE__, __LINE__);
+			return false;
 		}
-		//LOG("[*] VMCS setup on processor %x done\n", processor_number);
 
-		//
-		// Launch VM into Outer Space :)
-		//
-		__vmx_vmlaunch();
+		vcpu->vmcs_physical = MmGetPhysicalAddress(vcpu->vmcs).QuadPart;
+		if (vcpu->vmcs_physical == 0)	return false;
 
-		// We should never get here
-		DbgBreakPoint();
-		LOG("[-] Failure launching Virtual Machine.\n");
+		RtlSecureZeroMemory(vcpu->vmcs, PAGE_SIZE);
+		vcpu->vmcs->header.revision_identifier = vmx_basic.vmcs_revision_id;
 
-		size_t error_code = 0;
-		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &error_code);
-		LOG("[-] Exiting with error code : %llx\n", error_code);
+		// Indicates if it's shadow vmcs or not
+		vcpu->vmcs->header.shadow_vmcs_indicator = 0;
 
-		return arg;
+		return true;
 	}
 
 	auto dpc_broadcast_initialize_guest(KDPC* Dpc, void* DeferredContext, void* SystemArgument1, void* SystemArgument2) -> void {
 		UNREFERENCED_PARAMETER(DeferredContext);
 		UNREFERENCED_PARAMETER(Dpc);
 
-		launch_vm(0);
+		asm_save_vmm_state();
 
 		// Wait for all DPCs to synchronize at this point
 		KeSignalCallDpcSynchronize(SystemArgument2);
@@ -197,41 +154,43 @@ namespace hv {
 		KeSignalCallDpcDone(SystemArgument1);
 	}
 
-	auto launch_all_vmms() -> void {
+	auto initialize_vmm(void* guest_rsp) -> void {
+		auto current_procesor = KeGetCurrentProcessorNumberEx(nullptr);
+		auto current_vcpu = g_vmm_context->vcpu_table[current_procesor];
 		
-		KeIpiGenericCall((PKIPI_BROADCAST_WORKER)launch_vm, 0);
-		//KeGenericCallDpc(dpc_broadcast_initialize_guest, 0);
+		if (__vmx_on(&current_vcpu->vmxon_physical)) {
+			LOG("[!] Failed to put vcpu %d into VMX operation.\n", current_procesor);
+			LOG_ERROR(__FILE__, __LINE__);
+			return;
+		}
 
-		return;
+		current_vcpu->vcpu_status.vmx_on = true;
+		hv_setup_vmcs(current_vcpu, guest_rsp);
+		current_vcpu->vcpu_status.vmm_launched = true;
+
+		__vmx_vmlaunch();
+
+		// We should never get here
+		__debugbreak();
+		hv_vmcs::dump_vmcs();
+		__debugbreak();
+
+		size_t error_code = 0;
+		__vmx_vmread(VMCS_VM_INSTRUCTION_ERROR, &error_code);
+		LOG("[!] Failed to launch vmm on processor (%x) with error code : %x\n", current_procesor, error_code);
+		current_vcpu->vcpu_status.vmx_on = false;
+		current_vcpu->vcpu_status.vmm_launched = false;
 	}
 
-	auto inline terminate_vm(uchar processor_number) -> void {
-
-		//
-		// Set VMCS state to inactive
-		//
-		__vmx_vmclear(&vmm_context[processor_number].vmcs_region_phys_addr);
-
-		return;
-	}
-
-	auto resume_vm() -> void {
-		//UNREFERENCED_PARAMETER(processor_number);
-
-		size_t Rip, InstLen;
-		__vmx_vmread(VMCS_GUEST_RIP, &Rip);
-		__vmx_vmread(VMCS_VMEXIT_INSTRUCTION_LENGTH, &InstLen);
-
-		Rip += InstLen;
-		__vmx_vmwrite(VMCS_GUEST_RIP, Rip);
-
-		//
-		// the VMRESUME instruction requires a VMCS whose launch state is set to launched .
-		// we're still in launch mode
-		//
-		__vmx_vmresume();
-
-		return;
+	auto get_system_dirbase() -> unsigned __int64 {
+		__debugbreak();
+		UNICODE_STRING us_string{};
+		RtlInitUnicodeString(&us_string, L"PsInitialSystemProcess");
+		auto initial_process = MmGetSystemRoutineAddress(&us_string);
+		DbgPrint("[*] PsInitialSystemProcess : %p\n", initial_process);
+		auto dir_base = ((_KPROCESS*)initial_process)->DirectoryTableBase;
+		DbgPrint("[*] dirbase : %llx\n", dir_base);
+		return ((_KPROCESS*)PsInitialSystemProcess)->DirectoryTableBase;
 	}
 
 }

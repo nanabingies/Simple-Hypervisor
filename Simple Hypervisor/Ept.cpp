@@ -10,7 +10,9 @@ namespace ept {
 		PROCESSOR_NUMBER processor_number;
 		GROUP_AFFINITY affinity, old_affinity;
 
-		for (unsigned iter = 0; iter < g_num_processors; iter++) {
+		unsigned num_processors = KeQueryActiveProcessorCount(NULL);
+
+		for (unsigned iter = 0; iter < num_processors; iter++) {
 			KeGetProcessorNumberFromIndex(iter, &processor_number);
 
 			RtlSecureZeroMemory(&affinity, sizeof(GROUP_AFFINITY));
@@ -45,16 +47,13 @@ namespace ept {
 	}
 
 	auto ept_build_mtrr_map() -> bool {
-		PAGED_CODE();
-
-		//mtrr_entry* _mtrr_entry = g_mtrr_entries;
-		//RtlSecureZeroMemory(_mtrr_entry, num_mtrr_entries * sizeof(mtrr_entry));
 		RtlSecureZeroMemory(&g_mtrr_entries, sizeof(g_mtrr_entries));
 
-		ia32_mtrr_capabilities_register mtrr_cap;
-		ia32_mtrr_def_type_register mtrr_def;
-		ia32_mtrr_physbase_register mtrr_phys_base;
-		ia32_mtrr_physmask_register mtrr_phys_mask;
+		ia32_mtrr_capabilities_register mtrr_cap{};
+		ia32_mtrr_def_type_register mtrr_def{};
+		ia32_mtrr_physbase_register mtrr_phys_base{};
+		ia32_mtrr_physmask_register mtrr_phys_mask{};
+		__mtrr_range_descriptor* descriptor{};
 
 		mtrr_cap.flags = __readmsr(IA32_MTRR_CAPABILITIES);
 		mtrr_def.flags = __readmsr(IA32_MTRR_DEF_TYPE);
@@ -66,33 +65,28 @@ namespace ept {
 
 		if (!fix_range_enable && !fix_range_support)	return false;
 
+		g_vmm_context->mtrr_info.default_memory_type = Uncacheable;
+
 		// Handle Fix Ranged MTRR
 
 		static const uint64_t k64k_base = IA32_MTRR_FIX64K_BASE;
-		static const uint64_t k64k_managed_size = IA32_MTRR_FIX64K_SIZE;	// 64K
+		static const uint64_t k64k_size = IA32_MTRR_FIX64K_SIZE;	// 64K
 		static const uint64_t k16k_base = IA32_MTRR_FIX16K_BASE;
-		static const uint64_t k16k_managed_size = IA32_MTRR_FIX16K_SIZE;
+		static const uint64_t k16k_size = IA32_MTRR_FIX16K_SIZE;
 		static const uint64_t k4k_base = IA32_MTRR_FIX4K_BASE;
-		static const uint64_t k4k_managed_size = IA32_MTRR_FIX4K_SIZE;
-
-		uint64_t offset = 0x0;
+		static const uint64_t k4k_size = IA32_MTRR_FIX4K_SIZE;
 
 		// Let's first read Fix64K MTRR
 		ia32_mtrr_fixed_range_msr msr64k;
 		msr64k.all = __readmsr(IA32_MTRR_FIX64K_00000);
 		for (unsigned idx = 0; idx < 8; idx++) {
-			uint64_t base = k64k_base + offset;
-			offset += k64k_managed_size;
 
-			// Save the MTRR
-			g_mtrr_entries[g_mtrr_num].mtrr_enabled = true;
-			g_mtrr_entries[g_mtrr_num].memory_type = msr64k.fields.types[idx];
-			g_mtrr_entries[g_mtrr_num].mtrr_fixed = true;
-			g_mtrr_entries[g_mtrr_num].physical_address_start = base;
-			g_mtrr_entries[g_mtrr_num].physical_address_end = base + k64k_managed_size - 1;
-
-			g_mtrr_num += 1;
-			//_mtrr_entry++;
+			// Save the MTRR entries
+			descriptor = &g_vmm_context->mtrr_info.memory_range[g_vmm_context->mtrr_info.enabled_memory_ranges++];
+			descriptor->memory_type = msr64k.fields.types[idx];
+			descriptor->physcial_base_address = k64k_base + (k64k_size * idx);
+			descriptor->physcial_end_address = k64k_base + (k64k_size * idx) + (k64k_size - 1);
+			descriptor->fixed_range = true;
 		}
 
 
@@ -100,23 +94,17 @@ namespace ept {
 		ia32_mtrr_fixed_range_msr msr16k;
 		// start -- IA32_MTRR_FIX16K_80000	
 		// end   -- IA32_MTRR_FIX16K_A0000
-		offset = 0;
 
 		for (unsigned start = IA32_MTRR_FIX16K_80000; start <= IA32_MTRR_FIX16K_A0000; start++) {
 			msr16k.all = __readmsr(start);
-			for (unsigned idx = 0; idx < 8; idx++, g_mtrr_num) {
-				uint64_t base = k16k_base + offset;
-				offset += k16k_managed_size;
+			for (unsigned idx = 0; idx < 8; idx++) {
 
 				// Save the MTRR
-				g_mtrr_entries[g_mtrr_num].memory_type = msr16k.fields.types[idx];
-				g_mtrr_entries[g_mtrr_num].mtrr_enabled = true;
-				g_mtrr_entries[g_mtrr_num].mtrr_fixed = true;
-				g_mtrr_entries[g_mtrr_num].physical_address_start = base;
-				g_mtrr_entries[g_mtrr_num].physical_address_end = base + k16k_managed_size - 1;
-
-				g_mtrr_num += 1;
-				//_mtrr_entry++;
+				descriptor = &g_vmm_context->mtrr_info.memory_range[g_vmm_context->mtrr_info.enabled_memory_ranges++];
+				descriptor->memory_type = msr16k.fields.types[idx];
+				descriptor->physcial_base_address = (k16k_base + (start * k16k_size * 8)) + (k16k_size * idx);
+				descriptor->physcial_end_address = (k16k_base + (start * k16k_size * 8)) + (k16k_size * idx) + (k16k_size - 1);
+				descriptor->fixed_range = true;
 			}
 		}
 
@@ -125,28 +113,19 @@ namespace ept {
 		ia32_mtrr_fixed_range_msr msr4k;
 		// start -- IA32_MTRR_FIX4K_C0000	
 		// end   -- IA32_MTRR_FIX4K_F8000
-		offset = 0;
 
 		for (unsigned start = IA32_MTRR_FIX4K_C0000; start <= IA32_MTRR_FIX4K_F8000; start++) {
 			msr4k.all = __readmsr(start);
 			for (unsigned idx = 0; idx < 8; idx++) {
-				uint64_t base = k4k_base + offset;
-				offset += k4k_managed_size;
 
 				// Save the MTRR
-				g_mtrr_entries[g_mtrr_num].memory_type = msr4k.fields.types[idx];
-				g_mtrr_entries[g_mtrr_num].mtrr_enabled = true;
-				g_mtrr_entries[g_mtrr_num].mtrr_fixed = true;
-				g_mtrr_entries[g_mtrr_num].physical_address_start = base;
-				g_mtrr_entries[g_mtrr_num].physical_address_end = base + k4k_managed_size - 1;
-
-				g_mtrr_num += 1;
-				//_mtrr_entry++;
+				descriptor = &g_vmm_context->mtrr_info.memory_range[g_vmm_context->mtrr_info.enabled_memory_ranges++];
+				descriptor->memory_type = msr4k.fields.types[idx];
+				descriptor->physcial_base_address = (k4k_base + (start * k4k_size * 8)) + (k4k_size * idx);
+				descriptor->physcial_end_address = (k4k_base + (start * k4k_size * 8)) + (k4k_size * idx) + (k4k_size - 1);
+				descriptor->fixed_range = true;
 			}
 		}
-
-		//__debugbreak();
-		//mtrr_range_descriptor mtrr_decriptor = _ept_state->mtrr_ranges[_ept_state->num_enabled_memory_ranges];
 
 		for (unsigned iter = 0; iter < var_cnt; iter++) {
 			mtrr_phys_base.flags = __readmsr(IA32_MTRR_PHYSBASE0 + (iter * 2));
@@ -156,21 +135,30 @@ namespace ept {
 			if (!mtrr_phys_mask.valid)
 				continue;
 
-			// Get the length this MTRR manages
-			unsigned long length;
-			BitScanForward64(&length, mtrr_phys_mask.page_frame_number * PAGE_SIZE);
+			descriptor = &g_vmm_context->mtrr_info.memory_range[g_vmm_context->mtrr_info.enabled_memory_ranges++];
 
-			uint64_t physical_base_start, physical_base_end;
-			physical_base_start = mtrr_phys_base.page_frame_number * PAGE_SIZE;
-			physical_base_end = physical_base_start + ((1ull << length) - 1ull);
+			//
+			// Calculate base address, physbase is truncated by 12 bits so we have to left shift it by 12
+			//
+			descriptor->physcial_base_address = mtrr_phys_base.page_frame_number << PAGE_SHIFT;
 
-			g_mtrr_entries[g_mtrr_num].mtrr_enabled = true;
-			g_mtrr_entries[g_mtrr_num].mtrr_fixed = false;
-			g_mtrr_entries[g_mtrr_num].memory_type = mtrr_phys_base.type;
-			g_mtrr_entries[g_mtrr_num].physical_address_start = physical_base_start;
-			g_mtrr_entries[g_mtrr_num].physical_address_end = physical_base_end;
-			g_mtrr_num++;
-			//_mtrr_entry++;
+			//
+			// Index of first bit set to one determines how much do we have to bit shift to get size of range
+			// physmask is truncated by 12 bits so we have to left shift it by 12
+			//
+			unsigned long bits_in_mask = 0;
+			_BitScanForward64(&bits_in_mask, mtrr_phys_mask.page_frame_number << PAGE_SHIFT);
+
+			//
+			// Calculate the end of range specified by mtrr
+			//
+			descriptor->physcial_end_address = descriptor->physcial_base_address + ((1ULL << bits_in_mask) - 1ULL);
+
+			//
+			// Get memory type of range
+			//
+			descriptor->memory_type = (unsigned __int8)mtrr_phys_base.type;
+			descriptor->fixed_range = false;
 		}
 
 		return true;
@@ -182,8 +170,8 @@ namespace ept {
 		ept_state* _ept_state = reinterpret_cast<ept_state*>
 			(ExAllocatePoolWithTag(NonPagedPool, sizeof(ept_state), VMM_POOL_TAG));
 		if (!_ept_state) {
-			LOG("[-] Failed to allocate memory for Ept State.\n");
-			LOG_ERROR();
+			LOG("[!] Failed to allocate memory for Ept State.\n");
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 		RtlSecureZeroMemory(_ept_state, sizeof ept_state);
@@ -191,8 +179,8 @@ namespace ept {
 		ept_pointer* ept_ptr = reinterpret_cast<ept_pointer*>
 			(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL_TAG));
 		if (!ept_ptr) {
-			LOG("[-] Failed to allocate memory for pointer to Ept.\n");
-			LOG_ERROR();
+			LOG("[!] Failed to allocate memory for pointer to Ept.\n");
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 		_ept_state->ept_ptr = ept_ptr;
@@ -205,15 +193,15 @@ namespace ept {
 
 
 		if (create_ept_state(_ept_state) == false) {
-			DbgPrint("[-] Failed to set Ept Page Table Entries.\n");
-			LOG_ERROR();
+			DbgPrint("[!] Failed to set Ept Page Table Entries.\n");
+			LOG_ERROR(__FILE__, __LINE__);
 			ExFreePoolWithTag(ept_ptr, VMM_POOL_TAG);
 			ExFreePoolWithTag(_ept_state, VMM_POOL_TAG);
 			return false;
 		}
 
-		vmm_context[processor_number].ept_ptr = _ept_state->ept_ptr->flags;
-		vmm_context[processor_number].ept_state = _ept_state;
+		//vmm_context[processor_number].ept_ptr = _ept_state->ept_ptr->flags;
+		//vmm_context[processor_number].ept_state = _ept_state;
 		//vmm_context[processor_number].ept_pml4 = static_cast<uint64_t>
 		//	(MmGetPhysicalAddress(_ept_state->ept_page_table->ept_pml4).QuadPart >> PAGE_SHIFT);
 
@@ -242,7 +230,7 @@ namespace ept {
 		pml4e->user_mode_execute = 1;
 		pml4e->write_access = 1;
 
-		vmm_context[KeGetCurrentProcessorNumber()].ept_pml4 = pml4e->flags;
+		//vmm_context[KeGetCurrentProcessorNumber()].ept_pml4 = pml4e->flags;
 
 		ept_pdpte pdpte_template = { 0 };
 		pdpte_template.read_access = 1;
@@ -377,8 +365,8 @@ namespace ept {
 	auto split_pml2_entry(ept_state* _ept_state, void* buffer, unsigned __int64 physical_address) -> bool {
 		ept_pde_2mb* entry = get_pde_entry(_ept_state->ept_page_table, physical_address);
 		if (entry == NULL) {
-			LOG("[-] Invalid address passed");
-			LOG_ERROR();
+			LOG("[!] Invalid address passed");
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 
@@ -423,8 +411,8 @@ namespace ept {
 		uint64_t pml2_index = MASK_EPT_PML2_INDEX(pfn);
 
 		if (pml4_index > 0) {
-			LOG("Address above 512GB is invalid\n");
-			LOG_ERROR();
+			LOG("[!] Address above 512GB is invalid\n");
+			LOG_ERROR(__FILE__, __LINE__);
 			return nullptr;
 		}
 
@@ -434,8 +422,8 @@ namespace ept {
 	auto get_pte_entry(ept_page_table* page_table, unsigned __int64 pfn) -> ept_pte* {
 		ept_pde_2mb* pde_entry = get_pde_entry(page_table, pfn);
 		if (!pde_entry) {
-			LOG("[-] Invalid pde address passed.\n");
-			LOG_ERROR();
+			LOG("[!] Invalid pde address passed.\n");
+			LOG_ERROR(__FILE__, __LINE__);
 			return nullptr;
 		}
 
@@ -457,8 +445,8 @@ namespace ept {
 	auto split_pde(ept_page_table* page_table, void* buffer, unsigned __int64 pfn) -> void {
 		ept_pde_2mb* pde_entry = get_pde_entry(page_table, pfn);
 		if (!pde_entry) {
-			LOG("[-] Invalid pde address passed.\n");
-			LOG_ERROR();
+			LOG("[!] Invalid pde address passed.\n");
+			LOG_ERROR(__FILE__, __LINE__);
 			return;
 		}
 
@@ -547,7 +535,8 @@ namespace ept {
 	}
 
 	auto handle_ept_violation(unsigned __int64 phys_addr, unsigned __int64 linear_addr) -> bool {
-		ept_state* _ept_state = vmm_context[KeGetCurrentProcessorNumber()].ept_state;
+		//ept_state* _ept_state = vmm_context[KeGetCurrentProcessorNumber()].ept_state;
+		ept_state* _ept_state = (ept_state*)phys_addr;
 		__debugbreak();
 
 		// Get faulting page table entry (PTE)
@@ -555,7 +544,7 @@ namespace ept {
 		if (pte_entry && pte_entry->flags) {
 			__debugbreak();
 			LOG("[!][%ws] PteEntry: VA = %llx, PA = %llx", __FUNCTIONW__, linear_addr, phys_addr);
-			LOG_ERROR();
+			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
 
