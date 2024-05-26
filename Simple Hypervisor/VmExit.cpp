@@ -83,8 +83,7 @@ namespace vmexit {
 
 		case VMX_EXIT_REASON_EXECUTE_CPUID: {
 			//LOG("[*][%ws] execute cpuid\n", __FUNCTIONW__);
-			int cpuInfo[4] = { 0 };
-			__cpuidex(reinterpret_cast<int*>(&cpuInfo), static_cast<int>(guest_regs->rax), static_cast<int>(guest_regs->rcx));
+			handle_execute_cpuid(guest_regs);
 		}
 										  break;
 
@@ -130,9 +129,7 @@ namespace vmexit {
 
 		case VMX_EXIT_REASON_EXECUTE_VMCALL: {
 			//LOG("[*][%ws] execute vmcall\n", __FUNCTIONW__);
-			// TODO: handle vmcall
-			// We might use it to execute vmxoff and exit from hypervisor
-			guest_regs->rax = vmx::vmx_handle_vmcall(guest_regs->rcx, guest_regs->rdx, guest_regs->r8, guest_regs->r9);
+			handle_execute_vmcall(guest_regs);
 		}
 										   break;
 
@@ -148,22 +145,19 @@ namespace vmexit {
 
 		case VMX_EXIT_REASON_EXECUTE_VMPTRLD: {
 			//LOG("[*][%ws] execute vmptrld\n", __FUNCTIONW__);
-			vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			handle_execute_vmptrld(guest_regs);
 		}
 											break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMPTRST: {
 			//LOG("[*][%ws] execute vmptrst\n", __FUNCTIONW__);
-			vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			handle_execute_vmptrst(guest_regs);
 		}
 											break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMREAD: {
 			//LOG("[*][%ws] execute vmread\n", __FUNCTIONW__);
-			vmx_vmexit_instruction_info_vmread_vmwrite exitQualification;
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			handle_execute_vmread(guest_regs);
 		}
 										   break;
 
@@ -174,8 +168,7 @@ namespace vmexit {
 
 		case VMX_EXIT_REASON_EXECUTE_VMWRITE: {
 			//LOG("[*][%ws] execute vmwrite\n", __FUNCTIONW__);
-			vmx_vmexit_instruction_info_vmread_vmwrite exitQualification;
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			handle_execute_vmwrite(guest_regs);
 		}
 											break;
 
@@ -186,86 +179,19 @@ namespace vmexit {
 
 		case VMX_EXIT_REASON_EXECUTE_VMXON: {
 			//LOG("[*][%ws] execute vmxon\n", __FUNCTIONW__);
-			vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			handle_execute_vmxon(guest_regs);
 		}
 										  break;
 
 		case VMX_EXIT_REASON_MOV_CR: {
 			//LOG("[*][%ws] mov cr\n", __FUNCTIONW__);
-
-			//
-			// Check whether it was a mov to or mov from CR
-			//
-			vmx_exit_qualification_mov_cr exitQualification;
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
-			switch (exitQualification.access_type) {
-			case 0: {	// MOV to CR
-				switch (exitQualification.control_register) {
-				case 0: {	// CR0
-					__vmx_vmwrite(VMCS_GUEST_CR0, __readcr0());
-					__vmx_vmwrite(VMCS_CTRL_CR0_READ_SHADOW, __readcr0());
-				}
-					  break;
-
-				case 3: {	// CR3
-					__vmx_vmwrite(VMCS_GUEST_CR3, __readcr3());
-				}
-					  break;
-
-				case 4: {	// CR4
-					__vmx_vmwrite(VMCS_GUEST_CR4, __readcr4());
-					__vmx_vmwrite(VMCS_CTRL_CR4_READ_SHADOW, __readcr4());
-				}
-					  break;
-
-				default:
-					break;
-				}
-			}
-				  break;
-
-			case 1: {	// MOV from CR
-				switch (exitQualification.control_register) {
-				case 0: {		// CR0
-					__vmx_vmread(VMCS_GUEST_CR0, &guest_regs->rcx);
-				}
-					  break;
-
-				case 3: {		// CR3
-					__vmx_vmread(VMCS_GUEST_CR3, &guest_regs->rcx);
-				}
-					  break;
-
-				case 4: {		// CR4
-					__vmx_vmread(VMCS_GUEST_CR4, &guest_regs->rcx);
-				}
-					  break;
-				}
-			}
-				  break;
-
-			case 2: {	// 2 = CLTS
-
-			}
-				  break;
-
-			case 3: {	// 3 = LMSW
-
-			}
-				  break;
-
-			default:
-				break;
-			}
-
+			handle_execute_mov_cr(guest_regs);
 		}
 								   break;
 
 		case VMX_EXIT_REASON_MOV_DR: {
 			//LOG("[*][%ws] mov dr\n", __FUNCTIONW__);
-			vmx_exit_qualification_mov_dr exitQualification;
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			handle_execute_mov_dr(guest_regs);
 		}
 								   break;
 
@@ -525,8 +451,141 @@ namespace vmexit {
 	auto handle_task_switch(void* args) -> void {
 		UNREFERENCED_PARAMETER(args);
 		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
-
+		// TODO:
 		vmx_exit_qualification_task_switch exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+	}
+
+	auto handle_execute_cpuid(void* args) -> void {
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		auto guest_regs = reinterpret_cast<guest_registers*>(args);
+		int cpuInfo[4] = { 0 };
+		__cpuidex(reinterpret_cast<int*>(&cpuInfo), static_cast<int>(guest_regs->rax), static_cast<int>(guest_regs->rcx));
+	}
+
+	auto handle_execute_vmcall(void* args) -> void {
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		// TODO: handle vmcall
+		// We might use it to execute vmxoff and exit from hypervisor
+		auto guest_regs = reinterpret_cast<guest_registers*>(args);
+		guest_regs->rax = vmx::vmx_handle_vmcall(guest_regs->rcx, guest_regs->rdx, guest_regs->r8, guest_regs->r9);
+	}
+
+	auto handle_execute_vmptrld(void* args) -> void {
+		UNREFERENCED_PARAMETER(args);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		// TODO:
+		vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+	}
+
+	auto handle_execute_vmptrst(void* args) -> void {
+		UNREFERENCED_PARAMETER(args);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		// TODO:
+		vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+	}
+
+	auto handle_execute_vmread(void* args) -> void {
+		UNREFERENCED_PARAMETER(args);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		// TODO:
+		vmx_vmexit_instruction_info_vmread_vmwrite exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+	}
+
+	auto handle_execute_vmwrite(void* args) -> void {
+		UNREFERENCED_PARAMETER(args);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		// TODO:
+		vmx_vmexit_instruction_info_vmread_vmwrite exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+	}
+
+	auto handle_execute_vmxon(void* args) -> void {
+		UNREFERENCED_PARAMETER(args);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		// TODO:
+		vmx_vmexit_instruction_info_vmx_and_xsaves exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+	}
+
+	auto handle_execute_mov_cr(void* args) -> void {
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		auto guest_regs = reinterpret_cast<guest_registers*>(args);
+
+		//
+		// Check whether it was a mov to or mov from CR
+		//
+		vmx_exit_qualification_mov_cr exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+		switch (exitQualification.access_type) {
+		case 0: {	// MOV to CR
+			switch (exitQualification.control_register) {
+			case 0: {	// CR0
+				__vmx_vmwrite(VMCS_GUEST_CR0, __readcr0());
+				__vmx_vmwrite(VMCS_CTRL_CR0_READ_SHADOW, __readcr0());
+			}
+				  break;
+
+			case 3: {	// CR3
+				__vmx_vmwrite(VMCS_GUEST_CR3, __readcr3());
+			}
+				  break;
+
+			case 4: {	// CR4
+				__vmx_vmwrite(VMCS_GUEST_CR4, __readcr4());
+				__vmx_vmwrite(VMCS_CTRL_CR4_READ_SHADOW, __readcr4());
+			}
+				  break;
+
+			default:
+				break;
+			}
+		}
+			  break;
+
+		case 1: {	// MOV from CR
+			switch (exitQualification.control_register) {
+			case 0: {		// CR0
+				__vmx_vmread(VMCS_GUEST_CR0, &guest_regs->rcx);
+			}
+				  break;
+
+			case 3: {		// CR3
+				__vmx_vmread(VMCS_GUEST_CR3, &guest_regs->rcx);
+			}
+				  break;
+
+			case 4: {		// CR4
+				__vmx_vmread(VMCS_GUEST_CR4, &guest_regs->rcx);
+			}
+				  break;
+			}
+		}
+			  break;
+
+		case 2: {	// 2 = CLTS
+
+		}
+			  break;
+
+		case 3: {	// 3 = LMSW
+
+		}
+			  break;
+
+		default:
+			break;
+		}
+	}
+
+	auto handle_execute_mov_dr(void* args) -> void {
+		UNREFERENCED_PARAMETER(args);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		// TODO:
+		vmx_exit_qualification_mov_dr exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 }
