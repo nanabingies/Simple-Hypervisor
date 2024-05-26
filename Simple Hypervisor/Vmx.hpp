@@ -46,6 +46,7 @@ namespace hv {
 namespace vmexit {
 	auto vmexit_handler(void*) -> void;
 
+	auto handle_task_switch(void*) -> void;
 	auto handle_wrmsr(void*) -> void;
 	auto handle_rdmsr(void*) -> void;
 }
