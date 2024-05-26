@@ -185,20 +185,19 @@ namespace vmexit {
 
 		case VMX_EXIT_REASON_MOV_CR: {
 			//LOG("[*][%ws] mov cr\n", __FUNCTIONW__);
-			handle_execute_mov_cr(guest_regs);
+			handle_mov_cr(guest_regs);
 		}
 								   break;
 
 		case VMX_EXIT_REASON_MOV_DR: {
 			//LOG("[*][%ws] mov dr\n", __FUNCTIONW__);
-			handle_execute_mov_dr(guest_regs);
+			handle_mov_dr(guest_regs);
 		}
 								   break;
 
 		case VMX_EXIT_REASON_EXECUTE_IO_INSTRUCTION: {
 			//LOG("[*][%ws] execute io\n", __FUNCTIONW__);
-			vmx_exit_qualification_io_instruction exitQualification;
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			handle_execute_io_instruction(guest_regs);
 		}
 												   break;
 
@@ -254,9 +253,8 @@ namespace vmexit {
 												break;
 
 		case VMX_EXIT_REASON_APIC_ACCESS: {
-			LOG("[*][%ws] apic access\n", __FUNCTIONW__);
-			vmx_exit_qualification_apic_access exitQualification;
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			//LOG("[*][%ws] apic access\n", __FUNCTIONW__);
+			handle_apic_access(guest_regs);
 		}
 										break;
 
@@ -267,8 +265,7 @@ namespace vmexit {
 
 		case VMX_EXIT_REASON_GDTR_IDTR_ACCESS: {
 			//LOG("[*][%ws] gdtr idtr access\n", __FUNCTIONW__);
-			vmx_vmexit_instruction_info_gdtr_idtr_access exitQualification;
-			__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+			handle_gdtr_idtr_access(guest_regs);
 		}
 											 break;
 
@@ -511,7 +508,7 @@ namespace vmexit {
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 
-	auto handle_execute_mov_cr(void* args) -> void {
+	auto handle_mov_cr(void* args) -> void {
 		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
 		auto guest_regs = reinterpret_cast<guest_registers*>(args);
 
@@ -581,11 +578,35 @@ namespace vmexit {
 		}
 	}
 
-	auto handle_execute_mov_dr(void* args) -> void {
+	auto handle_mov_dr(void* args) -> void {
 		UNREFERENCED_PARAMETER(args);
 		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
 		// TODO:
 		vmx_exit_qualification_mov_dr exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+	}
+
+	auto handle_execute_io_instruction(void* args) -> void {
+		UNREFERENCED_PARAMETER(args);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		// TODO:
+		vmx_exit_qualification_io_instruction exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+	}
+
+	auto handle_apic_access(void* args) -> void {
+		UNREFERENCED_PARAMETER(args);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		// TODO:
+		vmx_exit_qualification_apic_access exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+	}
+
+	auto handle_gdtr_idtr_access(void* args) -> void {
+		UNREFERENCED_PARAMETER(args);
+		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
+		// TODO:
+		vmx_vmexit_instruction_info_gdtr_idtr_access exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 	}
 }
