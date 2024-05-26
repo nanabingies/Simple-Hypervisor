@@ -162,49 +162,26 @@ namespace ept {
 		return true;
 	}
 
-	auto initialize_ept(unsigned char processor_number) -> bool {
-		PAGED_CODE();
-
-		ept_state* _ept_state = reinterpret_cast<ept_state*>
-			(ExAllocatePoolWithTag(NonPagedPool, sizeof(ept_state), VMM_POOL_TAG));
-		if (!_ept_state) {
-			LOG("[!] Failed to allocate memory for Ept State.\n");
+	auto initialize_ept(__ept_state& ept_state) -> bool {
+		ept_state.ept_pointer = reinterpret_cast<ept_pointer*>(ExAllocatePoolWithTag(NonPagedPool, sizeof(ept_pointer), VMM_POOL_TAG));
+		if (ept_state.ept_pointer == nullptr) {
+			LOG("[!] Failed to allocate memory for pointer to ept.\n");
 			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
-		RtlSecureZeroMemory(_ept_state, sizeof ept_state);
+		RtlSecureZeroMemory(ept_state.ept_pointer, sizeof(ept_pointer));
 
-		ept_pointer* ept_ptr = reinterpret_cast<ept_pointer*>
-			(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, VMM_POOL_TAG));
-		if (!ept_ptr) {
-			LOG("[!] Failed to allocate memory for pointer to Ept.\n");
+		if (create_ept_state(ept_state) == false) {
+			DbgPrint("[!] Failed to setup ept page table entries.\n");
 			LOG_ERROR(__FILE__, __LINE__);
 			return false;
 		}
-		_ept_state->ept_ptr = ept_ptr;
-		RtlSecureZeroMemory(ept_ptr, PAGE_SIZE);
 
-		// 
-		// Build MTRR Map for that processor before setting up EPT
-		//
-		if (!ept_build_mtrr_map())	return false;
+		ept_state.ept_pointer->memory_type = g_vmm_context->mtrr_info.default_memory_type;
+		ept_state.ept_pointer->page_walk_length = 3;
+		ept_state.ept_pointer->page_frame_number = virtual_to_physical_address(&ept_state.ept_page_table->pml4) >> PAGE_SHIFT;
 
-
-		if (create_ept_state(_ept_state) == false) {
-			DbgPrint("[!] Failed to setup ept page table Entries.\n");
-			LOG_ERROR(__FILE__, __LINE__);
-			ExFreePoolWithTag(ept_ptr, VMM_POOL_TAG);
-			ExFreePoolWithTag(_ept_state, VMM_POOL_TAG);
-			return false;
-		}
-
-		//vmm_context[processor_number].ept_ptr = _ept_state->ept_ptr->flags;
-		//vmm_context[processor_number].ept_state = _ept_state;
-		//vmm_context[processor_number].ept_pml4 = static_cast<uint64_t>
-		//	(MmGetPhysicalAddress(_ept_state->ept_page_table->ept_pml4).QuadPart >> PAGE_SHIFT);
-
-
-		LOG("[*] EPT initialized on processor (%x)\n", processor_number);
+		LOG("[*] EPT initialized on processor (%x)\n", KeGetCurrentProcessorNumber());
 		return true;
 	}
 
