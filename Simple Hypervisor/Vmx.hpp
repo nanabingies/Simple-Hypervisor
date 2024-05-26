@@ -44,7 +44,10 @@ namespace hv {
 }
 
 namespace vmexit {
-	auto vmexit_handler(void* guest_regs) -> void;
+	auto vmexit_handler(void*) -> void;
+
+	auto handle_wrmsr(void*) -> void;
+	auto handle_rdmsr(void*) -> void;
 }
 
 extern "C" {
