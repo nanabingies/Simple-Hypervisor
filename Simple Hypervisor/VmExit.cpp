@@ -12,8 +12,6 @@ namespace vmexit {
 
 		unsigned __int64 vmcs_guest_rsp = 0;
 		__vmx_vmread(VMCS_GUEST_RSP, &vmcs_guest_rsp);
-		unsigned __int64 rip = 0;
-		__vmx_vmread(VMCS_GUEST_RIP, &rip);
 
 		{
 			// Save vmexit info
@@ -21,12 +19,11 @@ namespace vmexit {
 			vcpu->vmexit_info.guest_registers = guest_regs;
 		}
 
-		LOG("[*] exit reason : %llx\n", vmexit_reason.basic_exit_reason);
-		LOG("[*] guest rsp : %llx\n", vmcs_guest_rsp);
-		LOG("[*] guest rip : %llx\n", rip);
-		LOG("[>]=======================================================================[<]\n\n");
+		//LOG("[*] exit reason : %llx\n", vmexit_reason.basic_exit_reason);
+		//LOG("[*] guest rsp : %llx\n", vmcs_guest_rsp);
+		//LOG("[>]=======================================================================[<]\n\n");
 
-		__debugbreak();
+		//__debugbreak();
 
 		switch (vmexit_reason.basic_exit_reason)
 		{
@@ -584,9 +581,10 @@ namespace vmexit {
 	}
 
 	auto handle_ept_violation(void* args) -> void {
+		UNREFERENCED_PARAMETER(args);
 		using ept::handle_ept_violation;
 
-		auto guest_regs = reinterpret_cast<guest_registers*>(args);
+		//auto guest_regs = reinterpret_cast<guest_registers*>(args);
 		vmx_exit_qualification_ept_violation exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 
