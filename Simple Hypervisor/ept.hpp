@@ -58,24 +58,11 @@ using mtrr_range_descriptor = struct _mtrr_range_descriptor {
 	unsigned char mtrr_memory_type;
 };
 
-
-
-using ept_split_page = struct _ept_split_page {
-	DECLSPEC_ALIGN(PAGE_SIZE)	ept_pte ept_pte[512];
-	ept_pde_2mb* ept_pde;
-	LIST_ENTRY					split_pages;
+struct __ept_dynamic_split {
+	DECLSPEC_ALIGN(PAGE_SIZE) ept_pte ept_pte[512];
+	ept_pde_2mb* entry;
+	LIST_ENTRY dynamic_split_list;
 };
-
-
-
-/*using ept_state = struct _ept_state {
-	unsigned __int64	guest_address_width_value;
-	ept_pointer*		ept_ptr;
-	ept_page_table*		ept_page_table;
-
-	mtrr_range_descriptor	mtrr_ranges[9];
-	unsigned __int64		num_enabled_memory_ranges;
-};*/
 
 using vmx_non_root_memory = struct vmx_non_root_memory {
 	void* pre_allocated_buffer;
