@@ -217,7 +217,7 @@ namespace ept {
 		__stosq((unsigned __int64*)&ept_state.ept_page_table->ept_pde[0], pde_template.flags, 512 * 512);
 		for (unsigned i = 0; i < 512; i++) {
 			for (unsigned j = 0; j < 512; j++) {
-				if (setup_pml2_entries(ept_state, &ept_state.ept_page_table->ept_pde[i][j], (i * 512) + j) == false)
+				if (setup_pml2_entries(ept_state, ept_state.ept_page_table->ept_pde[i][j], (i * 512) + j) == false)
 					return false;
 			}
 		}
@@ -225,61 +225,40 @@ namespace ept {
 		return true;
 	}
 
-	//auto setup_pml2_entries(ept_state* _ept_state, ept_pde_2mb* pde_entry, unsigned __int64 pfn) -> bool {
-	//	UNREFERENCED_PARAMETER(_ept_state);
+	auto setup_pml2_entries(__ept_state& ept_state, ept_pde_2mb& pde_entry, unsigned __int64 pfn) -> bool {
+		pde_entry.page_frame_number = pfn;
 
-	//	pde_entry->page_frame_number = pfn;
-
-	//	uint64_t addr_of_page = pfn * PAGE2MB;
-	//	if (pfn == 0) {
-	//		pde_entry->memory_type = Uncacheable;
-	//		return true;
-	//	}
-		
-	//	uint64_t memory_type = WriteBack;
-	//	for (unsigned idx = 0; idx < g_mtrr_num; idx++) {
-	//		if (addr_of_page <= g_mtrr_entries[idx].physical_address_end) {
-	//			if ((addr_of_page + PAGE2MB - 1) >= g_mtrr_entries[idx].physical_address_start) {
-	//				memory_type = g_mtrr_entries[idx].memory_type;
-	//				if (memory_type == Uncacheable) {
-	//					break;
-	//				}
-	//			}
-	//		}
-	//	}
-
-	//	pde_entry->memory_type = memory_type;
-	//	return true;
-
-		/*if (is_valid_for_large_page(pfn) == true) {
-			pde_entry->memory_type = ept_get_memory_type(pfn, true);
+		if (is_valid_for_large_page(pfn) == true) {
+			pde_entry.memory_type = ept_get_memory_type(pfn, true);
 			return true;
 		} 
 		else {
-			void* split_buffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(struct _ept_split_page), VMM_POOL_TAG);
+			void* split_buffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(__ept_dynamic_split), VMM_POOL_TAG);
 			if (split_buffer == nullptr) {
 				LOG("Failed to allocate split buffer");
-				LOG_ERROR();
+				LOG_ERROR(__FILE__, __LINE__);
 				return false;
 			}
 
-			return split_pml2_entry(_ept_state, split_buffer, pfn * LARGE_PAGE_SIZE);
-		}*/
-	//}
+			return split_pml2_entry(ept_state, split_buffer, pfn * LARGE_PAGE_SIZE);
+		}
+	}
 
 	auto is_valid_for_large_page(unsigned __int64 pfn) -> bool {
 		UNREFERENCED_PARAMETER(pfn);
 
-		uint64_t page_start = pfn * PAGE2MB;
-		uint64_t page_end = (pfn * PAGE2MB) + (PAGE2MB - 1);
+		uint64_t page_start = pfn * LARGE_PAGE_SIZE;
+		uint64_t page_end = (pfn * LARGE_PAGE_SIZE) + (LARGE_PAGE_SIZE - 1);
 
 		//mtrr_entry* temp = reinterpret_cast<mtrr_entry*>(g_mtrr_entries);
 
-		for (unsigned idx = 0; idx < g_mtrr_num; idx++) {
-			if (page_start <= g_mtrr_entries[idx].physical_address_end && page_end > g_mtrr_entries[idx].physical_address_end)
+		for (unsigned idx = 0; idx < g_vmm_context->mtrr_info.enabled_memory_ranges; idx++) {
+			if (page_start <= g_vmm_context->mtrr_info.memory_range[idx].physcial_end_address &&
+				page_end > g_vmm_context->mtrr_info.memory_range[idx].physcial_end_address)
 				return false;
 
-			else if (page_start < g_mtrr_entries[idx].physical_address_start && page_end >= g_mtrr_entries[idx].physical_address_start)
+			else if (page_start < g_vmm_context->mtrr_info.memory_range[idx].physcial_base_address && 
+				page_end >= g_vmm_context->mtrr_info.memory_range[idx].physcial_base_address)
 				return false;
 		}
 
@@ -287,15 +266,16 @@ namespace ept {
 	}
 
 	auto ept_get_memory_type(unsigned __int64 pfn, bool large_page) -> unsigned __int64 {
-		uint64_t page_start = large_page == true ? pfn * PAGE2MB : pfn * PAGE_SIZE;
-		uint64_t page_end = large_page == true ? (pfn * PAGE2MB) + (PAGE2MB - 1) : (pfn * PAGE_SIZE) + (PAGE_SIZE - 1);
-		uint64_t memory_type = g_default_memory_type;
+		unsigned __int64 page_start = large_page == true ? pfn * LARGE_PAGE_SIZE : pfn * PAGE_SIZE;
+		unsigned __int64 page_end = large_page == true ? (pfn * LARGE_PAGE_SIZE) + (LARGE_PAGE_SIZE - 1) : (pfn * PAGE_SIZE) + (PAGE_SIZE - 1);
+		unsigned __int64 memory_type = g_vmm_context->mtrr_info.default_memory_type;
 
-		for (unsigned idx = 0; idx < g_mtrr_num; idx++) {
-			if (page_start >= g_mtrr_entries[idx].physical_address_start && page_end <= g_mtrr_entries[idx].physical_address_end) {
-				memory_type = g_mtrr_entries[idx].memory_type;
+		for (unsigned idx = 0; idx < g_vmm_context->mtrr_info.enabled_memory_ranges; idx++) {
+			if (page_start >= g_vmm_context->mtrr_info.memory_range[idx].physcial_base_address && 
+				page_end <= g_vmm_context->mtrr_info.memory_range[idx].physcial_end_address) {
+				memory_type = g_vmm_context->mtrr_info.memory_range[idx].memory_type;
 
-				if (static_cast<bool>(g_mtrr_entries[idx].mtrr_fixed) == true)
+				if (g_vmm_context->mtrr_info.memory_range[idx].fixed_range == true)
 					break;
 
 				if (memory_type == Uncacheable)
@@ -306,9 +286,9 @@ namespace ept {
 		return memory_type;
 	}
 
-	/*auto split_pml2_entry(ept_state* _ept_state, void* buffer, unsigned __int64 physical_address) -> bool {
-		ept_pde_2mb* entry = get_pde_entry(_ept_state->ept_page_table, physical_address);
-		if (entry == NULL) {
+	auto split_pml2_entry(__ept_state& ept_state, void* buffer, unsigned __int64 physical_address) -> bool {
+		ept_pde_2mb* entry = get_pde_entry(ept_state, physical_address);
+		if (entry == nullptr) {
 			LOG("[!] Invalid address passed");
 			LOG_ERROR(__FILE__, __LINE__);
 			return false;
@@ -347,12 +327,12 @@ namespace ept {
 		RtlCopyMemory(entry, &new_entry, sizeof(new_entry));
 
 		return true;
-	}*/
+	}
 
-	auto get_pde_entry(ept_page_table* page_table, unsigned __int64 pfn) -> ept_pde_2mb* {
-		uint64_t pml4_index = MASK_EPT_PML4_INDEX(pfn);
-		uint64_t pml3_index = MASK_EPT_PML3_INDEX(pfn);
-		uint64_t pml2_index = MASK_EPT_PML2_INDEX(pfn);
+	auto get_pde_entry(__ept_state& ept_state, unsigned __int64 pfn) -> ept_pde_2mb* {
+		unsigned __int64 pml4_index = MASK_EPT_PML4_INDEX(pfn);
+		unsigned __int64 pml3_index = MASK_EPT_PML3_INDEX(pfn);
+		unsigned __int64 pml2_index = MASK_EPT_PML2_INDEX(pfn);
 
 		if (pml4_index > 0) {
 			LOG("[!] Address above 512GB is invalid\n");
@@ -360,7 +340,7 @@ namespace ept {
 			return nullptr;
 		}
 
-		return &page_table->ept_pde[pml3_index][pml2_index];
+		return &ept_state.ept_page_table->ept_pde[pml3_index][pml2_index];
 	}
 
 	auto get_pte_entry(ept_page_table* page_table, unsigned __int64 pfn) -> ept_pte* {
