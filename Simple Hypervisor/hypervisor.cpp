@@ -73,7 +73,10 @@ namespace hv {
 		RtlSecureZeroMemory(vcpu->vcpu_bitmaps.io_bitmap_b, PAGE_SIZE);
 		vcpu->vcpu_bitmaps.io_bitmap_b_physical = MmGetPhysicalAddress(vcpu->vcpu_bitmaps.io_bitmap_b).QuadPart;
 
-		vcpu->ept_state = reinterpret_cast<__ept_state*>(ExAllocatePoolWithTag(NonPagedPool, sizeof(__ept_state), VMM_POOL_TAG));
+		PHYSICAL_ADDRESS phys_addr{};
+		phys_addr.QuadPart = static_cast<unsigned long long>(-1);
+		vcpu->ept_state = reinterpret_cast<__ept_state*>	//(ExAllocatePoolWithTag(NonPagedPool, sizeof(__ept_state), VMM_POOL_TAG));
+					(MmAllocateContiguousMemory(sizeof(__ept_state), phys_addr));
 		if (vcpu->ept_state == nullptr) {
 			LOG("[!] vcpu ept state for processor (%x) could not be allocated\n", curr_processor);
 			LOG_ERROR(__FILE__, __LINE__);
