@@ -294,13 +294,11 @@ namespace ept {
 			return false;
 		}
 
-		struct _ept_split_page* new_split = (struct _ept_split_page*)buffer;
-		RtlSecureZeroMemory(new_split, sizeof(struct _ept_split_page));
+		__ept_dynamic_split* new_split = (__ept_dynamic_split*)buffer;
+		RtlSecureZeroMemory(new_split, sizeof(__ept_dynamic_split));
 
-		//
 		// Set all pages as rwx to prevent unwanted ept violation
-		//
-		new_split->ept_pde = entry;
+		new_split->pde_entry = entry;
 
 		ept_pte entry_template = { 0 };
 		entry_template.read_access = 1;
@@ -343,8 +341,8 @@ namespace ept {
 		return &ept_state.ept_page_table->ept_pde[pml3_index][pml2_index];
 	}
 
-	auto get_pte_entry(ept_page_table* page_table, unsigned __int64 pfn) -> ept_pte* {
-		ept_pde_2mb* pde_entry = get_pde_entry(page_table, pfn);
+	auto get_pte_entry(__ept_state& ept_state, unsigned __int64 pfn) -> ept_pte* {
+		ept_pde_2mb* pde_entry = get_pde_entry(ept_state, pfn);
 		if (!pde_entry) {
 			LOG("[!] Invalid pde address passed.\n");
 			LOG_ERROR(__FILE__, __LINE__);
@@ -352,18 +350,14 @@ namespace ept {
 		}
 
 		// Check to ensure the page is split
-		if (pde_entry->large_page) {
-			return nullptr;
-		}
+		if (pde_entry->large_page)	return nullptr;
 
-		ept_pte* pte_entry = reinterpret_cast<ept_pte*>
-			(physical_to_virtual_address(pde_entry->page_frame_number << PAGE_SHIFT));
-		if (!pte_entry)	return nullptr;
+		PHYSICAL_ADDRESS phys_addr{};
+		phys_addr.QuadPart = pde_entry->page_frame_number << PAGE_SHIFT;
+		ept_pte* pte_entry = reinterpret_cast<ept_pte*>(MmGetVirtualForPhysical(phys_addr));
+		if (pte_entry == nullptr)	return nullptr;
 
-		uint64_t pte_index = MASK_EPT_PML1_INDEX(pfn);
-
-		pte_entry = &pte_entry[pte_index];
-		return pte_entry;
+		return &pte_entry[MASK_EPT_PML1_INDEX(pfn)];
 	}
 
 	auto split_pde(ept_page_table* page_table, void* buffer, unsigned __int64 pfn) -> void {
@@ -429,7 +423,7 @@ namespace ept {
 		return;
 	}
 
-	auto ept_allocate_ept_entry(ept_page_table* page_table) -> ept_entry* {
+	auto ept_allocate_ept_entry(__ept_page_table* page_table) -> ept_entry* {
 		if (!page_table) {
 			static const uint64_t kAllocSize = 512 * sizeof(ept_entry*);
 			ept_entry* entry = reinterpret_cast<ept_entry*>
