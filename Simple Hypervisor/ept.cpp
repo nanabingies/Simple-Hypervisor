@@ -179,7 +179,7 @@ namespace ept {
 
 		ept_state.ept_pointer->memory_type = g_vmm_context->mtrr_info.default_memory_type;
 		ept_state.ept_pointer->page_walk_length = 3;
-		ept_state.ept_pointer->page_frame_number = virtual_to_physical_address(&ept_state.ept_page_table->pml4) >> PAGE_SHIFT;
+		ept_state.ept_pointer->page_frame_number = virtual_to_physical_address(&ept_state.ept_page_table->ept_pml4) >> PAGE_SHIFT;
 
 		LOG("[*] EPT initialized on processor (%x)\n", KeGetCurrentProcessorNumber());
 		return true;
