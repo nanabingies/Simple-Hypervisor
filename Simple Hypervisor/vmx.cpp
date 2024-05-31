@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #pragma warning(disable: 4996)
+#pragma warning(disable: 6001)
 
 namespace vmx {
 	auto vmx_is_vmx_available() -> bool {
@@ -193,6 +194,8 @@ namespace vmx {
 
 							if (g_vmm_context->vcpu_table[iter]->ept_state->ept_pointer != nullptr)
 								ExFreePoolWithTag(g_vmm_context->vcpu_table[iter]->ept_state->ept_pointer, VMM_POOL_TAG);
+
+							MmFreeContiguousMemory(g_vmm_context->vcpu_table[iter]->ept_state);
 						}
 					}
 
