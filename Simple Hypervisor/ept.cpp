@@ -188,7 +188,7 @@ namespace ept {
 	auto initialize_ept_page_table(__ept_state& ept_state) -> bool {
 		ept_state.ept_page_table = reinterpret_cast<__ept_page_table*>
 			(ExAllocatePoolWithTag(NonPagedPool, sizeof(__ept_page_table), VMM_POOL_TAG));
-		if (page_table == nullptr)	return false;
+		if (ept_state.ept_page_table == nullptr)	return false;
 		RtlSecureZeroMemory(ept_state.ept_page_table, sizeof(__ept_page_table));
 
 		ept_state.ept_page_table->ept_pml4->page_frame_number = (virtual_to_physical_address(&ept_state.ept_page_table->ept_pdpte[0]) >> PAGE_SHIFT);
@@ -324,6 +324,11 @@ namespace ept {
 
 		RtlCopyMemory(entry, &new_entry, sizeof(new_entry));
 
+		// Add our allocation to the linked list of dynamic splits for later deallocation 
+		InsertHeadList(reinterpret_cast<PLIST_ENTRY>(&ept_state.ept_page_table->dynamic_pages), 
+			&new_split->dynamic_split_list);
+		InterlockedIncrement(reinterpret_cast<volatile LONG*>(ept_state.ept_page_table->dynamic_pages_count));
+
 		return true;
 	}
 
@@ -360,56 +365,6 @@ namespace ept {
 		return &pte_entry[MASK_EPT_PML1_INDEX(pfn)];
 	}
 
-	auto split_pde(ept_page_table* page_table, void* buffer, unsigned __int64 pfn) -> void {
-		ept_pde_2mb* pde_entry = get_pde_entry(page_table, pfn);
-		if (!pde_entry) {
-			LOG("[!] Invalid pde address passed.\n");
-			LOG_ERROR(__FILE__, __LINE__);
-			return;
-		}
-
-		// If this large page is not marked a large page, that means it's a pointer already.
-		// That page is therefore already split.
-		if (!pde_entry->large_page) {
-			return;
-		}
-
-		ept_split_page* split_page = reinterpret_cast<ept_split_page*>(buffer);
-		RtlSecureZeroMemory(split_page, sizeof ept_split_page);
-
-		// Set all pages as rwx to prevent unwanted ept violation
-		split_page->ept_pde = pde_entry;
-
-		ept_pte pte_template = { 0 };
-		pte_template.read_access = 1;
-		pte_template.write_access = 1;
-		pte_template.execute_access = 1;
-		pte_template.memory_type = pde_entry->memory_type;
-		pte_template.ignore_pat = pde_entry->ignore_pat;
-		pte_template.suppress_ve = pde_entry->suppress_ve;
-
-		__stosq((SIZE_T*)&split_page->ept_pte[0], pte_template.flags, 512);
-		for (unsigned idx = 0; idx < 512; idx++) {
-			uint64_t page_number = ((pde_entry->page_frame_number * PAGE2MB) >> PAGE_SHIFT) + idx;
-			split_page->ept_pte[idx].page_frame_number = page_number;
-			//split_page->ept_pte[idx].memory_type = get_memory_type(page_number, FALSE);
-		}
-
-		ept_pde_2mb pde_2 = { 0 };
-		pde_2.read_access = 1;
-		pde_2.write_access = 1;
-		pde_2.execute_access = 1;
-
-		pde_2.page_frame_number = (virtual_to_physical_address((void*)&split_page->ept_pte[0]) >> PAGE_SHIFT);
-
-		RtlCopyMemory(pde_entry, &pde_2, sizeof(pde_2));
-
-		// Add our allocation to the linked list of dynamic splits for later deallocation 
-		InsertHeadList((PLIST_ENTRY)&page_table->dynamic_pages, &split_page->split_pages);
-
-		return;
-	}
-
 	auto ept_init_table_entry(ept_entry* _ept_entry, unsigned __int64 level, unsigned __int64 pfn) -> void {
 		_ept_entry->read_access = 1;
 		_ept_entry->write_access = 1;
@@ -424,7 +379,7 @@ namespace ept {
 	}
 
 	auto ept_allocate_ept_entry(__ept_page_table* page_table) -> ept_entry* {
-		if (!page_table) {
+		if (page_table == nullptr) {
 			static const uint64_t kAllocSize = 512 * sizeof(ept_entry*);
 			ept_entry* entry = reinterpret_cast<ept_entry*>
 				(ExAllocatePoolZero(NonPagedPool, kAllocSize, VMM_POOL_TAG));
@@ -477,7 +432,7 @@ namespace ept {
 		return true;
 	}*/
 
-	auto ept_construct_tables(ept_entry* _ept_entry, unsigned __int64 level, unsigned __int64 pfn, ept_page_table* page_table) -> ept_entry* {
+	/*auto ept_construct_tables(ept_entry* _ept_entry, unsigned __int64 level, unsigned __int64 pfn, __ept_page_table* page_table) -> ept_entry* {
 		switch (level) {
 		case 4: {
 			// table == PML4 (512 GB)
@@ -503,15 +458,6 @@ namespace ept {
 			const uint64_t pml3_index = MASK_EPT_PML3_INDEX(pfn);
 			ept_entry* pdpt_entry = &_ept_entry[pml3_index];
 			LOG("[*] pdpt_entry : %p\n", pdpt_entry);
-
-			// ---------------------------------
-			/*if (!pdpt_entry->read_access)
-				pdpt_entry->read_access = 0x1;
-			if (!pdpt_entry->write_access)
-				pdpt_entry->write_access = 0x1;
-			if (!pdpt_entry->execute_access)
-				pdpt_entry->execute_access = 0x1;*/
-			// ----------------------------------
 
 			if (!pdpt_entry->flags) {
 				ept_entry* _ept_pde = reinterpret_cast<ept_entry*>
@@ -563,5 +509,5 @@ namespace ept {
 			__debugbreak();
 			return nullptr;
 		}
-	}
+	}*/
 }
