@@ -88,13 +88,13 @@ namespace ept {
 
 	auto is_valid_for_large_page(unsigned __int64) -> bool;
 
-	auto split_pml2_entry(ept_state*, void*, unsigned __int64) -> bool;
+	auto split_pml2_entry(__ept_state&, void*, unsigned __int64) -> bool;
 
-	auto get_pte_entry(ept_page_table*, unsigned __int64) -> ept_pte*;
+	//auto get_pte_entry(ept_page_table*, unsigned __int64) -> ept_pte*;
 
-	auto get_pde_entry(ept_page_table*, unsigned __int64) -> ept_pde_2mb*;
+	auto get_pde_entry(__ept_state&, unsigned __int64) -> ept_pde_2mb*;
 
-	auto ept_construct_tables(ept_entry*, unsigned __int64, unsigned __int64, ept_page_table*) -> ept_entry*;
+	//auto ept_construct_tables(ept_entry*, unsigned __int64, unsigned __int64, ept_page_table*) -> ept_entry*;
 
 	auto ept_init_table_entry(ept_entry*, unsigned __int64, unsigned __int64) -> void;
 
@@ -104,7 +104,7 @@ namespace ept {
 
 	auto ept_inv_global_entry() -> unsigned __int64;
 
-	auto split_pde(ept_page_table*, void*, unsigned __int64) -> void;
+	//auto split_pde(ept_page_table*, void*, unsigned __int64) -> void;
 
-	auto handle_ept_violation(unsigned __int64, unsigned __int64) -> bool;
+	//auto handle_ept_violation(unsigned __int64, unsigned __int64) -> bool;
 }
