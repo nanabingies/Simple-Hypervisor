@@ -60,7 +60,7 @@ using mtrr_range_descriptor = struct _mtrr_range_descriptor {
 
 struct __ept_dynamic_split {
 	DECLSPEC_ALIGN(PAGE_SIZE) ept_pte ept_pte[512];
-	ept_pde_2mb* entry;
+	ept_pde_2mb* pde_entry;
 	LIST_ENTRY dynamic_split_list;
 };
 
@@ -82,29 +82,29 @@ namespace ept {
 
 	auto initialize_ept_page_table(__ept_state&) -> bool;
 
-	//auto setup_pml2_entries(ept_state*, ept_pde_2mb*, unsigned __int64) -> bool;
+	auto setup_pml2_entries(__ept_state&, ept_pde_2mb&, unsigned __int64) -> bool;
 
 	auto is_in_range(unsigned __int64, unsigned __int64, unsigned __int64) -> bool;
 
 	auto is_valid_for_large_page(unsigned __int64) -> bool;
 
-	//auto split_pml2_entry(ept_state*, void*, unsigned __int64) -> bool;
+	auto split_pml2_entry(ept_state*, void*, unsigned __int64) -> bool;
 
-	//auto get_pte_entry(ept_page_table*, unsigned __int64) -> ept_pte*;
+	auto get_pte_entry(ept_page_table*, unsigned __int64) -> ept_pte*;
 
-	//auto get_pde_entry(ept_page_table*, unsigned __int64) -> ept_pde_2mb*;
+	auto get_pde_entry(ept_page_table*, unsigned __int64) -> ept_pde_2mb*;
 
-	//auto ept_construct_tables(ept_entry*, unsigned __int64, unsigned __int64, ept_page_table*) -> ept_entry*;
+	auto ept_construct_tables(ept_entry*, unsigned __int64, unsigned __int64, ept_page_table*) -> ept_entry*;
 
 	auto ept_init_table_entry(ept_entry*, unsigned __int64, unsigned __int64) -> void;
 
-	//auto ept_allocate_ept_entry(ept_page_table*) -> ept_entry*;
+	auto ept_allocate_ept_entry(__ept_page_table*) -> ept_entry*;
 
 	auto ept_get_memory_type(unsigned __int64, bool) -> unsigned __int64;
 
 	auto ept_inv_global_entry() -> unsigned __int64;
 
-	//auto split_pde(ept_page_table*, void*, unsigned __int64) -> void;
+	auto split_pde(ept_page_table*, void*, unsigned __int64) -> void;
 
 	auto handle_ept_violation(unsigned __int64, unsigned __int64) -> bool;
 }
