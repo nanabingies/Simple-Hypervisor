@@ -584,6 +584,8 @@ namespace vmexit {
 		UNREFERENCED_PARAMETER(args);
 		using ept::handle_ept_violation;
 
+		__debugbreak();
+
 		//auto guest_regs = reinterpret_cast<guest_registers*>(args);
 		vmx_exit_qualification_ept_violation exitQualification;
 		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
