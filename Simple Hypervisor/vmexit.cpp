@@ -582,31 +582,31 @@ namespace vmexit {
 
 	auto handle_ept_violation(void* args) -> void {
 		UNREFERENCED_PARAMETER(args);
-		using ept::handle_ept_violation;
+		//using ept::handle_ept_violation;
 
 		__debugbreak();
 
 		//auto guest_regs = reinterpret_cast<guest_registers*>(args);
-		vmx_exit_qualification_ept_violation exitQualification;
-		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+		//vmx_exit_qualification_ept_violation exitQualification;
+		//__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 
-		uint64_t phys_addr;
-		__vmx_vmread(VMCS_GUEST_PHYSICAL_ADDRESS, &phys_addr);
+		//uint64_t phys_addr;
+		//__vmx_vmread(VMCS_GUEST_PHYSICAL_ADDRESS, &phys_addr);
 		//phys_addr = PAGE_ALIGN((PVOID)phys_addr);
 
-		uint64_t linear_addr;
-		__vmx_vmread(VMCS_EXIT_GUEST_LINEAR_ADDRESS, &linear_addr);
+		//uint64_t linear_addr;
+		//__vmx_vmread(VMCS_EXIT_GUEST_LINEAR_ADDRESS, &linear_addr);
 
-		if (exitQualification.ept_executable || exitQualification.ept_readable || exitQualification.ept_writeable) {
+		//if (exitQualification.ept_executable || exitQualification.ept_readable || exitQualification.ept_writeable) {
 			// These caused an EPT Violation
-			__debugbreak();
-			LOG("Error: VA = %llx, PA = %llx", linear_addr, phys_addr);
-			return;
-		}
+			//__debugbreak();
+			//LOG("Error: VA = %llx, PA = %llx", linear_addr, phys_addr);
+			//return;
+		//}
 
-		if (!handle_ept_violation(phys_addr, linear_addr)) {
-			LOG("[!][%ws] Error handling apt violation\n", __FUNCTIONW__);
-		}
+		//if (!handle_ept_violation(phys_addr, linear_addr)) {
+			//LOG("[!][%ws] Error handling apt violation\n", __FUNCTIONW__);
+		//}
 	}
 
 	auto handle_ept_misconfiguration(void* args) -> void {
