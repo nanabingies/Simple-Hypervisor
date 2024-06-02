@@ -28,342 +28,345 @@ namespace vmexit {
 		switch (vmexit_reason.basic_exit_reason)
 		{
 		case VMX_EXIT_REASON_EXCEPTION_OR_NMI: {
-			//LOG("[*][%ws] exception or nmi\n", __FUNCTIONW__);
+			LOG("[*][%ws] exception or nmi\n", __FUNCTIONW__);
+			break;
 		}
-											 break;
 
 		case VMX_EXIT_REASON_EXTERNAL_INTERRUPT: {
-			//LOG("[*][%ws] external interrupt\n", __FUNCTIONW__);
+			LOG("[*][%ws] external interrupt\n", __FUNCTIONW__);
+			break;
 		}
-											   break;
 
 		case VMX_EXIT_REASON_TRIPLE_FAULT: {
-			//LOG("[*][%ws] triple fault\n", __FUNCTIONW__);
+			LOG("[*][%ws] triple fault\n", __FUNCTIONW__);
+			break;
 		}
-										 break;
 
 		case VMX_EXIT_REASON_INIT_SIGNAL: {
-			//LOG("[*][%ws] init signal\n", __FUNCTIONW__);
+			LOG("[*][%ws] init signal\n", __FUNCTIONW__);
+			break;
 		}
-										break;
 
 		case VMX_EXIT_REASON_STARTUP_IPI: {
-			//LOG("[*][%ws] startup ipi\n", __FUNCTIONW__);
+			LOG("[*][%ws] startup ipi\n", __FUNCTIONW__);
+			break;
 		}
-										break;
 
 		case VMX_EXIT_REASON_IO_SMI: {
-			//LOG("[*][%ws] io smi\n", __FUNCTIONW__);
+			LOG("[*][%ws] io smi\n", __FUNCTIONW__);
+			break;
 		}
-								   break;
 
 		case VMX_EXIT_REASON_SMI: {
-			//LOG("[*][%ws] smi\n", __FUNCTIONW__);
+			LOG("[*][%ws] smi\n", __FUNCTIONW__);
+			break;
 		}
-								break;
 
 		case VMX_EXIT_REASON_INTERRUPT_WINDOW: {
-			//LOG("[*][%ws] interrupt window\n", __FUNCTIONW__);
+			LOG("[*][%ws] interrupt window\n", __FUNCTIONW__);
+			break;
 		}
-											 break;
 
 		case VMX_EXIT_REASON_NMI_WINDOW: {
-			//LOG("[*][%ws] nmi window\n", __FUNCTIONW__);
+			LOG("[*][%ws] nmi window\n", __FUNCTIONW__);
+			break;
 		}
-									   break;
 
 		case VMX_EXIT_REASON_TASK_SWITCH: {
-			//LOG("[*][%ws] task switch\n", __FUNCTIONW__);
+			LOG("[*][%ws] task switch\n", __FUNCTIONW__);
 			handle_task_switch(guest_regs);
+			break;
 		}
-										break;
 
 		case VMX_EXIT_REASON_EXECUTE_CPUID: {
-			//LOG("[*][%ws] execute cpuid\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute cpuid\n", __FUNCTIONW__);
 			handle_execute_cpuid(guest_regs);
+			break;
 		}
-										  break;
 
 		case VMX_EXIT_REASON_EXECUTE_GETSEC: {
-			//LOG("[*][%ws] execute getsec\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute getsec\n", __FUNCTIONW__);
+			break;
 		}
 										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_HLT: {
-			//LOG("[*][%ws] execute hlt\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute hlt\n", __FUNCTIONW__);
 
 			//
 			// Terminate HyperVisor
 			//
 			//HostTerminateHypervisor();
+			break;
 		}
-										break;
 
 		case VMX_EXIT_REASON_EXECUTE_INVD: {
-			//LOG("[*][%ws] execute invd\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute invd\n", __FUNCTIONW__);
+			break;
 		}
-										 break;
 
 		case VMX_EXIT_REASON_EXECUTE_INVLPG: {
-			//LOG("[*][%ws] execute invlpg\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute invlpg\n", __FUNCTIONW__);
+			break;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_RDPMC: {
-			//LOG("[*][%ws] execute rdpmc\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute rdpmc\n", __FUNCTIONW__);
+			break;
 		}
-										  break;
 
 		case VMX_EXIT_REASON_EXECUTE_RDTSC: {
-			//LOG("[*][%ws] execute rdtsc\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute rdtsc\n", __FUNCTIONW__);
+			break;
 		}
-										  break;
 
 		case VMX_EXIT_REASON_EXECUTE_RSM_IN_SMM: {
-			//LOG("[*][%ws] execute rsm in smm\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute rsm in smm\n", __FUNCTIONW__);
+			break;
 		}
-											   break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMCALL: {
-			//LOG("[*][%ws] execute vmcall\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute vmcall\n", __FUNCTIONW__);
 			handle_execute_vmcall(guest_regs);
+			break;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMCLEAR: {
-			//LOG("[*][%ws] execute vmclear\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute vmclear\n", __FUNCTIONW__);
+			break;
 		}
-											break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMLAUNCH: {
-			//LOG("[*][%ws] execute vmlaunch\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute vmlaunch\n", __FUNCTIONW__);
+			break;
 		}
-											 break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMPTRLD: {
-			//LOG("[*][%ws] execute vmptrld\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute vmptrld\n", __FUNCTIONW__);
 			handle_execute_vmptrld(guest_regs);
+			break;
 		}
-											break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMPTRST: {
-			//LOG("[*][%ws] execute vmptrst\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute vmptrst\n", __FUNCTIONW__);
 			handle_execute_vmptrst(guest_regs);
+			break;
 		}
-											break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMREAD: {
-			//LOG("[*][%ws] execute vmread\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute vmread\n", __FUNCTIONW__);
 			handle_execute_vmread(guest_regs);
+			break;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMRESUME: {
-			//LOG("[*][%ws] execute vmresume\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute vmresume\n", __FUNCTIONW__);
+			break;
 		}
-											 break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMWRITE: {
-			//LOG("[*][%ws] execute vmwrite\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute vmwrite\n", __FUNCTIONW__);
 			handle_execute_vmwrite(guest_regs);
+			break;
 		}
-											break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMXOFF: {
-			//LOG("[*][%ws] execute vmxoff\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute vmxoff\n", __FUNCTIONW__);
+			break;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMXON: {
-			//LOG("[*][%ws] execute vmxon\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute vmxon\n", __FUNCTIONW__);
 			handle_execute_vmxon(guest_regs);
+			break;
 		}
-										  break;
 
 		case VMX_EXIT_REASON_MOV_CR: {
-			//LOG("[*][%ws] mov cr\n", __FUNCTIONW__);
+			LOG("[*][%ws] mov cr\n", __FUNCTIONW__);
 			handle_mov_cr(guest_regs);
+			break;
 		}
-								   break;
 
 		case VMX_EXIT_REASON_MOV_DR: {
-			//LOG("[*][%ws] mov dr\n", __FUNCTIONW__);
+			LOG("[*][%ws] mov dr\n", __FUNCTIONW__);
 			handle_mov_dr(guest_regs);
+			break;
 		}
-								   break;
 
 		case VMX_EXIT_REASON_EXECUTE_IO_INSTRUCTION: {
 			//LOG("[*][%ws] execute io\n", __FUNCTIONW__);
 			handle_execute_io_instruction(guest_regs);
-		}
-												   break;
+			break;
+		}		   
 
 		case VMX_EXIT_REASON_EXECUTE_RDMSR: {
-			//LOG("[*][%ws] execute rdmsr\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute rdmsr\n", __FUNCTIONW__);
 			handle_rdmsr(guest_regs);
-		}
-										  break;
+			break;
+		}					  
 
 		case VMX_EXIT_REASON_EXECUTE_WRMSR: {
+			LOG("[*][%ws] execute wrmsr\n", __FUNCTIONW__);
 			handle_wrmsr(guest_regs);
+			break;
 		}
-										  break;
 
 		case VMX_EXIT_REASON_ERROR_INVALID_GUEST_STATE: {
-			//LOG("[*][%ws] invalid guest state\n", __FUNCTIONW__);
-		}
-													  break;
+			LOG("[*][%ws] invalid guest state\n", __FUNCTIONW__);
+			break;
+		}			  
 
 		case VMX_EXIT_REASON_ERROR_MSR_LOAD: {
-			//LOG("[*][%ws] error msr load\n", __FUNCTIONW__);
+			LOG("[*][%ws] error msr load\n", __FUNCTIONW__);
+			break;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_MWAIT: {
-			//LOG("[*][%ws] execute mwait\n", __FUNCTIONW__);
-		}
-										  break;
+			LOG("[*][%ws] execute mwait\n", __FUNCTIONW__);
+			break;
+		}		  
 
 		case VMX_EXIT_REASON_MONITOR_TRAP_FLAG: {
-			//LOG("[*][%ws] monitor trap flag\n", __FUNCTIONW__);
+			LOG("[*][%ws] monitor trap flag\n", __FUNCTIONW__);
+			break;
 		}
-											  break;
 
 		case VMX_EXIT_REASON_EXECUTE_MONITOR: {
-			//LOG("[*][%ws] execute monitor\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute monitor\n", __FUNCTIONW__);
+			break;
 		}
-											break;
 
 		case VMX_EXIT_REASON_EXECUTE_PAUSE: {
-			//LOG("[*][%ws] execute pause\n", __FUNCTIONW__);
-		}
-										  break;
+			LOG("[*][%ws] execute pause\n", __FUNCTIONW__);
+			break;
+		}			  
 
 		case VMX_EXIT_REASON_ERROR_MACHINE_CHECK: {
-			//LOG("[*][%ws] error machine check\n", __FUNCTIONW__);
+			LOG("[*][%ws] error machine check\n", __FUNCTIONW__);
+			break;
 		}
-												break;
 
 		case VMX_EXIT_REASON_TPR_BELOW_THRESHOLD: {
-			//LOG("[*][%ws] below threshold\n", __FUNCTIONW__);
+			LOG("[*][%ws] below threshold\n", __FUNCTIONW__);
+			break;
 		}
-												break;
 
 		case VMX_EXIT_REASON_APIC_ACCESS: {
-			//LOG("[*][%ws] apic access\n", __FUNCTIONW__);
+			LOG("[*][%ws] apic access\n", __FUNCTIONW__);
 			handle_apic_access(guest_regs);
+			break;
 		}
-										break;
 
 		case VMX_EXIT_REASON_VIRTUALIZED_EOI: {
-			//LOG("[*][%ws] virtualized eoi\n", __FUNCTIONW__);
+			LOG("[*][%ws] virtualized eoi\n", __FUNCTIONW__);
+			break;
 		}
-											break;
 
 		case VMX_EXIT_REASON_GDTR_IDTR_ACCESS: {
-			//LOG("[*][%ws] gdtr idtr access\n", __FUNCTIONW__);
+			LOG("[*][%ws] gdtr idtr access\n", __FUNCTIONW__);
 			handle_gdtr_idtr_access(guest_regs);
+			break;
 		}
-											 break;
 
 		case VMX_EXIT_REASON_LDTR_TR_ACCESS: {
-			//LOG("[*][%ws] ldtr tr access\n", __FUNCTIONW__);
+			LOG("[*][%ws] ldtr tr access\n", __FUNCTIONW__);
 			handle_ldtr_tr_access(guest_regs);
+			break;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EPT_VIOLATION: {
-			//LOG("[*][%ws] ept violation\n", __FUNCTIONW__);
+			LOG("[*][%ws] ept violation\n", __FUNCTIONW__);
 			handle_ept_violation(guest_regs);
+			break;
 		}
-										  break;
 
 		case VMX_EXIT_REASON_EPT_MISCONFIGURATION: {
-			//LOG("[*][%ws] EPT Misconfiguration\n", __FUNCTIONW__);
+			LOG("[*][%ws] EPT Misconfiguration\n", __FUNCTIONW__);
 			handle_ept_misconfiguration(guest_regs);
+			break;
 		}
-												 break;
 
 		case VMX_EXIT_REASON_EXECUTE_INVEPT: {
-			//LOG("[*][%ws] invept\n", __FUNCTIONW__);
+			LOG("[*][%ws] invept\n", __FUNCTIONW__);
 			handle_execute_invept(guest_regs);
+			break;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_RDTSCP: {
-			//LOG("[*][%ws] rdtscp\n", __FUNCTIONW__);
+			LOG("[*][%ws] rdtscp\n", __FUNCTIONW__);
+			break;
 		}
-										   break;
+										   
 
 		case VMX_EXIT_REASON_VMX_PREEMPTION_TIMER_EXPIRED: {
-			//LOG("[*][%ws] timer expired\n", __FUNCTIONW__);
+			LOG("[*][%ws] timer expired\n", __FUNCTIONW__);
+			break;
 		}
-														 break;
 
 		case VMX_EXIT_REASON_EXECUTE_INVVPID: {
-			//LOG("[*][%ws] invvpid\n", __FUNCTIONW__);
+			LOG("[*][%ws] invvpid\n", __FUNCTIONW__);
 			handle_execute_invvpid(guest_regs);
-		}
-											break;
+			break;
+		}	
 
 		case VMX_EXIT_REASON_EXECUTE_WBINVD: {
-			//LOG("[*][%ws] wbinvd\n", __FUNCTIONW__);
-		}
-										   break;
+			LOG("[*][%ws] wbinvd\n", __FUNCTIONW__);
+			break;
+		}			   
 
 		case VMX_EXIT_REASON_EXECUTE_XSETBV: {
-			//LOG("[*][%ws] xsetvb\n", __FUNCTIONW__);
+			LOG("[*][%ws] xsetvb\n", __FUNCTIONW__);
+			break;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_APIC_WRITE: {
-			//LOG("[*][%ws] apic write\n", __FUNCTIONW__);
+			LOG("[*][%ws] apic write\n", __FUNCTIONW__);
+			break;
 		}
-									   break;
 
 		case VMX_EXIT_REASON_EXECUTE_RDRAND: {
-			//LOG("[*][%ws] rdrand\n", __FUNCTIONW__);
+			LOG("[*][%ws] rdrand\n", __FUNCTIONW__);
 			handle_execute_rdrand(guest_regs);
+			break;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_INVPCID: {
-			//LOG("[*][%ws] invpcid\n", __FUNCTIONW__);
+			LOG("[*][%ws] invpcid\n", __FUNCTIONW__);
 			handle_execute_invpcid(guest_regs);
+			break;
 		}
-											break;
 
 		case VMX_EXIT_REASON_EXECUTE_VMFUNC: {
-			//LOG("[*][%ws] vmfunc\n", __FUNCTIONW__);
-		}
-										   break;
+			LOG("[*][%ws] vmfunc\n", __FUNCTIONW__);
+			break;
+		}  
 
 		case VMX_EXIT_REASON_EXECUTE_ENCLS: {
-			//LOG("[*][%ws] execute encls\n", __FUNCTIONW__);
-		}
-										  break;
+			LOG("[*][%ws] execute encls\n", __FUNCTIONW__);
+			break;
+		}  
 
 		case VMX_EXIT_REASON_EXECUTE_RDSEED: {
-			//LOG("[*][%ws] execute rdseed\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute rdseed\n", __FUNCTIONW__);
+			break;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_PAGE_MODIFICATION_LOG_FULL: {
-			//LOG("[*][%ws] modification log full\n", __FUNCTIONW__);
+			LOG("[*][%ws] modification log full\n", __FUNCTIONW__);
+			break;
 		}
-													   break;
 
 		case VMX_EXIT_REASON_EXECUTE_XSAVES: {
-			//LOG("[*][%ws] execute xsaves\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute xsaves\n", __FUNCTIONW__);
 			handle_execute_xsaves(guest_regs);
+			break;
 		}
-										   break;
 
 		case VMX_EXIT_REASON_EXECUTE_XRSTORS: {
-			//LOG("[*][%ws] execute xstors\n", __FUNCTIONW__);
+			LOG("[*][%ws] execute xstors\n", __FUNCTIONW__);
 			handle_execute_xrstors(guest_regs);
+			break;
 		}
-											break;
 
 		default:
 			break;
@@ -587,15 +590,16 @@ namespace vmexit {
 		__debugbreak();
 
 		//auto guest_regs = reinterpret_cast<guest_registers*>(args);
-		//vmx_exit_qualification_ept_violation exitQualification;
-		//__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
+		vmx_exit_qualification_ept_violation exitQualification;
+		__vmx_vmread(VMCS_EXIT_QUALIFICATION, reinterpret_cast<size_t*>(&exitQualification));
 
-		//uint64_t phys_addr;
-		//__vmx_vmread(VMCS_GUEST_PHYSICAL_ADDRESS, &phys_addr);
+		size_t guest_phys_addr, guest_linear_addr;
+		__vmx_vmread(VMCS_GUEST_PHYSICAL_ADDRESS, &guest_phys_addr);
 		//phys_addr = PAGE_ALIGN((PVOID)phys_addr);
+		__vmx_vmread(VMCS_EXIT_GUEST_LINEAR_ADDRESS, &guest_linear_addr);
 
-		//uint64_t linear_addr;
-		//__vmx_vmread(VMCS_EXIT_GUEST_LINEAR_ADDRESS, &linear_addr);
+		LOG("[*] EPT violation at address %llx [phys : %llx]\n", guest_linear_addr, guest_phys_addr);
+		LOG("[*] read : %llx | write : %llx | execute : %llx\n", exitQualification.ept_readable, exitQualification.ept_writeable, exitQualification.execute_access);
 
 		//if (exitQualification.ept_executable || exitQualification.ept_readable || exitQualification.ept_writeable) {
 			// These caused an EPT Violation
@@ -614,6 +618,11 @@ namespace vmexit {
 		NT_ASSERTMSG("ARGS == NULL", args != nullptr);
 		// TODO:
 		__debugbreak();
+
+		size_t guest_phys_addr, guest_linear_addr;
+		__vmx_vmread(VMCS_GUEST_PHYSICAL_ADDRESS, &guest_phys_addr);
+		__vmx_vmread(VMCS_EXIT_GUEST_LINEAR_ADDRESS, &guest_linear_addr);
+		LOG("[*] EPT Misconfiguration at address %llx [phys : %llx]\n", guest_linear_addr, guest_phys_addr);
 
 		// Failure setting EPT
 		// Bugcheck and restart system
