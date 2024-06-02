@@ -44,7 +44,7 @@ enum inv_ept_type {
 
 
 
-using mtrr_entry = struct _mtrr_entry {
+/*using mtrr_entry = struct _mtrr_entry {
 	unsigned __int64	mtrr_enabled;
 	unsigned __int64	mtrr_fixed;
 	unsigned __int64	memory_type;
@@ -56,7 +56,7 @@ using mtrr_range_descriptor = struct _mtrr_range_descriptor {
 	uint64_t	physical_base_address;
 	uint64_t	physical_end_address;
 	unsigned char mtrr_memory_type;
-};
+};*/
 
 struct __ept_dynamic_split {
 	DECLSPEC_ALIGN(PAGE_SIZE) ept_pte ept_pte[512];
@@ -64,16 +64,7 @@ struct __ept_dynamic_split {
 	LIST_ENTRY dynamic_split_list;
 };
 
-using vmx_non_root_memory = struct vmx_non_root_memory {
-	void* pre_allocated_buffer;
-};
-
 namespace ept {
-	static inline unsigned __int64 g_mtrr_num = 0;
-	static inline unsigned __int64 max_ept_walk_length = 0x4;
-
-	inline unsigned __int64 g_default_memory_type;
-
 	auto check_ept_support() -> bool;
 
 	auto initialize_ept(__ept_state&) -> bool;
