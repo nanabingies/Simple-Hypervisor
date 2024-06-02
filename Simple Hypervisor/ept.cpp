@@ -59,7 +59,6 @@ namespace ept {
 		uint64_t var_cnt = mtrr_cap.variable_range_count;
 		uint64_t fix_range_support = mtrr_cap.fixed_range_supported;
 		uint64_t fix_range_enable = mtrr_def.fixed_range_mtrr_enable;
-		g_default_memory_type = mtrr_def.default_memory_type;
 
 		if (!fix_range_enable && !fix_range_support)	return false;
 
