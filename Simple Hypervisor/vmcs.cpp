@@ -610,10 +610,6 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	if (__vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY_STATE, 0))	return;
 	if (__vmx_vmwrite(VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS, 0))	return;
 
-	__debugbreak();
-	LOG("[*] ept pointer : %p\n", (void*)vcpu->ept_state->ept_pointer);
-	LOG("[*] ept flags : %llx\n", vcpu->ept_state->ept_pointer->flags);
-
 	if (__vmx_vmwrite(VMCS_CTRL_EPT_POINTER, vcpu->ept_state->ept_pointer->flags))	return;
 
 	if (__vmx_vmwrite(VMCS_CTRL_IO_BITMAP_A_ADDRESS, vcpu->vcpu_bitmaps.io_bitmap_a_physical))	return;
