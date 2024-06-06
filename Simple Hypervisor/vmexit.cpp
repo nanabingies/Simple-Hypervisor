@@ -182,31 +182,31 @@ namespace vmexit {
 		}
 
 		case VMX_EXIT_REASON_MOV_CR: {
-			LOG("[*][%ws] mov cr\n", __FUNCTIONW__);
+			//DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[*] mov cr\n");
 			handle_mov_cr(guest_regs);
 			break;
 		}
 
 		case VMX_EXIT_REASON_MOV_DR: {
-			LOG("[*][%ws] mov dr\n", __FUNCTIONW__);
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[*] mov dr\n");
 			handle_mov_dr(guest_regs);
 			break;
 		}
 
 		case VMX_EXIT_REASON_EXECUTE_IO_INSTRUCTION: {
-			//LOG("[*][%ws] execute io\n", __FUNCTIONW__);
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[*] execute io\n");
 			handle_execute_io_instruction(guest_regs);
 			break;
 		}		   
 
 		case VMX_EXIT_REASON_EXECUTE_RDMSR: {
-			LOG("[*][%ws] execute rdmsr\n", __FUNCTIONW__);
+			//DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[*] execute rdmsr\n");
 			handle_rdmsr(guest_regs);
 			break;
 		}					  
 
 		case VMX_EXIT_REASON_EXECUTE_WRMSR: {
-			LOG("[*][%ws] execute wrmsr\n", __FUNCTIONW__);
+			//DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[*] execute wrmsr\n");
 			handle_wrmsr(guest_regs);
 			break;
 		}
