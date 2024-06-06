@@ -2,8 +2,6 @@
 #pragma warning(disable: 4996)
 
 namespace ept {
-	static struct _mtrr_entry g_mtrr_entries[num_mtrr_entries];
-
 	auto check_ept_support() -> bool {
 		PAGED_CODE();
 
