@@ -11,14 +11,14 @@
 #define MASK_32BITS 0xffffffff
 
 #pragma pack(push, 1)
-struct __descriptor64 {
+struct __pseudo_descriptor64 {
 	unsigned __int16 limit;
 	unsigned __int64 base_address;
 };
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-struct __descriptor32 {
+struct __pseudo_descriptor32 {
 	unsigned __int16 limit;
 	unsigned __int32 base_address;
 };
@@ -91,7 +91,7 @@ union __exception_bitmap {
 	};
 };
 
-using guest_registers = struct guest_registers {
+struct __guest_registers {
 	__m128 xmm[6];
 	unsigned __int64 r15;
 	unsigned __int64 r14;
@@ -131,14 +131,6 @@ struct __ept_page_table {
 	unsigned __int64			dynamic_pages_count;
 };
 
-/*struct __vmm_ept_page_table {
-	DECLSPEC_ALIGN(PAGE_SIZE) ept_pml4e pml4[512];
-
-	DECLSPEC_ALIGN(PAGE_SIZE) ept_pdpte pml3[512];
-
-	DECLSPEC_ALIGN(PAGE_SIZE) ept_pde pml2[512][512];
-};*/
-
 struct __ept_state {
 	LIST_ENTRY hooked_page_list;
 	ept_pointer* ept_pointer;
@@ -157,7 +149,7 @@ struct __vcpu {
 	unsigned __int64 vmxon_physical;
 
 	struct __vmexit_info {
-		guest_registers* guest_registers;
+		__guest_registers* guest_registers;
 
 		unsigned __int64 guest_rip;
 
