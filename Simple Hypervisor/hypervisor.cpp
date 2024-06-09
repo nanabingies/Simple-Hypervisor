@@ -172,6 +172,8 @@ namespace hv {
 			return;
 		}
 
+		host_cr3 = __readcr3();
+
 		current_vcpu->vcpu_status.vmx_on = true;
 		hv_setup_vmcs(current_vcpu, guest_rsp);
 		current_vcpu->vcpu_status.vmm_launched = true;
