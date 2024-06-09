@@ -83,6 +83,36 @@ auto adjust_controls(ulong Ctl, ulong Msr) -> unsigned __int64 {
 	return Ctl;
 }
 
+auto set_io_bitmap(unsigned __int16 io_port, __vcpu* vcpu, bool value) -> void {
+	unsigned __int16 bitmap_position;
+	unsigned __int8 bitmap_bit;
+
+	//
+	// IO ports from 0x8000 to 0xFFFF are encoded in io bitmap b
+	if (io_port >= 0x8000) {
+		io_port -= 0x8000;
+		bitmap_position = io_port / 8;
+		bitmap_bit = io_port % 8;
+
+		if (value == true)
+			*(vcpu->vcpu_bitmaps.io_bitmap_b + bitmap_position) |= (1 << bitmap_bit);
+		else
+			*(vcpu->vcpu_bitmaps.io_bitmap_b + bitmap_position) &= ~(1 << bitmap_bit);
+	}
+
+	//
+	// IO ports from 0 to 0x7fff are encoded in io bitmap b
+	else {
+		bitmap_position = io_port / 8;
+		bitmap_bit = io_port % 8;
+
+		if (value == true)
+			*(vcpu->vcpu_bitmaps.io_bitmap_a + bitmap_position) |= (1 << bitmap_bit);
+		else
+			*(vcpu->vcpu_bitmaps.io_bitmap_a + bitmap_position) &= ~(1 << bitmap_bit);
+	}
+}
+
 namespace hv_vmcs {
 	auto dump_vmcs() -> void {
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "-----------------------------------VMCS CORE %u DUMP-----------------------------------\r\n", KeGetCurrentProcessorIndex());
@@ -436,13 +466,23 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 	memset(vcpu->vcpu_bitmaps.io_bitmap_b, 0xff, PAGE_SIZE);
 	memset(vcpu->vcpu_bitmaps.msr_bitmap, 0xff, PAGE_SIZE);
 
+	set_io_bitmap(0x5655, vcpu, false);
+	set_io_bitmap(0x5656, vcpu, false);
+	set_io_bitmap(0x5657, vcpu, false);
+	set_io_bitmap(0x5658, vcpu, false);
+	set_io_bitmap(0x5659, vcpu, false);
+	set_io_bitmap(0x565a, vcpu, false);
+	set_io_bitmap(0x565b, vcpu, false);
+	set_io_bitmap(0x1094, vcpu, false);
+	set_io_bitmap(0x1090, vcpu, false);
+
 	/// Control Registers - Guest & Host
 	if (__vmx_vmwrite(VMCS_GUEST_CR0, __readcr0()))	return;
 	if (__vmx_vmwrite(VMCS_GUEST_CR3, __readcr3()))	return;
 	if (__vmx_vmwrite(VMCS_GUEST_CR4, __readcr4()))	return;
 
 	if (__vmx_vmwrite(VMCS_HOST_CR0, __readcr0()))	return;
-	if (__vmx_vmwrite(VMCS_HOST_CR3, __readcr3()))	return;		// Host cr3		// hv::get_system_dirbase()
+	if (__vmx_vmwrite(VMCS_HOST_CR3, host_cr3))	return;		// Host cr3		// hv::get_system_dirbase()
 	if (__vmx_vmwrite(VMCS_HOST_CR4, __readcr4()))	return;
 
 	if (__vmx_vmwrite(VMCS_CTRL_CR0_READ_SHADOW, __readcr0()))	return;
@@ -584,14 +624,14 @@ auto hv_setup_vmcs(struct __vcpu* vcpu, void* guest_rsp) -> void {
 		adjust_controls(0, IA32_VMX_PINBASED_CTLS));
 
 	__vmx_vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
-		adjust_controls(IA32_VMX_PROCBASED_CTLS_HLT_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_USE_MSR_BITMAPS_FLAG |
-			IA32_VMX_PROCBASED_CTLS_CR3_LOAD_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_CR3_STORE_EXITING_FLAG |
-			IA32_VMX_PROCBASED_CTLS_ACTIVATE_SECONDARY_CONTROLS_FLAG | IA32_VMX_PROCBASED_CTLS_USE_IO_BITMAPS_FLAG,
+		adjust_controls(//IA32_VMX_PROCBASED_CTLS_HLT_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_USE_IO_BITMAPS_FLAG |
+			//IA32_VMX_PROCBASED_CTLS_CR3_LOAD_EXITING_FLAG | IA32_VMX_PROCBASED_CTLS_CR3_STORE_EXITING_FLAG |
+			IA32_VMX_PROCBASED_CTLS_ACTIVATE_SECONDARY_CONTROLS_FLAG | IA32_VMX_PROCBASED_CTLS_USE_MSR_BITMAPS_FLAG,
 			IA32_VMX_PROCBASED_CTLS));
 
 	__vmx_vmwrite(VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS,
-		adjust_controls(IA32_VMX_PROCBASED_CTLS2_ENABLE_XSAVES_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_RDTSCP_FLAG | 
-			IA32_VMX_PROCBASED_CTLS2_ENABLE_EPT_FLAG,
+		adjust_controls(IA32_VMX_PROCBASED_CTLS2_ENABLE_XSAVES_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_RDTSCP_FLAG, //| 
+			//IA32_VMX_PROCBASED_CTLS2_ENABLE_EPT_FLAG | IA32_VMX_PROCBASED_CTLS2_ENABLE_INVPCID_FLAG,
 			IA32_VMX_PROCBASED_CTLS2));
 
 	/// VM-exit control fields. 
